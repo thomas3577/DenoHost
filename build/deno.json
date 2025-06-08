@@ -17,6 +17,7 @@
     ]
   },
   "imports": {
+    "@std/cli": "jsr:@std/cli@^1.0.19",
     "esbuild": "npm:esbuild@^0.25.5"
   }
 }

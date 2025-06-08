@@ -1,7 +1,13 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@std/cli@^1.0.19": "1.0.19",
     "npm:esbuild@~0.25.5": "0.25.5"
+  },
+  "jsr": {
+    "@std/cli@1.0.19": {
+      "integrity": "b3601a54891f89f3f738023af11960c4e6f7a45dc76cde39a6861124cba79e88"
+    }
   },
   "npm": {
     "@esbuild/aix-ppc64@0.25.5": {
@@ -164,6 +170,7 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@std/cli@^1.0.19",
       "npm:esbuild@~0.25.5"
     ]
   }

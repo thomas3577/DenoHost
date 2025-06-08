@@ -5,41 +5,46 @@ using System.Threading.Tasks;
 
 namespace deno;
 
-public class Deno
+public static class Deno
 {
-    public static string GetDenoPath()
-    {
-        var exePath = Path.Combine(AppContext.BaseDirectory, "deno.exe");
-        if (!File.Exists(exePath))
-            throw new FileNotFoundException("Deno.exe not found!");
+  private const string DenoExecutableName = "deno.EXE";
 
-        return exePath;
+  private static string GetDenoPath()
+  {
+    var exePath = Path.Combine(AppContext.BaseDirectory, DenoExecutableName);
+    if (!File.Exists(exePath))
+      throw new FileNotFoundException("Deno executable not found!");
+
+    return exePath;
+  }
+
+  public static async Task<int> Run(params string[] args)
+  {
+    var psi = new ProcessStartInfo
+    {
+      FileName = GetDenoPath(),
+      RedirectStandardOutput = true,
+      RedirectStandardError = true,
+      UseShellExecute = false,
+      CreateNoWindow = true,
+    };
+
+    foreach (var arg in args)
+    {
+      psi.ArgumentList.Add(arg);
     }
 
-    public static async Task<int> Run(string scriptPath)
-    {
-        var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = GetDenoPath(),
-                Arguments = $"run {scriptPath}",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            }
-        };
+    var process = new Process { StartInfo = psi };
 
-        process.Start();
-        string output = await process.StandardOutput.ReadToEndAsync();
-        string error = await process.StandardError.ReadToEndAsync();
-        process.WaitForExit();
+    process.Start();
+    string output = await process.StandardOutput.ReadToEndAsync();
+    string error = await process.StandardError.ReadToEndAsync();
+    process.WaitForExit();
 
-        Console.WriteLine(output);
-        if (!string.IsNullOrWhiteSpace(error))
-            Console.Error.WriteLine(error);
+    Console.WriteLine(output);
+    if (!string.IsNullOrWhiteSpace(error))
+      Console.Error.WriteLine(error);
 
-        return process.ExitCode;
-    }
+    return process.ExitCode;
+  }
 }
