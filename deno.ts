@@ -9,4 +9,4 @@ const result = await esbuild.build({
 
 console.log("Build done:", result);
 
-esbuild.stop(); // Wichtig: esbuild Prozess sauber beenden
+esbuild.stop();
