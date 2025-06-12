@@ -11,3 +11,9 @@ dotnet build -c Release
 ```shell
 dotnet pack -c Release
 ```
+
+## Publish
+
+```shell
+dotnet nuget push bin/Release/DenoWrapper.0.0.1-alpha.1.nupkg --api-key <your-api-key> --source https://api.nuget.org/v3/index.json
+```
