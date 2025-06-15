@@ -1,0 +1,6 @@
+@dotnet_deno_example_HostAddress = http://localhost:5030
+
+GET {{dotnet_deno_example_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
