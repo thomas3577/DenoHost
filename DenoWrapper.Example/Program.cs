@@ -1,5 +1,3 @@
-using deno;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
@@ -17,7 +15,7 @@ app.UseHttpsRedirection();
 app.MapGet("/build", () =>
 {
     // TODO(thu): Build the Deno project
-    DenoWrapper.Execute();
+    Deno.Execute();
     return;
 })
 .WithName("Build");
