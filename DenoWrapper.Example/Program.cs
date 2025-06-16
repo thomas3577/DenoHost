@@ -1,3 +1,5 @@
+using DenoWrapper;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();

@@ -5,9 +5,7 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DenoWrapper", "DenoWrapper/DenoWrapper.csproj", "{43CAEAE3-09A4-1F14-7885-241A46140C73}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DenoWrapper.Example", "DenoWrapper.Example", "{76A3AC86-E41C-CE17-8F80-2E9F5DCB349B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnet-deno-example", "DenoWrapper.Example\dotnet-deno-example.csproj", "{828016B3-0C86-4502-9DEE-D719A0ECF165}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DenoWrapper.Example", "DenoWrapper.Example\DenoWrapper.Example.csproj", "{828016B3-0C86-4502-9DEE-D719A0ECF165}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,9 +44,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{828016B3-0C86-4502-9DEE-D719A0ECF165} = {76A3AC86-E41C-CE17-8F80-2E9F5DCB349B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0F726FDB-1042-4B2A-BE62-6CBAA380AE1E}
