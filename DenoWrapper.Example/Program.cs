@@ -13,12 +13,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
-app.MapGet("/build", () =>
+app.MapGet("/build", static async (HttpContext context) =>
 {
-    // TODO(thu): Build the Deno project
-    Deno.Execute();
-    return;
+    string command = "deno run --allow-read --allow-write --allow-net --allow-env --allow-run ./build.ts";
+
+    await Deno.Execute(command);
 })
 .WithName("Build");
 

@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="deno.EXE">
+    <Content Include="deno.exe">
       <Pack>true</Pack>
       <PackagePath>contentFiles/</PackagePath>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
