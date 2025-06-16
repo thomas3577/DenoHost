@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace deno;
+namespace DenoWrapper;
 
-public static class DenoWrapper
+public static class Deno
 {
   private const string DenoExecutableName = "deno.EXE";
 
@@ -20,6 +20,7 @@ public static class DenoWrapper
   public static async Task<T?> Execute<T>(string command, bool expectResult = true, params string[] args)
   {
     var result = await InternalExecute(command, typeof(T), expectResult, args);
+
     return result != null ? (T?)result : default;
   }
 
@@ -57,6 +58,7 @@ public static class DenoWrapper
   private static string BuildArguments(string command, string[] args)
   {
     var quotedArgs = args.Select(arg => $"\"{arg}\"");
+
     return $"{command} {string.Join(" ", quotedArgs)}";
   }
 
