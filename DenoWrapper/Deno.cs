@@ -16,6 +16,15 @@ public static class Deno
     await InternalExecute(command, null, false, args);
   }
 
+  public static async Task Execute(string command, string configOrPath, params string[] args)
+  {
+    string configPath = EnsureConfigFile(configOrPath);
+    var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
+    await InternalExecute(command, null, false, allArgs);
+
+    DeleteIfTempFile(configPath, configOrPath);
+  }
+
   public static async Task Execute(string command, DenoConfig config, params string[] args)
   {
     var configPath = WriteTempConfig(config);
@@ -29,14 +38,24 @@ public static class Deno
     }
     finally
     {
-      if (File.Exists(configPath))
-        File.Delete(configPath);
+      DeleteTempFile(configPath);
     }
   }
 
   public static async Task<T?> Execute<T>(string command, bool expectResult = true, params string[] args)
   {
     var result = await InternalExecute(command, typeof(T), expectResult, args);
+
+    return result != null ? (T?)result : default;
+  }
+
+  public static async Task<T?> Execute<T>(string command, string configOrPath, bool expectResult = true, params string[] args)
+  {
+    string configPath = EnsureConfigFile(configOrPath);
+    var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
+    var result = await InternalExecute(command, typeof(T), expectResult, allArgs);
+
+    DeleteIfTempFile(configPath, configOrPath);
 
     return result != null ? (T?)result : default;
   }
@@ -54,8 +73,7 @@ public static class Deno
     }
     finally
     {
-      if (File.Exists(configPath))
-        File.Delete(configPath);
+      DeleteTempFile(configPath);
     }
   }
 
@@ -113,5 +131,46 @@ public static class Deno
     File.WriteAllText(tempPath, config.ToJson());
 
     return tempPath;
+  }
+
+  private static bool IsJsonLike(string input)
+  {
+    input = input.Trim();
+
+    return (input.StartsWith('{') && input.EndsWith('}')) ||
+           (input.StartsWith('[') && input.EndsWith(']'));
+  }
+
+  private static string EnsureConfigFile(string configOrPath)
+  {
+    if (IsJsonLike(configOrPath))
+    {
+      string tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
+      File.WriteAllText(tempPath, configOrPath);
+      return tempPath;
+    }
+
+    if (!File.Exists(configOrPath))
+      throw new FileNotFoundException("The specified configuration path does not exist.", configOrPath);
+
+    return configOrPath;
+  }
+
+  private static void DeleteIfTempFile(string resolvedPath, string original)
+  {
+    if (IsJsonLike(original))
+    {
+      DeleteTempFile(resolvedPath);
+    }
+  }
+
+  private static void DeleteTempFile(string resolvedPath)
+  {
+    try
+    {
+      if (File.Exists(resolvedPath))
+        File.Delete(resolvedPath);
+    }
+    catch { /* ignore */ }
   }
 }
