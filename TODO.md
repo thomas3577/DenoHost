@@ -1,8 +1,6 @@
 # The Plan
 
-Possibility to run Deno in dotnet.
-
-Don't forget crossplattform!
+Possibilities to run Deno in dotnet.
 
 ## API
 
@@ -15,7 +13,7 @@ string command = "<your command>";
 await Deno.Execute(command);
 
 // Var 2
-string config = "{}"; // JSON
+string config = "{}"; // JSON => deno.json
 
 // public Task<object?> Execute(string command, string config)
 await Deno.Execute(command, config);
@@ -27,7 +25,7 @@ string configFile = "<path-to-file>";
 await Deno.Execute(command, config);
 
 // Var 4
-IDenoConfig config = {};
+IDenoConfig config = {}; // Is there a schema or a TS Interface for the deno.json
 
 // public Task<object?> Execute(string command, IDenoConfig config)
 await Deno.Execute(command, config);
