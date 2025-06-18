@@ -21,7 +21,7 @@ dotnet nuget push bin/Release/DenoWrapper.0.0.1-alpha.1.nupkg --api-key <your-ap
 ## Private source
 
 ```shell
-dotnet nuget add source "C:\Data\Private\MyGitHub\dotnet-deno\bin\Release" --name LocalPackages
+dotnet nuget add source "C:\Data\Private\MyGitHub\DenoWrapper\bin\Release" --name LocalPackages
 ```
 
 ## Install

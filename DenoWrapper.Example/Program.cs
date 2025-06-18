@@ -8,16 +8,17 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+  app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
 
-app.MapGet("/build", static async (HttpContext context) =>
+app.MapGet("/", static async (HttpContext context) =>
 {
-    string command = "deno run --allow-read --allow-write --allow-net --allow-env --allow-run ./build.ts";
+  string command = "run";
+  string[] args = { "--allow-read", "--allow-write", "--allow-net", "--allow-env", "--allow-run", "--config=./build/deno.json", "./build/run.ts" };
 
-    await Deno.Execute(command);
+  await Deno.Execute(command, "A", args);
 })
 .WithName("Build");
 
