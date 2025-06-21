@@ -7,16 +7,6 @@ using System.Threading.Tasks;
 
 namespace DenoWrapper;
 
-public class DenoExecuteOptions
-{
-  public string? WorkingDirectory { get; set; }
-  public string Command { get; set; } = string.Empty;
-  public bool ExpectResult { get; set; } = true;
-  public string? configOrPath { get; set; }
-  public DenoConfig? config { get; set; }
-  public string[] Args { get; set; } = Array.Empty<string>();
-}
-
 public static class Deno
 {
   private const string DenoExecutableName = "deno.exe";
@@ -29,8 +19,8 @@ public static class Deno
     var workingDirectory = options.WorkingDirectory ?? Directory.GetCurrentDirectory();
     var command = options.Command;
     var expectResult = options.ExpectResult;
-    var configOrPath = options.configOrPath;
-    var config = options.config;
+    var configOrPath = options.ConfigOrPath;
+    var config = options.Config;
     var args = options.Args;
 
     if (config != null && !string.IsNullOrWhiteSpace(configOrPath))
@@ -52,8 +42,8 @@ public static class Deno
     var workingDirectory = options.WorkingDirectory ?? Directory.GetCurrentDirectory();
     var command = options.Command;
     var expectResult = options.ExpectResult;
-    var configOrPath = options.configOrPath;
-    var config = options.config;
+    var configOrPath = options.ConfigOrPath;
+    var config = options.Config;
     var args = options.Args;
 
     if (config != null && !string.IsNullOrWhiteSpace(configOrPath))
