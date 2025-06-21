@@ -2,12 +2,15 @@ using System;
 
 namespace DenoWrapper;
 
-public class DenoExecuteOptions
+public class DenoExecuteBaseOptions
 {
   public string? WorkingDirectory { get; set; }
+}
+
+public class DenoExecuteOptions : DenoExecuteBaseOptions
+{
   public string Command { get; set; } = string.Empty;
-  public bool ExpectResult { get; set; } = true;
   public string? ConfigOrPath { get; set; }
   public DenoConfig? Config { get; set; }
-  public string[] Args { get; set; } = Array.Empty<string>();
+  public string[] Args { get; set; } = [];
 }

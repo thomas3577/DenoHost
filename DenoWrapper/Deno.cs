@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace DenoWrapper;
 
@@ -11,14 +12,12 @@ public static class Deno
 {
   private const string DenoExecutableName = "deno.exe";
 
-  public static async Task Execute(DenoExecuteOptions options)
+  public static async Task<T> Execute<T>(DenoExecuteOptions options)
   {
     if (options == null)
       throw new ArgumentNullException(nameof(options));
 
-    var workingDirectory = options.WorkingDirectory ?? Directory.GetCurrentDirectory();
     var command = options.Command;
-    var expectResult = options.ExpectResult;
     var configOrPath = options.ConfigOrPath;
     var config = options.Config;
     var args = options.Args;
@@ -27,60 +26,64 @@ public static class Deno
       throw new ArgumentException("Either 'config' or 'configOrPath' should be provided, not both.");
 
     if (config != null)
-      await Execute(workingDirectory, command, config, args);
+      return await Execute<T>(command, config, args);
     else if (!string.IsNullOrWhiteSpace(configOrPath))
-      await Execute(workingDirectory, command, configOrPath, args);
+      return await Execute<T>(command, configOrPath, args);
     else
-      await Execute(workingDirectory, command, args);
+      return await Execute<T>(command, args);
   }
 
-  public static async Task<T?> Execute<T>(DenoExecuteOptions options)
+  public static async Task<T> Execute<T>(string command)
   {
-    if (options == null)
-      throw new ArgumentNullException(nameof(options));
-
-    var workingDirectory = options.WorkingDirectory ?? Directory.GetCurrentDirectory();
-    var command = options.Command;
-    var expectResult = options.ExpectResult;
-    var configOrPath = options.ConfigOrPath;
-    var config = options.Config;
-    var args = options.Args;
-
-    if (config != null && !string.IsNullOrWhiteSpace(configOrPath))
-      throw new ArgumentException("Either 'config' or 'configOrPath' should be provided, not both.");
-
-    if (config != null)
-      return await Execute<T?>(workingDirectory, command, config, true, args);
-    else if (!string.IsNullOrWhiteSpace(configOrPath))
-      return await Execute<T>(workingDirectory, command, configOrPath, true, args);
-    else
-      return await Execute<T>(workingDirectory, command, true, args);
+    return await InternalExecute<T>(null, command, typeof(T));
   }
 
-  public static async Task Execute(string workingDirectory, string command, params string[] args)
+  public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions)
   {
-    await InternalExecute(workingDirectory, command, null, false, args);
+    return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T));
   }
 
-  public static async Task Execute(string workingDirectory, string command, string configOrPath, params string[] args)
+  public static async Task<T> Execute<T>(string command, params string[] args)
   {
-    // TODO(thu): Exception if --config lready exists in args
+    return await InternalExecute<T>(null, command, typeof(T), args);
+  }
+
+  public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions, params string[] args)
+  {
+    return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T), args);
+  }
+
+  public static async Task<T> Execute<T>(params string[] args)
+  {
+    return await InternalExecute<T>(null, null, typeof(T), args);
+  }
+
+  public static async Task<T> Execute<T>(DenoExecuteBaseOptions baseOptions, params string[] args)
+  {
+    return await InternalExecute<T>(baseOptions.WorkingDirectory, null, typeof(T), args);
+  }
+
+  public static async Task<T> Execute<T>(string command, string configOrPath, params string[] args)
+  {
     var configPath = EnsureConfigFile(configOrPath);
     var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
-    await InternalExecute(workingDirectory, command, null, false, allArgs);
+    var result = await InternalExecute<T>(null, command, typeof(T), allArgs);
 
     DeleteIfTempFile(configPath, configOrPath);
+
+    return result;
   }
 
-  public static async Task Execute(string workingDirectory, string command, DenoConfig config, params string[] args)
+  public static async Task<T> Execute<T>(string command, DenoConfig config, params string[] args)
   {
-    // TODO(thu): Exception if --config lready exists in args
     var configPath = WriteTempConfig(config);
     var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
 
     try
     {
-      await InternalExecute(workingDirectory, command, null, false, allArgs);
+      var result = await InternalExecute<T>(null, command, typeof(T), allArgs);
+
+      return result;
     }
     finally
     {
@@ -88,45 +91,12 @@ public static class Deno
     }
   }
 
-  public static async Task<T?> Execute<T>(string workingDirectory, string command, bool expectResult = true, params string[] args)
+  private static async Task<T> InternalExecute<T>(string? workingDirectory, string? command, Type? resultType, params string[] args)
   {
-    var result = await InternalExecute(workingDirectory, command, typeof(T), expectResult, args);
+    workingDirectory ??= Directory.GetCurrentDirectory();
 
-    return result != null ? (T?)result : default;
-  }
-
-  public static async Task<T?> Execute<T>(string workingDirectory, string command, string configOrPath, bool expectResult = true, params string[] args)
-  {
-    var configPath = EnsureConfigFile(configOrPath);
-    var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
-    var result = await InternalExecute(workingDirectory, command, typeof(T), expectResult, allArgs);
-
-    DeleteIfTempFile(configPath, configOrPath);
-
-    return result != null ? (T?)result : default;
-  }
-
-  public static async Task<T?> Execute<T>(string workingDirectory, string command, DenoConfig config, bool expectResult = true, params string[] args)
-  {
-    var configPath = WriteTempConfig(config);
-    var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
-
-    try
-    {
-      var result = await InternalExecute(workingDirectory, command, typeof(T), expectResult, allArgs);
-
-      return result != null ? (T?)result : default;
-    }
-    finally
-    {
-      DeleteTempFile(configPath);
-    }
-  }
-
-  private static async Task<object?> InternalExecute(string workingDirectory, string command, Type? resultType, bool expectResult, params string[] args)
-  {
     var fileName = GetDenoPath();
-    var arguments = BuildArguments(command, args);
+    var arguments = BuildArguments(args, command);
 
     var process = new Process
     {
@@ -151,15 +121,25 @@ public static class Deno
     if (!string.IsNullOrWhiteSpace(error))
       throw new Exception($"Deno Error: {error}");
 
-    if (!expectResult || resultType == null || string.IsNullOrWhiteSpace(output))
-      return null;
+    if (resultType == null)
+      throw new ArgumentNullException(nameof(resultType), "Result type cannot be null.");
 
-    return JsonSerializer.Deserialize(output, resultType);
+    var deserializedResult = JsonSerializer.Deserialize(output, resultType);
+
+    return deserializedResult != null
+      ? (T)deserializedResult
+      : throw new InvalidOperationException("Deserialization returned null.");
   }
 
-  private static string BuildArguments(string command, string[] args)
+  private static string BuildArguments(string[] args, string? command = null)
   {
-    return $"{command} {string.Join(" ", args)}";
+    var argsStr = string.Join(" ", args);
+    if (command == null)
+    {
+      return argsStr;
+    }
+
+    return $"{command} {argsStr}";
   }
 
   private static string GetDenoPath()
