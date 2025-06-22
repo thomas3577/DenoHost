@@ -57,6 +57,10 @@ public static class Deno
   /// Executes a Deno command.
   /// </summary>
   /// <param name="command">The Deno command.</param>
+  /// <code>
+  /// var command = "run --allow-read script.ts";
+  /// await Deno.Execute(command);
+  /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command)
   {
@@ -68,6 +72,10 @@ public static class Deno
   /// </summary>
   /// <typeparam name="T">The expected return type of the Deno process.</typeparam>
   /// <param name="command">The Deno command.</param>
+  /// <code>
+  /// var command = "run --allow-read script.ts";
+  /// var result = await Deno.Execute<MyResult>(command);
+  /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command)
   {
@@ -79,6 +87,11 @@ public static class Deno
   /// </summary>
   /// <param name="command">The Deno command.</param>
   /// <param name="baseOptions">Base options such as working directory.</param>
+  /// <code>
+  /// var command = "run --allow-read script.ts";
+  /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
+  /// await Deno.Execute(command, options); 
+  /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions)
   {
@@ -91,6 +104,11 @@ public static class Deno
   /// <typeparam name="T">The expected return type of the Deno process.</typeparam>
   /// <param name="command">The Deno command.</param>
   /// <param name="baseOptions">Base options such as working directory.</param>
+  /// <code>
+  /// var command = "run --allow-read script.ts";
+  /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
+  /// var result = await Deno.Execute<MyResult>(command, options); 
+  /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions)
   {
@@ -102,8 +120,13 @@ public static class Deno
   /// </summary>
   /// <param name="command">The Deno command.</param>
   /// <param name="args">Additional arguments for Deno.</param>
+  /// <code>
+  /// var command = "run";
+  /// var args = new[] { "--allow-read", "script.ts" };
+  /// await Deno.Execute(command, args); 
+  /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command, params string[] args)
+  public static async Task Execute(string command, string[] args)
   {
     await Execute<object>(command, args);
   }
@@ -114,8 +137,13 @@ public static class Deno
   /// <typeparam name="T">The expected return type of the Deno process.</typeparam>
   /// <param name="command">The Deno command.</param>
   /// <param name="args">Additional arguments for Deno.</param>
+  /// <code>
+  /// var command = "run";
+  /// var args = new[] { "--allow-read", "script.ts" };
+  /// var result = await Deno.Execute<MyResult>(command, args); 
+  /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(string command, params string[] args)
+  public static async Task<T> Execute<T>(string command, string[] args)
   {
     return await InternalExecute<T>(null, command, typeof(T), args);
   }
@@ -126,8 +154,14 @@ public static class Deno
   /// <param name="command">The Deno command.</param>
   /// <param name="baseOptions">Base options such as working directory.</param>
   /// <param name="args">Additional arguments for Deno.</param>
+  /// <code>
+  /// var command = "run";
+  /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
+  /// var args = new[] { "--allow-read", "script.ts" };
+  /// await Deno.Execute(command, options, args); 
+  /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions, params string[] args)
+  public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions, string[] args)
   {
     await Execute<object>(command, baseOptions, args);
   }
@@ -139,8 +173,14 @@ public static class Deno
   /// <param name="command">The Deno command.</param>
   /// <param name="baseOptions">Base options such as working directory.</param>
   /// <param name="args">Additional arguments for Deno.</param>
+  /// <code>
+  /// var command = "run";
+  /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
+  /// var args = new[] { "--allow-read", "script.ts" };
+  /// var result = await Deno.Execute(command, options, args);  
+  /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions, params string[] args)
+  public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions, string[] args)
   {
     return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T), args);
   }
@@ -149,8 +189,12 @@ public static class Deno
   /// Executes Deno with the specified arguments.
   /// </summary>
   /// <param name="args">Arguments for Deno.</param>
+  /// <code>
+  /// var args = new ["run", "--allow-read", "script.ts"];
+  /// await Deno.Execute(args); 
+  /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(params string[] args)
+  public static async Task Execute(string[] args)
   {
     await Execute<object>(args);
   }
@@ -160,8 +204,12 @@ public static class Deno
   /// </summary>
   /// <typeparam name="T">The expected return type of the Deno process.</typeparam>
   /// <param name="args">Arguments for Deno.</param>
+  /// <code>
+  /// var args = new ["run", "--allow-read", "script.ts"];
+  /// var result = await Deno.Execute<MyResult>(args); 
+  /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(params string[] args)
+  public static async Task<T> Execute<T>(string[] args)
   {
     return await InternalExecute<T>(null, null, typeof(T), args);
   }
@@ -171,8 +219,13 @@ public static class Deno
   /// </summary>
   /// <param name="baseOptions">Base options such as working directory.</param>
   /// <param name="args">Arguments for Deno.</param>
+  /// <code>
+  /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
+  /// var args = new ["run", "--allow-read", "script.ts"];
+  /// await Deno.Execute(options, args); 
+  /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(DenoExecuteBaseOptions baseOptions, params string[] args)
+  public static async Task Execute(DenoExecuteBaseOptions baseOptions, string[] args)
   {
     await Execute<object>(baseOptions, args);
   }
@@ -183,8 +236,13 @@ public static class Deno
   /// <typeparam name="T">The expected return type of the Deno process.</typeparam>
   /// <param name="baseOptions">Base options such as working directory.</param>
   /// <param name="args">Arguments for Deno.</param>
+  /// <code>
+  /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
+  /// var args = new ["run", "--allow-read", "script.ts"];
+  /// var result = await Deno.Execute<MyResult>(options, args); 
+  /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(DenoExecuteBaseOptions baseOptions, params string[] args)
+  public static async Task<T> Execute<T>(DenoExecuteBaseOptions baseOptions, string[] args)
   {
     return await InternalExecute<T>(baseOptions.WorkingDirectory, null, typeof(T), args);
   }
@@ -195,8 +253,21 @@ public static class Deno
   /// <param name="command">The Deno command.</param>
   /// <param name="configOrPath">Configuration as JSON or path to a configuration file.</param>
   /// <param name="args">Additional arguments for Deno.</param>
+  /// <code>
+  /// // Var 1:
+  /// var command = "run";
+  /// var configPath = "./deno.json";
+  /// var args = new[] { "--allow-read", "script.ts" };
+  /// await Deno.Execute(command, configPath, args);
+  /// 
+  /// // Var 2:
+  /// var command = "run";
+  /// var configPath = "{ \"imports\": { \"@std/fs\": \"jsr:@std/fs@^1.0.18\" } }"; // JSON string
+  /// var args = new[] { "--allow-read", "script.ts" };
+  /// await Deno.Execute(command, configPath, args);
+  /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command, string configOrPath, params string[] args)
+  public static async Task Execute(string command, string configOrPath, string[] args)
   {
     await Execute<object>(command, configOrPath, args);
   }
@@ -208,8 +279,21 @@ public static class Deno
   /// <param name="command">The Deno command.</param>
   /// <param name="configOrPath">Configuration as JSON or path to a configuration file.</param>
   /// <param name="args">Additional arguments for Deno.</param>
+  /// <code>
+  /// // Var 1:
+  /// var command = "run";
+  /// var configPath = "./deno.json";
+  /// var args = new[] { "--allow-read", "script.ts" };
+  /// var result = await Deno.Execute<MyResult>(command, configPath, args);
+  /// 
+  /// // Var 2:
+  /// var command = "run";
+  /// var configPath = "{ \"imports\": { \"@std/fs\": \"jsr:@std/fs@^1.0.18\" } }"; // JSON string
+  /// var args = new[] { "--allow-read", "script.ts" };
+  /// var result = await Deno.Execute<MyResult>(command, configPath, args);
+  /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(string command, string configOrPath, params string[] args)
+  public static async Task<T> Execute<T>(string command, string configOrPath, string[] args)
   {
     var configPath = EnsureConfigFile(configOrPath);
     var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
@@ -227,7 +311,7 @@ public static class Deno
   /// <param name="config">The Deno configuration object.</param>
   /// <param name="args">Additional arguments for Deno.</param>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command, DenoConfig config, params string[] args)
+  public static async Task Execute(string command, DenoConfig config, string[] args)
   {
     await Execute<object>(command, config, args);
   }
@@ -240,7 +324,7 @@ public static class Deno
   /// <param name="config">The Deno configuration object.</param>
   /// <param name="args">Additional arguments for Deno.</param>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(string command, DenoConfig config, params string[] args)
+  public static async Task<T> Execute<T>(string command, DenoConfig config, string[] args)
   {
     var configPath = WriteTempConfig(config);
     var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
@@ -257,7 +341,7 @@ public static class Deno
     }
   }
 
-  private static async Task<T> InternalExecute<T>(string? workingDirectory, string? command, Type? resultType, params string[] args)
+  private static async Task<T> InternalExecute<T>(string? workingDirectory, string? command, Type? resultType, string[] args)
   {
     workingDirectory ??= Directory.GetCurrentDirectory();
 
