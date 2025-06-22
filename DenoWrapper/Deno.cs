@@ -79,7 +79,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command)
   {
-    return await InternalExecute<T>(null, command, typeof(T));
+    return await InternalExecute<T>(null, command, typeof(T), null);
   }
 
   /// <summary>
@@ -112,7 +112,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions)
   {
-    return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T));
+    return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T), null);
   }
 
   /// <summary>
@@ -341,7 +341,7 @@ public static class Deno
     }
   }
 
-  private static async Task<T> InternalExecute<T>(string? workingDirectory, string? command, Type? resultType, string[] args)
+  private static async Task<T> InternalExecute<T>(string? workingDirectory, string? command, Type? resultType, string[]? args)
   {
     workingDirectory ??= Directory.GetCurrentDirectory();
 
@@ -381,9 +381,9 @@ public static class Deno
         : throw new InvalidOperationException("Deserialization returned null.");
   }
 
-  private static string BuildArguments(string[] args, string? command = null)
+  private static string BuildArguments(string[]? args, string? command = null)
   {
-    var argsStr = string.Join(" ", args);
+    var argsStr = string.Join(" ", args ?? []);
     if (command == null)
     {
       return argsStr;
