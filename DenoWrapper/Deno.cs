@@ -352,6 +352,7 @@ public static class Deno
     {
       StartInfo = new ProcessStartInfo
       {
+        WorkingDirectory = workingDirectory,
         FileName = fileName,
         Arguments = arguments,
         RedirectStandardOutput = true,
@@ -366,10 +367,14 @@ public static class Deno
     string output = await process.StandardOutput.ReadToEndAsync();
     string error = await process.StandardError.ReadToEndAsync();
 
-    process.WaitForExit();
+    await process.WaitForExitAsync();
 
-    if (!string.IsNullOrWhiteSpace(error))
-      throw new Exception($"Deno Error: {error}");
+    if (process.ExitCode != 0)
+      throw new Exception(
+        $"Deno exited with code {process.ExitCode}.{Environment.NewLine}" +
+        $"Standard Output:{Environment.NewLine}{output}{Environment.NewLine}" +
+        $"Standard Error:{Environment.NewLine}{error}"
+      );
 
     if (resultType == null)
       throw new ArgumentNullException(nameof(resultType), "Result type cannot be null.");
@@ -377,8 +382,8 @@ public static class Deno
     var deserializedResult = JsonSerializer.Deserialize(output, resultType);
 
     return deserializedResult != null
-        ? (T)deserializedResult
-        : throw new InvalidOperationException("Deserialization returned null.");
+      ? (T)deserializedResult
+      : throw new InvalidOperationException("Deserialization returned null.");
   }
 
   private static string BuildArguments(string[]? args, string? command = null)
