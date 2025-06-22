@@ -12,6 +12,11 @@ public static class Deno
 {
   private const string DenoExecutableName = "deno.exe";
 
+  public static async Task Execute(DenoExecuteOptions options)
+  {
+    await Execute<object>(options);
+  }
+
   public static async Task<T> Execute<T>(DenoExecuteOptions options)
   {
     if (options == null)
@@ -29,8 +34,13 @@ public static class Deno
       return await Execute<T>(command, config, args);
     else if (!string.IsNullOrWhiteSpace(configOrPath))
       return await Execute<T>(command, configOrPath, args);
-    else
-      return await Execute<T>(command, args);
+
+    return await Execute<T>(command, args);
+  }
+
+  public static async Task Execute(string command)
+  {
+    await Execute<object>(command);
   }
 
   public static async Task<T> Execute<T>(string command)
@@ -38,9 +48,19 @@ public static class Deno
     return await InternalExecute<T>(null, command, typeof(T));
   }
 
+  public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions)
+  {
+    await Execute<object>(command, baseOptions);
+  }
+
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions)
   {
     return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T));
+  }
+
+  public static async Task Execute(string command, params string[] args)
+  {
+    await Execute<object>(command, args);
   }
 
   public static async Task<T> Execute<T>(string command, params string[] args)
@@ -48,9 +68,19 @@ public static class Deno
     return await InternalExecute<T>(null, command, typeof(T), args);
   }
 
+  public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions, params string[] args)
+  {
+    await Execute<object>(command, baseOptions, args);
+  }
+
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions, params string[] args)
   {
     return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T), args);
+  }
+
+  public static async Task Execute(params string[] args)
+  {
+    await Execute<object>(args);
   }
 
   public static async Task<T> Execute<T>(params string[] args)
@@ -58,9 +88,19 @@ public static class Deno
     return await InternalExecute<T>(null, null, typeof(T), args);
   }
 
+  public static async Task Execute(DenoExecuteBaseOptions baseOptions, params string[] args)
+  {
+    await Execute<object>(baseOptions, args);
+  }
+
   public static async Task<T> Execute<T>(DenoExecuteBaseOptions baseOptions, params string[] args)
   {
     return await InternalExecute<T>(baseOptions.WorkingDirectory, null, typeof(T), args);
+  }
+
+  public static async Task Execute(string command, string configOrPath, params string[] args)
+  {
+    await Execute<object>(command, configOrPath, args);
   }
 
   public static async Task<T> Execute<T>(string command, string configOrPath, params string[] args)
@@ -72,6 +112,11 @@ public static class Deno
     DeleteIfTempFile(configPath, configOrPath);
 
     return result;
+  }
+
+  public static async Task Execute(string command, DenoConfig config, params string[] args)
+  {
+    await Execute<object>(command, config, args);
   }
 
   public static async Task<T> Execute<T>(string command, DenoConfig config, params string[] args)
