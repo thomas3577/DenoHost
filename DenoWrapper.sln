@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DenoWrapper", "DenoWrapper\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DenoWrapper.Example", "DenoWrapper.Example\DenoWrapper.Example.csproj", "{ADD2E22A-3C27-90EB-D662-07EC89ECAAF7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DenoWrapper.Tests", "DenoWrapper.Tests\DenoWrapper.Tests.csproj", "{32845160-9467-1836-F36F-760A3B7F86B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{ADD2E22A-3C27-90EB-D662-07EC89ECAAF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADD2E22A-3C27-90EB-D662-07EC89ECAAF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADD2E22A-3C27-90EB-D662-07EC89ECAAF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32845160-9467-1836-F36F-760A3B7F86B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32845160-9467-1836-F36F-760A3B7F86B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32845160-9467-1836-F36F-760A3B7F86B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32845160-9467-1836-F36F-760A3B7F86B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
