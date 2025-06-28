@@ -2,6 +2,7 @@ name: Build and Publish NuGet Package
 
 on:
   push:
+    branches: [main]
     tags: ['v*'] # e.g. v1.45.0
   workflow_dispatch:
 
@@ -32,8 +33,10 @@ jobs:
         run: |
           VERSION=${{ steps.extract_version.outputs.version }}
           mkdir -p runtimes/win-x64/native
-          curl -L -o deno-win.zip "https://github.com/denoland/deno/releases/download/v$VERSION/deno-x86_64-pc-windows-msvc.zip"
+          curl --fail --retry 3 -L -o deno-win.zip "https://github.com/denoland/deno/releases/download/v$VERSION/deno-x86_64-pc-windows-msvc.zip"
           unzip -q deno-win.zip -d runtimes/win-x64/native
+          find runtimes/win-x64/native -maxdepth 1 -type f -name "deno*" -exec mv {} runtimes/win-x64/native/deno.exe \;
+          chmod +x runtimes/win-x64/native/deno.exe
           rm deno-win.zip
 
       - name: Download Deno for Linux
@@ -41,8 +44,9 @@ jobs:
         run: |
           VERSION=${{ steps.extract_version.outputs.version }}
           mkdir -p runtimes/linux-x64/native
-          curl -L -o deno-linux.zip "https://github.com/denoland/deno/releases/download/v$VERSION/deno-x86_64-unknown-linux-gnu.zip"
+          curl --fail --retry 3 -L -o deno-linux.zip "https://github.com/denoland/deno/releases/download/v$VERSION/deno-x86_64-unknown-linux-gnu.zip"
           unzip -q deno-linux.zip -d runtimes/linux-x64/native
+          find runtimes/linux-x64/native -maxdepth 1 -type f -name "deno*" -exec mv {} runtimes/linux-x64/native/deno \;
           chmod +x runtimes/linux-x64/native/deno
           rm deno-linux.zip
           
@@ -51,46 +55,34 @@ jobs:
         run: |
           VERSION=${{ steps.extract_version.outputs.version }}
           mkdir -p runtimes/osx-x64/native
-          curl -L -o deno-macos-x64.zip "https://github.com/denoland/deno/releases/download/v$VERSION/deno-x86_64-apple-darwin.zip"
+          curl --fail --retry 3 -L -o deno-macos-x64.zip "https://github.com/denoland/deno/releases/download/v$VERSION/deno-x86_64-apple-darwin.zip"
           unzip -q deno-macos-x64.zip -d runtimes/osx-x64/native
+          find runtimes/osx-x64/native -maxdepth 1 -type f -name "deno*" -exec mv {} runtimes/osx-x64/native/deno \;
           chmod +x runtimes/osx-x64/native/deno
           rm deno-macos-x64.zip
 
-      - name: Download Deno for macOS (ARM64)
+      - name: Download Deno for macOS (osx-arm64)
         shell: bash
         run: |
           VERSION=${{ steps.extract_version.outputs.version }}
           mkdir -p runtimes/osx-arm64/native
-          curl -L -o deno-macos-arm64.zip "https://github.com/denoland/deno/releases/download/v$VERSION/deno-aarch64-apple-darwin.zip"
+          curl --fail --retry 3 -L -o deno-macos-arm64.zip "https://github.com/denoland/deno/releases/download/v$VERSION/deno-aarch64-apple-darwin.zip"
           unzip -q deno-macos-arm64.zip -d runtimes/osx-arm64/native
+          find runtimes/osx-arm64/native -maxdepth 1 -type f -name "deno*" -exec mv {} runtimes/osx-arm64/native/deno \;
           chmod +x runtimes/osx-arm64/native/deno
           rm deno-macos-arm64.zip
 
-      - name: Inject version into csproj
-        run: |
-          $version = "${{ steps.extract_version.outputs.version }}"
-          $csproj = "DenoWrapper/DenoWrapper.csproj"
-          [xml]$xml = Get-Content $csproj
-          $propertyGroup = $xml.Project.PropertyGroup[0]
-          if ($propertyGroup.Version) {
-            $propertyGroup.Version = $version
-          } else {
-            $versionElement = $xml.CreateElement("Version")
-            $versionElement.InnerText = $version
-            $propertyGroup.AppendChild($versionElement) | Out-Null
-          }
-          $xml.Save($csproj)
-
-      - name: Restore dependencies
-        run: dotnet restore DenoWrapper/DenoWrapper.csproj
-
-      - name: Build
-        run: dotnet build DenoWrapper/DenoWrapper.csproj -c Release --no-restore
+      - name: Run tests
+        run: dotnet test DenoWrapper.Tests/DenoWrapper.Tests.csproj --configuration Release --no-restore --verbosity normal
 
       - name: Pack with version
-        run: dotnet pack DenoWrapper/DenoWrapper.csproj -c Release --no-build -o ./nupkg
+        run: dotnet pack DenoWrapper/DenoWrapper.csproj -c Release -p:Version=${{ steps.extract_version.outputs.version }} --include-symbols --include-source -o ./nupkg
+
+      - name: Show generated packages
+        run: ls -lh ./nupkg
 
       - name: Publish to NuGet
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: dotnet nuget push ./nupkg/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json
