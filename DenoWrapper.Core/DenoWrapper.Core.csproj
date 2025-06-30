@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageId>DenoWrapper</PackageId>
+    <PackageId>DenoWrapper.Core</PackageId>
     <Version>2.3.7-alpha.3</Version>
     <Authors>Thomas Huber</Authors>
     <Description>Deno as a NuGet Package</Description>

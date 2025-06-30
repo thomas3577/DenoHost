@@ -1,3 +1,4 @@
+using DenoWrapper.Core;
 using System.Reflection;
 
 namespace DenoWrapper.Tests;

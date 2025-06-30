@@ -1,4 +1,4 @@
-using DenoWrapper;
+using DenoWrapper.Core;
 
 const string SCRIPTS_PATH = "scripts";
 
@@ -11,7 +11,7 @@ var app = builder.Build();
 app.MapOpenApi();
 app.UseHttpsRedirection();
 
-app.MapGet("/var/a", static async (HttpContext context) =>
+app.MapGet("/var/a", static async context =>
 {
   string cwd = Path.Combine(Directory.GetCurrentDirectory(), SCRIPTS_PATH);
   string command = "run";
@@ -24,7 +24,7 @@ app.MapGet("/var/a", static async (HttpContext context) =>
 app.Run();
 
 
-app.MapGet("/var/b", static async (HttpContext context) =>
+app.MapGet("/var/b", static async context =>
 {
   string cwd = Path.Combine(Directory.GetCurrentDirectory(), SCRIPTS_PATH);
 

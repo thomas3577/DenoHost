@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace DenoWrapper;
+namespace DenoWrapper.Core;
 
 /// <summary>
 /// Provides methods to execute Deno commands.
@@ -419,8 +419,8 @@ public static class Deno
   {
     input = input.Trim();
 
-    return (input.StartsWith('{') && input.EndsWith('}')) ||
-           (input.StartsWith('[') && input.EndsWith(']'));
+    return input.StartsWith('{') && input.EndsWith('}') ||
+           input.StartsWith('[') && input.EndsWith(']');
   }
 
   private static string EnsureConfigFile(string configOrPath)
