@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -399,12 +400,32 @@ public static class Deno
 
   private static string GetDenoPath()
   {
-    var exePath = Path.Combine(AppContext.BaseDirectory, DenoExecutableName);
-    if (!File.Exists(exePath))
-      throw new FileNotFoundException("Deno executable not found!");
+    var rid = GetRuntimeId(); // Supported: win-x64, linux-x64, osx-arm64, osx-x64
+    var filename = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "deno.exe" : "deno";
+    var path = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", filename);
 
-    return exePath;
+    if (!File.Exists(path))
+      throw new FileNotFoundException("Deno executable not found.", path);
+
+    return path;
   }
+
+  private static string GetRuntimeId()
+  {
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+      return "win-x64";
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+      return "linux-x64";
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+    {
+      return RuntimeInformation.OSArchitecture == Architecture.Arm64
+          ? "osx-arm64"
+          : "osx-x64";
+    }
+
+    throw new PlatformNotSupportedException("Unsupported OS platform.");
+  }
+
 
   private static string WriteTempConfig(DenoConfig config)
   {

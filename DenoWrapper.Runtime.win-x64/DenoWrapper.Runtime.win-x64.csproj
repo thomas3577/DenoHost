@@ -1,24 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>DenoWrapper.Example</RootNamespace>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <PackageId>DenoWrapper.Runtime.win-x64</PackageId>
+    <Description>Deno binary for Windows x64</Description>
+    <PackageType>DotnetPlatform</PackageType>
     <Authors>Thomas Huber</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/thomas3577/DenoWrapper</PackageProjectUrl>
     <RepositoryUrl>https://github.com/thomas3577/DenoWrapper.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageTags>deno, runtime, wrapper, win-x64</PackageTags>
     <Copyright>Copyright © 2025 Thomas Huber</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.6" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\DenoWrapper.Core\DenoWrapper.Core.csproj" />
+    <None Include="deno.exe" Pack="true" PackagePath="runtimes/win-x64/native" />
   </ItemGroup>
 
 </Project>

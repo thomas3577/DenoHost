@@ -28,7 +28,7 @@ jobs:
             echo "NuGet Version: $VERSION"
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Download Deno for Windows
+      - name: Download Deno for Windows (win-x64)
         shell: bash
         run: |
           VERSION=${{ steps.extract_version.outputs.version }}
@@ -39,7 +39,7 @@ jobs:
           chmod +x runtimes/win-x64/native/deno.exe
           rm deno-win.zip
 
-      - name: Download Deno for Linux
+      - name: Download Deno for Linux (linux-x64)
         shell: bash
         run: |
           VERSION=${{ steps.extract_version.outputs.version }}
@@ -50,7 +50,7 @@ jobs:
           chmod +x runtimes/linux-x64/native/deno
           rm deno-linux.zip
           
-      - name: Download Deno for macOS (Intel)
+      - name: Download Deno for macOS (osx-x64)
         shell: bash
         run: |
           VERSION=${{ steps.extract_version.outputs.version }}

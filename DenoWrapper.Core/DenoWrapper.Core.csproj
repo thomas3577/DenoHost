@@ -1,24 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>DenoWrapper.Core</PackageId>
-    <Version>2.3.7-alpha.3</Version>
-    <Authors>Thomas Huber</Authors>
     <Description>Deno as a NuGet Package</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <Authors>Thomas Huber</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/thomas3577/DenoWrapper</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/thomas3577/DenoWrapper.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>deno, runtime, wrapper, win-x64</PackageTags>
+    <Copyright>Copyright © 2025 Thomas Huber</Copyright>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="deno.exe">
-      <Pack>true</Pack>
-      <PackagePath>contentFiles/</PackagePath>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="runtimes\**\*.*" Pack="true" PackagePath="runtimes\" />
-  </ItemGroup>
 </Project>
