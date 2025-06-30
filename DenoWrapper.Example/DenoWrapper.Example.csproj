@@ -5,12 +5,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>DenoWrapper.Example</RootNamespace>
-    <Authors>Thomas Huber</Authors>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/thomas3577/DenoWrapper</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/thomas3577/DenoWrapper.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <Copyright>Copyright © 2025 Thomas Huber</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

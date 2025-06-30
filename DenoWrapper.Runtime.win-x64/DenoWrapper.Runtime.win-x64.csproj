@@ -5,13 +5,6 @@
     <PackageId>DenoWrapper.Runtime.win-x64</PackageId>
     <Description>Deno binary for Windows x64</Description>
     <PackageType>DotnetPlatform</PackageType>
-    <Authors>Thomas Huber</Authors>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/thomas3577/DenoWrapper</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/thomas3577/DenoWrapper.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>deno, runtime, wrapper, win-x64</PackageTags>
-    <Copyright>Copyright © 2025 Thomas Huber</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

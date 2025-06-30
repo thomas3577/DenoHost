@@ -1,0 +1,11 @@
+<Project>
+    <PropertyGroup>
+        <Authors>Thomas Huber</Authors>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/thomas3577/DenoWrapper</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/thomas3577/DenoWrapper.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>deno;runtime;dotnet;wrapper</PackageTags>
+        <Copyright>Copyright © 2025 Thomas Huber</Copyright>
+    </PropertyGroup>
+</Project>

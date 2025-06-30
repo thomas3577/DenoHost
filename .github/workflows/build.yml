@@ -49,7 +49,18 @@ jobs:
           find runtimes/linux-x64/native -maxdepth 1 -type f -name "deno*" -exec mv {} runtimes/linux-x64/native/deno \;
           chmod +x runtimes/linux-x64/native/deno
           rm deno-linux.zip
-          
+         
+      - name: Download Deno for Linux (linux-arm64)
+        shell: bash
+        run: |
+          VERSION=${{ steps.extract_version.outputs.version }}
+          mkdir -p runtimes/linux-arm64/native
+          curl --fail --retry 3 -L -o deno-linux.zip "https://github.com/denoland/deno/releases/download/v$VERSION/deno-aarch64-unknown-linux-gnu.zip"
+          unzip -q deno-linux.zip -d runtimes/linux-arm64/native
+          find runtimes/linux-arm64/native -maxdepth 1 -type f -name "deno*" -exec mv {} runtimes/linux-arm64/native/deno \;
+          chmod +x runtimes/linux-arm64/native/deno
+          rm deno-linux.zip
+
       - name: Download Deno for macOS (osx-x64)
         shell: bash
         run: |
