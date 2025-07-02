@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <PackageId>DenoHost.Runtime.linux-arm64</PackageId>
+    <Description>Deno binary for Linux ARM64</Description>
+    <PackageType>DotnetPlatform</PackageType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="deno" Pack="true" PackagePath="runtimes/linux-arm64/native" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
+    <PropertyGroup>
+      <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools'))</ToolsDir>
+      <DenoExecutable>$(MSBuildThisFileDirectory)deno</DenoExecutable>
+      <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v$(DenoVersion)/deno-aarch64-unknown-linux-gnu.zip</DenoDownloadUrl>
+    </PropertyGroup>
+
+    <Message Text="DenoDownloadUrl resolved to: $(DenoDownloadUrl)" Importance="High" />
+    <Message Text="ToolsDir resolved to: $(ToolsDir)" Importance="High" />
+
+    <Exec Condition="'$(OS)' == 'Windows_NT'" Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ToolsDir)/download-deno.ps1&quot; -ExecutablePath &quot;$(DenoExecutable)&quot; -DownloadUrl &quot;$(DenoDownloadUrl)&quot;" ContinueOnError="true" />
+
+    <Exec Condition="'$(OS)' != 'Windows_NT'" Command="bash &quot;$(ToolsDir)/download-deno.sh&quot; &quot;$(DenoExecutable)&quot; &quot;$(DenoDownloadUrl)&quot;" ContinueOnError="true" />
+  </Target>
+
+  <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build">
+    <PropertyGroup>
+      <RidOutputDir>$(OutputPath)runtimes/linux-arm64/native</RidOutputDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(RidOutputDir)" />
+
+    <Copy Condition="Exists('deno')" SourceFiles="deno" DestinationFiles="$(RidOutputDir)/deno" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

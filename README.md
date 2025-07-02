@@ -1,4 +1,4 @@
-# DenoWrapper
+# DenoHost
 
 ![Build & Publish](https://github.com/<USERNAME>/<REPO>/actions/workflows/build.yml/badge.svg)
 
@@ -9,8 +9,8 @@
 
 ## 💡 About
 
-**DenoWrapper** allows you to seamlessly run [Deno](https://deno.com/) scripts
-or inline JavaScript/TypeScript code within your .NET applications.\
+**DenoHost** allows you to seamlessly run [Deno](https://deno.com/) scripts or
+inline JavaScript/TypeScript code within your .NET applications.\
 It bundles platform-specific Deno executables as separate NuGet packages and
 provides a simple, consistent API for execution.
 
@@ -28,21 +28,21 @@ provides a simple, consistent API for execution.
 
 ## 📦 NuGet Packages
 
-| Package                           | Description                  | Platforms     |
-| --------------------------------- | ---------------------------- | ------------- |
-| `DenoWrapper.Core`                | Core execution logic (API)   | all           |
-| `DenoWrapper.Runtime.win-x64`     | Bundled Deno for Windows     | `win-x64`     |
-| `DenoWrapper.Runtime.linux-x64`   | Deno for Linux               | `linux-x64`   |
-| `DenoWrapper.Runtime.linux-arm64` | Deno for ARM Linux           | `linux-arm64` |
-| `DenoWrapper.Runtime.osx-x64`     | Deno for macOS Intel         | `osx-x64`     |
-| `DenoWrapper.Runtime.osx-arm64`   | Deno for macOS Apple Silicon | `osx-arm64`   |
+| Package                        | Description                  | Platforms     |
+| ------------------------------ | ---------------------------- | ------------- |
+| `DenoHost.Core`                | Core execution logic (API)   | all           |
+| `DenoHost.Runtime.win-x64`     | Bundled Deno for Windows     | `win-x64`     |
+| `DenoHost.Runtime.linux-x64`   | Deno for Linux               | `linux-x64`   |
+| `DenoHost.Runtime.linux-arm64` | Deno for ARM Linux           | `linux-arm64` |
+| `DenoHost.Runtime.osx-x64`     | Deno for macOS Intel         | `osx-x64`     |
+| `DenoHost.Runtime.osx-arm64`   | Deno for macOS Apple Silicon | `osx-arm64`   |
 
 ---
 
 ## 🚀 Usage Example
 
 ```csharp
-using DenoWrapper;
+using DenoHost;
 
 await Deno.Execute("console.log('Hello from Deno');");
 ```
@@ -67,4 +67,4 @@ MIT License © Thomas Huber
 ## 🌐 Links
 
 - [deno.com](https://deno.com/)
-- [NuGet Gallery](https://www.nuget.org/packages?q=denowrapper)
+- [NuGet Gallery](https://www.nuget.org/packages?q=DenoHost)

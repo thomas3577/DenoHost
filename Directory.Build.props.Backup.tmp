@@ -6,16 +6,12 @@
     <PackageProjectUrl>https://github.com/thomas3577/DenoHost</PackageProjectUrl>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl>https://raw.githubusercontent.com/thomas3577/DenoHost/main/icon.png</PackageIconUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>deno;runtime;dotnet;wrapper</PackageTags>
     <RepositoryUrl>https://github.com/thomas3577/DenoHost.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>Copyright © 2025 Thomas Huber</Copyright>
-
-    <!-- Deno Host Configuration -->
+    <!-- Deno Wrapper Configuration -->
     <DenoVersion>2.4.0</DenoVersion>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="icon.png" Pack="true" PackagePath="" />
-  </ItemGroup>
 </Project>

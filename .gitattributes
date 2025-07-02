@@ -1,0 +1,10 @@
+* text=auto
+
+# PowerShell = CRLF
+*.ps1 text eol=crlf
+
+# Shell = LF
+*.sh text eol=lf
+
+# C# = LF preferred
+*.cs text eol=lf
