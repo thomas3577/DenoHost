@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DenoWrapper.Core;
+namespace DenoHost.Core;
 
 public static class JsonOptions
 {

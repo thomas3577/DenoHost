@@ -27,7 +27,7 @@ jobs:
           echo "##[notice]Using version: $VERSION"
 
   build-core:
-    name: Build DenoWrapper.Core
+    name: Build DenoHost.Core
     needs: get-version
     runs-on: ubuntu-latest
 
@@ -41,22 +41,22 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Build Core Project
-        run: dotnet pack src/DenoWrapper.Core/DenoWrapper.Core.csproj -c Release -p:Version=${{ needs.get-version.outputs.version }}
+        run: dotnet pack DenoHost.Core/DenoHost.Core.csproj -c Release -p:Version=${{ needs.get-version.outputs.version }}
 
       - name: Run Unit Tests
-        run: dotnet test DenoWrapper.Tests/DenoWrapper.Tests.csproj --no-build --configuration Release
+        run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj --no-build --configuration Release
 
       - name: Publish Core NuGet (only for tag)
         if: startsWith(github.ref, 'refs/tags/v')
-        run: dotnet nuget push **/DenoWrapper.Core.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push **/DenoHost.Core.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
       
       - name: Upload Core Package as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DenoWrapper.Core.${{ needs.get-version.outputs.version }}
+          name: DenoHost.Core.${{ needs.get-version.outputs.version }}
           path: |
-            **/DenoWrapper.Core.*.nupkg
-            **/DenoWrapper.Core.*.snupkg
+            **/DenoHost.Core.*.nupkg
+            **/DenoHost.Core.*.snupkg
           retention-days: 1
 
       - name: Upload Core Package to GitHub Release (only for tag)
@@ -64,8 +64,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            **/DenoWrapper.Core.*.nupkg
-            **/DenoWrapper.Core.*.snupkg
+            **/DenoHost.Core.*.nupkg
+            **/DenoHost.Core.*.snupkg
 
   build-runtime:
     name: Build Runtime Packages
@@ -75,23 +75,23 @@ jobs:
         include:
           - rid: win-x64
             zip: deno-x86_64-pc-windows-msvc.zip
-            proj: src/DenoWrapper.Runtime.win-x64/DenoWrapper.Runtime.win-x64.csproj
+            proj: DenoHost.Runtime.win-x64/DenoHost.Runtime.win-x64.csproj
             os: windows-latest
           - rid: linux-x64
             zip: deno-x86_64-unknown-linux-gnu.zip
-            proj: src/DenoWrapper.Runtime.linux-x64/DenoWrapper.Runtime.linux-x64.csproj
+            proj: DenoHost.Runtime.linux-x64/DenoHost.Runtime.linux-x64.csproj
             os: ubuntu-latest
           - rid: linux-arm64
             zip: deno-aarch64-unknown-linux-gnu.zip
-            proj: src/DenoWrapper.Runtime.linux-arm64/DenoWrapper.Runtime.linux-arm64.csproj
+            proj: DenoHost.Runtime.linux-arm64/DenoHost.Runtime.linux-arm64.csproj
             os: ubuntu-latest
           - rid: osx-x64
             zip: deno-x86_64-apple-darwin.zip
-            proj: src/DenoWrapper.Runtime.osx-x64/DenoWrapper.Runtime.osx-x64.csproj
+            proj: DenoHost.Runtime.osx-x64/DenoHost.Runtime.osx-x64.csproj
             os: ubuntu-latest
           - rid: osx-arm64
             zip: deno-aarch64-apple-darwin.zip
-            proj: src/DenoWrapper.Runtime.osx-arm64/DenoWrapper.Runtime.osx-arm64.csproj
+            proj: DenoHost.Runtime.osx-arm64/DenoHost.Runtime.osx-arm64.csproj
             os: ubuntu-latest
 
     runs-on: ${{ matrix.os }}
@@ -123,15 +123,15 @@ jobs:
 
       - name: Publish Runtime NuGet (only for tag)
         if: startsWith(github.ref, 'refs/tags/v')
-        run: dotnet nuget push **/DenoWrapper.Runtime.${{ matrix.rid }}.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push **/DenoHost.Runtime.${{ matrix.rid }}.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
       - name: Upload Runtime Package as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DenoWrapper.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.version }}
+          name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.version }}
           path: |
-            **/DenoWrapper.Runtime.${{ matrix.rid }}.*.nupkg
-            **/DenoWrapper.Runtime.${{ matrix.rid }}.*.snupkg
+            **/DenoHost.Runtime.${{ matrix.rid }}.*.nupkg
+            **/DenoHost.Runtime.${{ matrix.rid }}.*.snupkg
           retention-days: 1
 
       - name: Upload Runtime Package to GitHub Release (only for tag)
@@ -139,6 +139,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            **/DenoWrapper.Runtime.${{ matrix.rid }}.*.nupkg
-            **/DenoWrapper.Runtime.${{ matrix.rid }}.*.snupkg
+            **/DenoHost.Runtime.${{ matrix.rid }}.*.nupkg
+            **/DenoHost.Runtime.${{ matrix.rid }}.*.snupkg
 

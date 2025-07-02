@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace DenoWrapper.Core;
+namespace DenoHost.Core;
 
 /// <summary>
 /// Provides methods to execute Deno commands.

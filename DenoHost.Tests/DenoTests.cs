@@ -1,7 +1,7 @@
-using DenoWrapper.Core;
+using DenoHost.Core;
 using System.Reflection;
 
-namespace DenoWrapper.Tests;
+namespace DenoHost.Tests;
 
 public class DenoTests
 {

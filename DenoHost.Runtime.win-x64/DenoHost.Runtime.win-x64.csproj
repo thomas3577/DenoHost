@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <PackageId>DenoWrapper.Runtime.linux-arm64</PackageId>
-    <Description>Deno binary for Linux arm64</Description>
+    <PackageId>DenoHost.Runtime.win-x64</PackageId>
+    <Description>Deno binary for Windows x64</Description>
     <PackageType>DotnetPlatform</PackageType>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="deno" Pack="true" PackagePath="runtimes/linux-arm64/native" />
+    <None Include="deno.exe" Pack="true" PackagePath="runtimes/win-x64/native" />
   </ItemGroup>
 
 </Project>

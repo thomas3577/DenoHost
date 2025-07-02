@@ -1,4 +1,4 @@
-using DenoWrapper.Core;
+using DenoHost.Core;
 
 const string SCRIPTS_PATH = "scripts";
 

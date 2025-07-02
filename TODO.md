@@ -6,7 +6,7 @@ Possibilities to run Deno in dotnet.
 
 ```csharp
 // Var 1
-using DenoWrapper;
+using DenoHost;
 
 string command = "<your command>";
 

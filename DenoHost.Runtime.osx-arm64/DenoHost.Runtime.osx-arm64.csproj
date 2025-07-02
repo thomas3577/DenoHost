@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <PackageId>DenoWrapper.Runtime.osx-x64</PackageId>
-    <Description>Deno binary for macOS x64</Description>
+    <PackageId>DenoHost.Runtime.osx-arm64</PackageId>
+    <Description>Deno binary for macOS ARM64</Description>
     <PackageType>DotnetPlatform</PackageType>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="deno" Pack="true" PackagePath="runtimes/osx-x64/native" />
+    <None Include="deno" Pack="true" PackagePath="runtimes/osx-arm64/native" />
   </ItemGroup>
 
 </Project>

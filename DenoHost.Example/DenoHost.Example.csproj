@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>DenoWrapper.Example</RootNamespace>
+    <RootNamespace>DenoHost.Example</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DenoWrapper.Core\DenoWrapper.Core.csproj" />
+    <ProjectReference Include="..\DenoHost.Core\DenoHost.Core.csproj" />
   </ItemGroup>
 
 </Project>

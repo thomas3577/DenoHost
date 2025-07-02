@@ -1,6 +1,6 @@
 using System;
 
-namespace DenoWrapper.Core;
+namespace DenoHost.Core;
 
 public class DenoExecuteBaseOptions
 {

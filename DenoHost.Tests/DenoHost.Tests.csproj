@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DenoWrapper.Core\DenoWrapper.Core.csproj" />
+    <ProjectReference Include="..\DenoHost.Core\DenoHost.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
