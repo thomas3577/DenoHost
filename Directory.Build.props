@@ -1,11 +1,13 @@
 <Project>
-    <PropertyGroup>
-        <Authors>Thomas Huber</Authors>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/thomas3577/DenoHost</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/thomas3577/DenoHost.git</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
-        <PackageTags>deno;runtime;dotnet;wrapper</PackageTags>
-        <Copyright>Copyright © 2025 Thomas Huber</Copyright>
-    </PropertyGroup>
+  <PropertyGroup>
+    <Authors>Thomas Huber</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/thomas3577/DenoHost</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/thomas3577/DenoHost.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>deno;runtime;dotnet;wrapper</PackageTags>
+    <Copyright>Copyright © 2025 Thomas Huber</Copyright>
+    <DenoExecutableExtension Condition="'$(OS)' == 'Windows_NT'">.exe</DenoExecutableExtension>
+    <DenoExecutableExtension Condition="'$(OS)' != 'Windows_NT'"></DenoExecutableExtension>
+  </PropertyGroup>
 </Project>

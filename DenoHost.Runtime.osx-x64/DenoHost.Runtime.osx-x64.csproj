@@ -11,4 +11,24 @@
     <None Include="deno" Pack="true" PackagePath="runtimes/osx-x64/native" />
   </ItemGroup>
 
+  <Target Name="DownloadDenoIfMissing" BeforeTargets="Build"
+          Condition="'$(Configuration)' == 'Debug'">
+    <PropertyGroup>
+      <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools'))</ToolsDir>
+      <DenoExecutable>$(MSBuildThisFileDirectory)deno</DenoExecutable>
+      <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v1.44.0/deno-x86_64-apple-darwin.zip</DenoDownloadUrl>
+    </PropertyGroup>
+
+    <Message Text="DenoDownloadUrl resolved to: $(DenoDownloadUrl)" Importance="High" />
+    <Message Text="ToolsDir resolved to: $(ToolsDir)" Importance="High" />
+
+    <Exec Condition="'$(OS)' == 'Windows_NT'"
+          Command="pwsh -NoProfile -ExecutionPolicy Bypass -File &quot;$(ToolsDir)\download-deno.ps1&quot; -ExecutablePath &quot;$(DenoExecutable)&quot; -DownloadUrl &quot;$(DenoDownloadUrl)&quot;"
+          ContinueOnError="true" />
+
+    <Exec Condition="'$(OS)' != 'Windows_NT'"
+          Command="bash &quot;$(ToolsDir)/download-deno.sh&quot; &quot;$(DenoExecutable)&quot; &quot;$(DenoDownloadUrl)&quot;"
+          ContinueOnError="true" />
+  </Target>
+
 </Project>

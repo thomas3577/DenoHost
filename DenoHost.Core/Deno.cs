@@ -35,8 +35,7 @@ public static class Deno
   /// <exception cref="ArgumentException">Thrown if both Config and ConfigOrPath are set.</exception>
   public static async Task<T> Execute<T>(DenoExecuteOptions options)
   {
-    if (options == null)
-      throw new ArgumentNullException(nameof(options));
+    ArgumentNullException.ThrowIfNull(options);
 
     var command = options.Command;
     var configOrPath = options.ConfigOrPath;
