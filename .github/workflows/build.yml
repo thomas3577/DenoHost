@@ -20,14 +20,14 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
           else
-            VERSION="2.3.7"
+            VERSION="2.4.0" # Fallback for local development
           fi
           echo "Deno version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "##[notice]Using version: $VERSION"
 
   build-core:
-    name: Build DenoHost.Core
+    name: Build and Publish DenoHost.Core
     needs: get-version
     runs-on: ubuntu-latest
 
@@ -40,32 +40,40 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Build Core Project
-        run: dotnet pack DenoHost.Core/DenoHost.Core.csproj -c Release -p:Version=${{ needs.get-version.outputs.version }}
+      - name: Restore and Build Solution
+        run: dotnet build DenoHost.sln -c Release
 
       - name: Run Unit Tests
-        run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj --no-build --configuration Release
+        run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release
+
+      - name: Pack Core Project
+        run: dotnet pack DenoHost.Core/DenoHost.Core.csproj -c Release -p:Version=${{ needs.get-version.outputs.version }} --output ./nupkg
 
       - name: Publish Core NuGet (only for tag)
         if: startsWith(github.ref, 'refs/tags/v')
-        run: dotnet nuget push **/DenoHost.Core.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-      
+        run: dotnet nuget push ./nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+
       - name: Upload Core Package as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DenoHost.Core.${{ needs.get-version.outputs.version }}
-          path: |
-            **/DenoHost.Core.*.nupkg
-            **/DenoHost.Core.*.snupkg
+          path: ./nupkg
           retention-days: 1
+
+      - name: Create GitHub Release (if not exists)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
 
       - name: Upload Core Package to GitHub Release (only for tag)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            **/DenoHost.Core.*.nupkg
-            **/DenoHost.Core.*.snupkg
+          files: ./nupkg/*
 
   build-runtime:
     name: Build Runtime Packages
@@ -118,27 +126,22 @@ jobs:
           chmod +x runtimes/${{ matrix.rid }}/native/deno
           runtimes/${{ matrix.rid }}/native/deno --version
 
-      - name: Build Runtime Package
-        run: dotnet pack ${{ matrix.proj }} -c Release -p:Version=${{ needs.get-version.outputs.version }}
+      - name: Pack Runtime Package
+        run: dotnet pack ${{ matrix.proj }} -c Release -p:Version=${{ needs.get-version.outputs.version }} --output ./nupkg
 
       - name: Publish Runtime NuGet (only for tag)
         if: startsWith(github.ref, 'refs/tags/v')
-        run: dotnet nuget push **/DenoHost.Runtime.${{ matrix.rid }}.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push ./nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
       - name: Upload Runtime Package as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.version }}
-          path: |
-            **/DenoHost.Runtime.${{ matrix.rid }}.*.nupkg
-            **/DenoHost.Runtime.${{ matrix.rid }}.*.snupkg
+          path: ./nupkg
           retention-days: 1
 
       - name: Upload Runtime Package to GitHub Release (only for tag)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            **/DenoHost.Runtime.${{ matrix.rid }}.*.nupkg
-            **/DenoHost.Runtime.${{ matrix.rid }}.*.snupkg
-
+          files: ./nupkg/*
