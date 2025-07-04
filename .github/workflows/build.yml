@@ -13,9 +13,11 @@ jobs:
     outputs:
       version: ${{ steps.extract.outputs.version }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Extract Version
         id: extract
-        shell: bash
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
@@ -32,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up .NET
@@ -60,7 +62,7 @@ jobs:
           path: ./nupkg
           retention-days: 1
 
-      - name: Create GitHub Release (if not exists)
+      - name: Create Release and Upload
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
@@ -68,11 +70,6 @@ jobs:
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
-
-      - name: Upload Core Package to GitHub Release (only for tag)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
           files: ./nupkg/*
 
   build-runtime:
@@ -105,7 +102,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup .NET
@@ -114,7 +111,6 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Download Deno for ${{ matrix.rid }}
-        shell: bash
         run: |
           VERSION=${{ needs.get-version.outputs.version }}
           curl -L --retry 3 -o deno.zip https://github.com/denoland/deno/releases/download/v$VERSION/${{ matrix.zip }}

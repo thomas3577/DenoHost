@@ -1,14 +1,23 @@
 <Project>
   <PropertyGroup>
+    <!-- NuGet Metadata -->
     <Authors>Thomas Huber</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/thomas3577/DenoHost</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageIconUrl>https://raw.githubusercontent.com/thomas3577/DenoHost/main/icon.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/thomas3577/DenoHost.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>deno;runtime;dotnet;wrapper</PackageTags>
     <Copyright>Copyright © 2025 Thomas Huber</Copyright>
+
+    <!-- Deno Wrapper Configuration -->
     <DenoVersion>2.4.0</DenoVersion>
     <DenoExecutableExtension Condition="'$(OS)' == 'Windows_NT'">.exe</DenoExecutableExtension>
     <DenoExecutableExtension Condition="'$(OS)' != 'Windows_NT'"></DenoExecutableExtension>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
 </Project>
