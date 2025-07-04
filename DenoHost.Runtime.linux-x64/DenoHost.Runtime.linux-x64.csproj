@@ -5,12 +5,20 @@
     <PackageId>DenoHost.Runtime.linux-x64</PackageId>
     <Description>Deno binary for Linux x64</Description>
     <PackageType>DotnetPlatform</PackageType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="deno" Pack="true" PackagePath="runtimes/linux-x64/native" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+  
   <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
     <PropertyGroup>
       <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools'))</ToolsDir>
