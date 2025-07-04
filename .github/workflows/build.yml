@@ -20,7 +20,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
           else
-            VERSION=$(xmllint --xpath "string(//DenoVersion)" Directory.Build.props)
+            VERSION=$(grep '<DenoVersion>' Directory.Build.props | sed -E 's:.*<DenoVersion>(.*)</DenoVersion>.*:\1:')
           fi
           echo "Deno version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
