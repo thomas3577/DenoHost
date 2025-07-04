@@ -16,7 +16,7 @@
     <PropertyGroup>
       <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools'))</ToolsDir>
       <DenoExecutable>$(MSBuildThisFileDirectory)deno$(DenoExecutableExtension)</DenoExecutable>
-      <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v1.44.0/deno-x86_64-pc-windows-msvc.zip</DenoDownloadUrl>
+      <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v2.4.0/deno-x86_64-pc-windows-msvc.zip</DenoDownloadUrl>
     </PropertyGroup>
 
     <Message Text="DenoDownloadUrl resolved to: $(DenoDownloadUrl)" Importance="High" />
@@ -29,6 +29,19 @@
     <Exec Condition="'$(OS)' != 'Windows_NT'"
           Command='bash "$(ToolsDir)download-deno.sh" "$(DenoExecutable)" "$(DenoDownloadUrl)"'
           ContinueOnError="true" />
+  </Target>
+
+  <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <PropertyGroup>
+      <RidOutputDir>$(OutputPath)runtimes\win-x64\native</RidOutputDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(RidOutputDir)" />
+
+    <Copy Condition="Exists('deno.exe')"
+          SourceFiles="deno.exe"
+          DestinationFiles="$(RidOutputDir)\deno.exe"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

@@ -11,24 +11,37 @@
     <None Include="deno" Pack="true" PackagePath="runtimes/linux-x64/native" />
   </ItemGroup>
 
-  <Target Name="DownloadDenoIfMissing" BeforeTargets="Build"
+  <Target Name="DownloadDenoIfMissing" BeforeTargets="Build" 
           Condition="'$(Configuration)' == 'Debug'">
     <PropertyGroup>
-      <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools'))</ToolsDir>
+      <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools'))</ToolsDir>
       <DenoExecutable>$(MSBuildThisFileDirectory)deno</DenoExecutable>
-      <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v1.44.0/deno-x86_64-unknown-linux-gnu.zip</DenoDownloadUrl>
+      <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v2.4.0/deno-x86_64-unknown-linux-gnu.zip</DenoDownloadUrl>
     </PropertyGroup>
 
     <Message Text="DenoDownloadUrl resolved to: $(DenoDownloadUrl)" Importance="High" />
     <Message Text="ToolsDir resolved to: $(ToolsDir)" Importance="High" />
 
     <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(ToolsDir)\download-deno.ps1" -ExecutablePath "$(DenoExecutable)" -DownloadUrl "$(DenoDownloadUrl)"'
+          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(ToolsDir)/download-deno.ps1" -ExecutablePath "$(DenoExecutable)" -DownloadUrl "$(DenoDownloadUrl)"'
           ContinueOnError="true" />
 
     <Exec Condition="'$(OS)' != 'Windows_NT'"
           Command='bash "$(ToolsDir)/download-deno.sh" "$(DenoExecutable)" "$(DenoDownloadUrl)"'
           ContinueOnError="true" />
+  </Target>
+
+  <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <PropertyGroup>
+      <RidOutputDir>$(OutputPath)runtimes/linux-x64/native</RidOutputDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(RidOutputDir)" />
+
+    <Copy Condition="Exists('deno')"
+          SourceFiles="deno"
+          DestinationFiles="$(RidOutputDir)/deno"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
