@@ -13,8 +13,6 @@
 
     <!-- Deno Wrapper Configuration -->
     <DenoVersion>2.4.0</DenoVersion>
-    <DenoExecutableExtension Condition="'$(OS)' == 'Windows_NT'">.exe</DenoExecutableExtension>
-    <DenoExecutableExtension Condition="'$(OS)' != 'Windows_NT'"></DenoExecutableExtension>
   </PropertyGroup>
 
   <ItemGroup>

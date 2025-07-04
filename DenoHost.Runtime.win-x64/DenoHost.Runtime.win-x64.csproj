@@ -14,7 +14,7 @@
   <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
     <PropertyGroup>
       <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools'))</ToolsDir>
-      <DenoExecutable>$(MSBuildThisFileDirectory)deno$(DenoExecutableExtension)</DenoExecutable>
+      <DenoExecutable>$(MSBuildThisFileDirectory)deno.exe</DenoExecutable>
       <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v$(DenoVersion)/deno-x86_64-pc-windows-msvc.zip</DenoDownloadUrl>
     </PropertyGroup>
 
