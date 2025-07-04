@@ -26,7 +26,7 @@
           ContinueOnError="true" />
 
     <Exec Condition="'$(OS)' != 'Windows_NT'"
-          Command='bash "$(ToolsDir)download-deno.sh" "$(DenoExecutable)" "$(DenoDownloadUrl)"'
+          Command='bash "$(ToolsDir)/download-deno.sh" "$(DenoExecutable)" "$(DenoDownloadUrl)"'
           ContinueOnError="true" />
   </Target>
 
