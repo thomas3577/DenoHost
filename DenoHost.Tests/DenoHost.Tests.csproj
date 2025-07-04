@@ -30,7 +30,7 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <Target Name="CopyDenoFromRuntime" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+  <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
     <PropertyGroup>
       <RuntimeOutputDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.win-x64\bin\Debug\netstandard2.1\runtimes\win-x64\native</RuntimeOutputDir>
       <TargetRuntimeDir>$(OutputPath)runtimes\win-x64\native</TargetRuntimeDir>

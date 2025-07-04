@@ -24,53 +24,68 @@ jobs:
           else
             VERSION=$(grep '<DenoVersion>' Directory.Build.props | sed -E 's:.*<DenoVersion>(.*)</DenoVersion>.*:\1:')
           fi
-          echo "Deno version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "##[notice]Using version: $VERSION"
 
   build-core:
-    name: Build and Publish DenoHost.Core
+    name: Build Core Package
     needs: get-version
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore and Build Solution
+      - name: Build Solution
         run: dotnet build DenoHost.sln -c Release
 
-      - name: Run Unit Tests
-        run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release
-
       - name: Pack Core Project
-        run: dotnet pack DenoHost.Core/DenoHost.Core.csproj -c Release -p:Version=${{ needs.get-version.outputs.version }} --output ./nupkg
-
-      - name: Publish Core NuGet (only for tag)
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: dotnet nuget push ./nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: |
+          VERSION=${{ needs.get-version.outputs.version }}
+          dotnet pack DenoHost.Core/DenoHost.Core.csproj -c Release -p:Version=$VERSION --output ./nupkg/core
 
       - name: Upload Core Package as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DenoHost.Core.${{ needs.get-version.outputs.version }}
-          path: ./nupkg
+          path: ./nupkg/core/*.nupkg
           retention-days: 1
 
-      - name: Create Release and Upload
-        if: startsWith(github.ref, 'refs/tags/v')
+  test:
+    name: Run Tests
+    needs: [build-core, build-runtime]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Run Unit Tests
+        run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release
+
+  publish-core:
+    name: Publish Core NuGet
+    needs: build-core
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: DenoHost.Core.${{ needs.get-version.outputs.version }}
+          path: ./nupkg/core
+
+      - name: Push Core Package to NuGet
+        run: dotnet nuget push ./nupkg/core/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+
+      - name: Upload Core Package to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-          files: ./nupkg/*
+          files: ./nupkg/core/*.nupkg
 
   build-runtime:
     name: Build Runtime Packages
@@ -79,65 +94,62 @@ jobs:
       matrix:
         include:
           - rid: win-x64
-            zip: deno-x86_64-pc-windows-msvc.zip
             proj: DenoHost.Runtime.win-x64/DenoHost.Runtime.win-x64.csproj
             os: windows-latest
           - rid: linux-x64
-            zip: deno-x86_64-unknown-linux-gnu.zip
             proj: DenoHost.Runtime.linux-x64/DenoHost.Runtime.linux-x64.csproj
             os: ubuntu-latest
           - rid: linux-arm64
-            zip: deno-aarch64-unknown-linux-gnu.zip
             proj: DenoHost.Runtime.linux-arm64/DenoHost.Runtime.linux-arm64.csproj
             os: ubuntu-latest
           - rid: osx-x64
-            zip: deno-x86_64-apple-darwin.zip
             proj: DenoHost.Runtime.osx-x64/DenoHost.Runtime.osx-x64.csproj
             os: ubuntu-latest
           - rid: osx-arm64
-            zip: deno-aarch64-apple-darwin.zip
             proj: DenoHost.Runtime.osx-arm64/DenoHost.Runtime.osx-arm64.csproj
             os: ubuntu-latest
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Download Deno for ${{ matrix.rid }}
+      - name: Pack Runtime Package
         run: |
           VERSION=${{ needs.get-version.outputs.version }}
-          curl -L --retry 3 -o deno.zip https://github.com/denoland/deno/releases/download/v$VERSION/${{ matrix.zip }}
-          mkdir -p runtimes/${{ matrix.rid }}/native
-          unzip -j deno.zip "deno*" -d runtimes/${{ matrix.rid }}/native
+          dotnet pack ${{ matrix.proj }} -c Release -p:Version=$VERSION --output ./nupkg/runtime/${{ matrix.rid }}
 
-      - name: Test Deno binary
-        run: |
-          chmod +x runtimes/${{ matrix.rid }}/native/deno
-          runtimes/${{ matrix.rid }}/native/deno --version
-
-      - name: Pack Runtime Package
-        run: dotnet pack ${{ matrix.proj }} -c Release -p:Version=${{ needs.get-version.outputs.version }} --output ./nupkg
-
-      - name: Publish Runtime NuGet (only for tag)
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: dotnet nuget push ./nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-
-      - name: Upload Runtime Package as Artifact
+      - name: Upload Runtime Package
         uses: actions/upload-artifact@v4
         with:
           name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.version }}
-          path: ./nupkg
+          path: ./nupkg/runtime/${{ matrix.rid }}/*.nupkg
           retention-days: 1
 
-      - name: Upload Runtime Package to GitHub Release (only for tag)
-        if: startsWith(github.ref, 'refs/tags/v')
+  publish-runtime:
+    name: Publish Runtime NuGet
+    needs: build-runtime
+    if: startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      matrix:
+        rid: [win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Runtime Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.version }}
+          path: ./nupkg/runtime/${{ matrix.rid }}
+
+      - name: Push Runtime Package to NuGet
+        run: dotnet nuget push ./nupkg/runtime/${{ matrix.rid }}/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+
+      - name: Upload Runtime Package to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./nupkg/*
+          files: ./nupkg/runtime/${{ matrix.rid }}/*.nupkg

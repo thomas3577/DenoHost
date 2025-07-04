@@ -11,8 +11,7 @@
     <None Include="deno" Pack="true" PackagePath="runtimes/osx-x64/native" />
   </ItemGroup>
 
-  <Target Name="DownloadDenoIfMissing" BeforeTargets="Build"
-          Condition="'$(Configuration)' == 'Debug'">
+  <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
     <PropertyGroup>
       <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools'))</ToolsDir>
       <DenoExecutable>$(MSBuildThisFileDirectory)deno</DenoExecutable>
@@ -31,7 +30,7 @@
           ContinueOnError="true" />
   </Target>
 
-  <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+  <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build">
     <PropertyGroup>
       <RidOutputDir>$(OutputPath)runtimes/osx-x64/native</RidOutputDir>
     </PropertyGroup>
