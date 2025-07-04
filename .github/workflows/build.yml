@@ -119,6 +119,7 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Pack Runtime Package
+        shell: bash
         run: |
           VERSION=${{ needs.get-version.outputs.version }}
           dotnet pack ${{ matrix.proj }} -c Release -p:Version=$VERSION --output ./nupkg/runtime/${{ matrix.rid }}
