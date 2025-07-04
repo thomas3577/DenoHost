@@ -32,11 +32,12 @@
 
   <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
     <PropertyGroup>
-      <RuntimeOutputDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.win-x64\bin\Debug\netstandard2.1\runtimes\win-x64\native</RuntimeOutputDir>
+      <RuntimeOutputDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.win-x64\bin\$(Configuration)\netstandard2.1\runtimes\win-x64\native</RuntimeOutputDir>
       <TargetRuntimeDir>$(OutputPath)runtimes\win-x64\native</TargetRuntimeDir>
     </PropertyGroup>
 
     <Message Text="Copying deno.exe from: $(RuntimeOutputDir) to: $(TargetRuntimeDir)" Importance="High" />
+    <Message Text="Build configuration: $(Configuration)" Importance="High" />
 
     <MakeDir Directories="$(TargetRuntimeDir)" />
 

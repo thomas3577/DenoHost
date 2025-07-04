@@ -70,7 +70,7 @@ jobs:
 
   publish-core:
     name: Publish Core NuGet
-    needs: build-core
+    needs: [get-version, build-core, test]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -133,7 +133,7 @@ jobs:
 
   publish-runtime:
     name: Publish Runtime NuGet
-    needs: build-runtime
+    needs: [get-version, build-runtime, test]
     if: startsWith(github.ref, 'refs/tags/v')
     strategy:
       matrix:
