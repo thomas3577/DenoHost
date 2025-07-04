@@ -16,7 +16,7 @@
     <PropertyGroup>
       <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools'))</ToolsDir>
       <DenoExecutable>$(MSBuildThisFileDirectory)deno</DenoExecutable>
-      <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v2.4.0/deno-aarch64-unknown-linux-gnu.zip</DenoDownloadUrl>
+      <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v$(DenoVersion)/deno-aarch64-unknown-linux-gnu.zip</DenoDownloadUrl>
     </PropertyGroup>
 
     <Message Text="DenoDownloadUrl resolved to: $(DenoDownloadUrl)" Importance="High" />

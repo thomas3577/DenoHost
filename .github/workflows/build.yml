@@ -20,7 +20,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
           else
-            VERSION="2.4.0" # Fallback for local development
+            VERSION=$(xmllint --xpath "string(//DenoVersion)" Directory.Build.props)
           fi
           echo "Deno version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT

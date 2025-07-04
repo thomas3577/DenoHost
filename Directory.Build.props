@@ -7,6 +7,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>deno;runtime;dotnet;wrapper</PackageTags>
     <Copyright>Copyright © 2025 Thomas Huber</Copyright>
+    <DenoVersion>2.4.0</DenoVersion>
     <DenoExecutableExtension Condition="'$(OS)' == 'Windows_NT'">.exe</DenoExecutableExtension>
     <DenoExecutableExtension Condition="'$(OS)' != 'Windows_NT'"></DenoExecutableExtension>
   </PropertyGroup>
