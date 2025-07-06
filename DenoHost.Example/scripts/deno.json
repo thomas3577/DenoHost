@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "tasks": {
     "dev": "deno run --watch app.ts",
-    "test": "deno test --watch"
+    "update": "deno outdated --update --latest"
   },
   "fmt": {
     "useTabs": false,
@@ -17,7 +17,6 @@
     ]
   },
   "imports": {
-    "@std/cli": "jsr:@std/cli@^1.0.19",
-    "esbuild": "npm:esbuild@^0.25.5"
+    "@std/cli": "jsr:@std/cli@^1.0.20"
   }
 }
