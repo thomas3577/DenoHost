@@ -1,6 +1,8 @@
 # DenoHost
 
-![Build & Publish](https://github.com/thomas3577/DenoHost/actions/workflows/build.yml/badge.svg)
+![Build](https://github.com/thomas3577/DenoHost/actions/workflows/build.yml/badge.svg)
+![NuGet](https://img.shields.io/nuget/v/DenoHost.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
 > 🦕 Use Deno from within your .NET applications – cross-platform, cleanly
 > packaged, and NuGet-ready.

@@ -11,7 +11,8 @@ jobs:
     name: Determine Deno Version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.extract.outputs.version }}
+      package_version: ${{ steps.extract.outputs.package_version }}
+      deno_version: ${{ steps.extract.outputs.deno_version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -19,13 +20,20 @@ jobs:
       - name: Extract Version
         id: extract
         run: |
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"
+          REF="${GITHUB_REF#refs/tags/}"
+          if [[ "$REF" =~ ^v[0-9] ]]; then
+            PACKAGE_VERSION="${REF#v}"
+            DENO_VERSION=$(echo "$PACKAGE_VERSION" | cut -d '-' -f 1)
           else
-            VERSION=$(grep '<DenoVersion>' Directory.Build.props | sed -E 's:.*<DenoVersion>(.*)</DenoVersion>.*:\1:')
+            DENO_VERSION=$(grep '<DevDenoVersion>' Directory.Build.props | sed -E 's:.*<DevDenoVersion>(.*)</DevDenoVersion>.*:\1:')
+            PACKAGE_VERSION="${DENO_VERSION}-dev"
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "##[notice]Using version: $VERSION"
+
+          echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "deno_version=$DENO_VERSION" >> $GITHUB_OUTPUT
+          echo "##[notice]NuGet version: $PACKAGE_VERSION"
+          echo "##[notice]Deno version: $DENO_VERSION"
+
 
   build-runtime:
     name: Build Runtime Packages
@@ -61,13 +69,13 @@ jobs:
       - name: Pack Runtime Package
         shell: bash
         run: |
-          VERSION=${{ needs.get-version.outputs.version }}
+          VERSION=${{ needs.get-version.outputs.package_version }}
           dotnet pack ${{ matrix.proj }} -c Release -p:Version=$VERSION --output ./nupkg/runtime/${{ matrix.rid }}
 
       - name: Upload Runtime Package
         uses: actions/upload-artifact@v4
         with:
-          name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.version }}
+          name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime/${{ matrix.rid }}/*.nupkg
           retention-days: 7
 
@@ -88,13 +96,13 @@ jobs:
 
       - name: Pack Core Project
         run: |
-          VERSION=${{ needs.get-version.outputs.version }}
+          VERSION=${{ needs.get-version.outputs.package_version }}
           dotnet pack DenoHost.Core/DenoHost.Core.csproj -c Release -p:Version=$VERSION --output ./nupkg/core
 
       - name: Upload Core Package as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DenoHost.Core.${{ needs.get-version.outputs.version }}
+          name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core/*.nupkg
           retention-days: 7
           
@@ -132,7 +140,7 @@ jobs:
       - name: Build Solution (Release)
         run: dotnet build DenoHost.sln -c Release
 
-      - name: Check deno.exe exists
+      - name: Check deno exists
         run: test -f DenoHost.Tests/bin/Release/net9.0/runtimes/linux-x64/native/deno
         
       - name: Run Unit Tests
@@ -151,7 +159,7 @@ jobs:
       - name: Download Runtime Artifact
         uses: actions/download-artifact@v4
         with:
-          name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.version }}
+          name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime/${{ matrix.rid }}
 
       - name: Push Runtime Package to NuGet
@@ -170,7 +178,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: DenoHost.Core.${{ needs.get-version.outputs.version }}
+          name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core
 
       - name: Push Core Package to NuGet

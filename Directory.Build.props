@@ -6,13 +6,14 @@
     <PackageProjectUrl>https://github.com/thomas3577/DenoHost</PackageProjectUrl>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl>https://raw.githubusercontent.com/thomas3577/DenoHost/main/icon.png</PackageIconUrl>
-    <PackageTags>deno;runtime;dotnet;wrapper</PackageTags>
+    <PackageTags>deno;runtime;dotnet;javascript;typescript</PackageTags>
     <RepositoryUrl>https://github.com/thomas3577/DenoHost.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <Description>Run JavaScript/TypeScript from .NET using Deno.</Description>
     <Copyright>Copyright © 2025 Thomas Huber</Copyright>
 
     <!-- Deno Host Configuration -->
-    <DenoVersion>2.4.0</DenoVersion>
+    <DevDenoVersion>2.4.0</DevDenoVersion>
   </PropertyGroup>
 
   <ItemGroup>

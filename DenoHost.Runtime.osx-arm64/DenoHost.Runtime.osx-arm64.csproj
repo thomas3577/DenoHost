@@ -23,18 +23,18 @@
     <PropertyGroup>
       <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools'))</ToolsDir>
       <DenoExecutable>$(MSBuildThisFileDirectory)deno</DenoExecutable>
-      <DenoDownloadUrl>https://github.com/denoland/deno/releases/download/v$(DenoVersion)/deno-aarch64-apple-darwin.zip</DenoDownloadUrl>
+      <DenoDownloadFileName>deno-aarch64-apple-darwin.zip</DenoDownloadFileName>
     </PropertyGroup>
 
-    <Message Text="DenoDownloadUrl resolved to: $(DenoDownloadUrl)" Importance="High" />
+    <Message Text="DownloadFileName resolved to: $(DownloadFileName)" Importance="High" />
     <Message Text="ToolsDir resolved to: $(ToolsDir)" Importance="High" />
 
     <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(ToolsDir)/download-deno.ps1" -ExecutablePath "$(DenoExecutable)" -DownloadUrl "$(DenoDownloadUrl)"'
+          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(ToolsDir)/download-deno.ps1" -ExecutablePath "$(DenoExecutable)" -DownloadFileName "$(DenoDownloadFileName)" -DevDenoVersion "$(DevDenoVersion)"'
           ContinueOnError="true" />
 
     <Exec Condition="'$(OS)' != 'Windows_NT'"
-          Command='bash "$(ToolsDir)/download-deno.sh" "$(DenoExecutable)" "$(DenoDownloadUrl)"'
+          Command='bash "$(ToolsDir)/download-deno.sh" "$(DenoExecutable)" "$(DenoDownloadFileName)" "$(DevDenoVersion)"'
           ContinueOnError="true" />
   </Target>
 
