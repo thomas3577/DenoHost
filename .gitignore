@@ -1,4 +1,23 @@
-**/bin
-**/obj
-**/deno.exe
-example
+# .NET build output
+bin/
+obj/
+TestResults/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+
+# User-specific
+*.user
+*.suo
+
+# IDEs
+.vscode/
+.idea/
+.vs/
+
+# Deno binaries
+deno
+deno.exe
+*.zip
