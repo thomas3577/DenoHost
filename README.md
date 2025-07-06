@@ -1,6 +1,6 @@
 # DenoHost
 
-![Build & Publish](https://github.com/<USERNAME>/<REPO>/actions/workflows/build.yml/badge.svg)
+![Build & Publish](https://github.com/thomas3577/DenoHost/actions/workflows/build.yml/badge.svg)
 
 > 🦕 Use Deno from within your .NET applications – cross-platform, cleanly
 > packaged, and NuGet-ready.
