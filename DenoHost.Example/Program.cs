@@ -15,24 +15,10 @@ app.MapGet("/var/a", static async context =>
 {
   string cwd = Path.Combine(Directory.GetCurrentDirectory(), SCRIPTS_PATH);
   string command = "run";
-  string[] args = ["--allow-read", "--allow-write", "--allow-net", "--allow-env", "--allow-run", "run.ts"];
+  string[] args = ["app.ts"];
 
   await Deno.Execute(cwd, command, args);
 })
 .WithName("Execute");
 
 app.Run();
-
-
-app.MapGet("/var/b", static async context =>
-{
-  string cwd = Path.Combine(Directory.GetCurrentDirectory(), SCRIPTS_PATH);
-
-  Directory.SetCurrentDirectory(cwd);
-
-  string command = "run";
-  string[] args = ["--allow-read", "--allow-write", "--allow-net", "--allow-env", "--allow-run", "run.ts"];
-
-  await Deno.Execute(command, args);
-})
-.WithName("Execute");

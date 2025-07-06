@@ -1,13 +1,5 @@
 {
   "version": "5",
-  "specifiers": {
-    "jsr:@std/cli@^1.0.20": "1.0.20"
-  },
-  "jsr": {
-    "@std/cli@1.0.20": {
-      "integrity": "a8c384a2c98cec6ec6a2055c273a916e2772485eb784af0db004c5ab8ba52333"
-    }
-  },
   "npm": {
     "@esbuild/aix-ppc64@0.25.5": {
       "integrity": "sha512-9o3TMmpmftaCMepOdA5k/yDw8SfInyzWWTjYTFCX3kPSDJMROQTb8jg+h9Cnwnmm1vOzvxN7gIfB5V2ewpjtGA==",
@@ -134,10 +126,5 @@
       "os": ["win32"],
       "cpu": ["x64"]
     }
-  },
-  "workspace": {
-    "dependencies": [
-      "jsr:@std/cli@^1.0.20"
-    ]
   }
 }

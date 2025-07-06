@@ -44,14 +44,11 @@ provides a simple, consistent API for execution.
 ```csharp
 using DenoHost;
 
-await Deno.Execute("console.log('Hello from Deno');");
-```
+string cwd = Path.Combine(Directory.GetCurrentDirectory(), SCRIPTS_PATH);
+string command = "run";
+string[] args = ["app.ts"];
 
-Or with result:
-
-```csharp
-string? output = await Deno.Execute<string>("console.log('42');");
-Console.WriteLine(output); // "42"
+await Deno.Execute(cwd, command, args);
 ```
 
 ## 🛠️ Requirements
