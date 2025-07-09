@@ -21,20 +21,20 @@
   
   <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
     <PropertyGroup>
-      <ToolsDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools'))</ToolsDir>
+      <DenoDownloadScriptPathPwsh>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools\download-deno.ps1'))</DenoDownloadScriptPathPwsh>
+      <DenoDownloadScriptPathBash>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools/download-deno.sh'))</DenoDownloadScriptPathBash>
       <DenoExecutable>$(MSBuildThisFileDirectory)deno.exe</DenoExecutable>
-      <DenoDownloadFileName>deno-x86_64-pc-windows-msvc.zip</DenoDownloadFileName>
+      <DenoDownloadFilename>deno-x86_64-pc-windows-msvc.zip</DenoDownloadFilename>
     </PropertyGroup>
 
-    <Message Text="DownloadFileName resolved to: $(DownloadFileName)" Importance="High" />
-    <Message Text="ToolsDir resolved to: $(ToolsDir)" Importance="High" />
+    <Message Text="DownloadFilename resolved to: $(DownloadFilename)" Importance="High" />
 
     <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(ToolsDir)\download-deno.ps1" -ExecutablePath "$(DenoExecutable)" -DownloadFileName "$(DenoDownloadFileName)" -DevDenoVersion "$(DevDenoVersion)"'
+          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
           ContinueOnError="true" />
 
     <Exec Condition="'$(OS)' != 'Windows_NT'"
-          Command='bash "$(ToolsDir)/download-deno.sh" "$(DenoExecutable)" "$(DenoDownloadFileName)" "$(DevDenoVersion)"'
+          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DevDenoVersion)"'
           ContinueOnError="true" />
   </Target>
 

@@ -1,6 +1,6 @@
 param (
     [string]$ExecutablePath,
-    [string]$DownloadFileName
+    [string]$DownloadFilename,
     [string]$DevDenoVersion
 )
 
@@ -28,7 +28,7 @@ if ($gitTag -match '^v?(\d+\.\d+\.\d+)') {
     exit 1
 }
 
-$downloadUrl = "https://github.com/denoland/deno/releases/download/v$($denoVersion)/$($DownloadFileName)"
+$downloadUrl = "https://github.com/denoland/deno/releases/download/v$($denoVersion)/$($DownloadFilename)"
 $tempZip = "$env:TEMP\deno.zip"
 $extractDir = Split-Path $ExecutablePath
 
