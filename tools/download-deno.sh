@@ -11,7 +11,7 @@ if [ -f "$EXECUTABLE_PATH" ]; then
   exit 0
 fi
 
-# Get last Git-Tag (e.g. "v2.4.0-alpha.1")
+# Get last Git-Tag (e.g. "v2.4.1-alpha.1")
 GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
 
 # Fallback-Version, falls kein Tag gefunden wurde
@@ -20,7 +20,7 @@ if [[ -z "$GIT_TAG" ]]; then
   GIT_TAG="v$DEV_DENO_VERSION" # Fallback
 fi
 
-# Extract only the main version (e.g. 2.4.0 from v2.4.0-alpha.1)
+# Extract only the main version (e.g. 2.4.1 from v2.4.1-alpha.1)
 if [[ "$GIT_TAG" =~ ^v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
   DENO_VERSION="${BASH_REMATCH[1]}"
 else

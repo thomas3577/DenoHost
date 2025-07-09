@@ -9,7 +9,7 @@ if (Test-Path $ExecutablePath) {
     return
 }
 
-# Get last Git-Tag (e.g. "v2.4.0-alpha.1")
+# Get last Git-Tag (e.g. "v2.4.1-alpha.1")
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $repoRoot
 $gitTag = git describe --tags --abbrev=0 2>$null
@@ -20,7 +20,7 @@ if (-not $gitTag) {
     $gitTag = "v$DevDenoVersion" # Fallback
 }
 
-# Extract only the main version (e.g. 2.4.0 from v2.4.0-alpha.1)
+# Extract only the main version (e.g. 2.4.1 from v2.4.1-alpha.1)
 if ($gitTag -match '^v?(\d+\.\d+\.\d+)') {
     $denoVersion = $matches[1]
 } else {
