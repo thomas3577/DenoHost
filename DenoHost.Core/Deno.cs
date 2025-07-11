@@ -163,7 +163,7 @@ public static class Deno
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions, string[] args)
   {
-    await Execute<object>(command, baseOptions, args);
+    await Execute<string>(command, baseOptions, args);
   }
 
   /// <summary>
@@ -376,10 +376,9 @@ public static class Deno
         $"Standard Error:{Environment.NewLine}{error}"
       );
 
-    if (resultType == null)
-      throw new ArgumentNullException(nameof(resultType), "Result type cannot be null.");
+    ArgumentNullException.ThrowIfNull(resultType);
 
-    var deserializedResult = JsonSerializer.Deserialize(output, resultType);
+    var deserializedResult = typeof(T).Name == "String" ? output : JsonSerializer.Deserialize(output, resultType);
 
     return deserializedResult != null
       ? (T)deserializedResult
@@ -390,9 +389,7 @@ public static class Deno
   {
     var argsStr = string.Join(" ", args ?? []);
     if (command == null)
-    {
       return argsStr;
-    }
 
     return $"{command} {argsStr}";
   }
@@ -416,19 +413,16 @@ public static class Deno
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
       return "linux-x64";
     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-    {
       return RuntimeInformation.OSArchitecture == Architecture.Arm64
           ? "osx-arm64"
           : "osx-x64";
-    }
 
     throw new PlatformNotSupportedException("Unsupported OS platform.");
   }
 
-
   private static string WriteTempConfig(DenoConfig config)
   {
-    string tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
+    var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
 
     File.WriteAllText(tempPath, config.ToJson());
 
@@ -447,7 +441,7 @@ public static class Deno
   {
     if (IsJsonLike(configOrPath))
     {
-      string tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
+      var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
       File.WriteAllText(tempPath, configOrPath);
       return tempPath;
     }
@@ -461,9 +455,7 @@ public static class Deno
   private static void DeleteIfTempFile(string resolvedPath, string original)
   {
     if (IsJsonLike(original))
-    {
       DeleteTempFile(resolvedPath);
-    }
   }
 
   private static void DeleteTempFile(string resolvedPath)

@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.7" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\DenoHost.Core\DenoHost.Core.csproj" />
     <ProjectReference Include="..\DenoHost.Runtime.linux-x64\DenoHost.Runtime.linux-x64.csproj" />
     <ProjectReference Include="..\DenoHost.Runtime.win-x64\DenoHost.Runtime.win-x64.csproj" />

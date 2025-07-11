@@ -2,23 +2,20 @@ using DenoHost.Core;
 
 const string SCRIPTS_PATH = "scripts";
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddOpenApi();
-
+var builder = WebApplication.CreateBuilder();
 var app = builder.Build();
 
-app.MapOpenApi();
 app.UseHttpsRedirection();
 
-app.MapGet("/var/a", static async context =>
+app.MapGet("/", static async (HttpContext context) =>
 {
-  string cwd = Path.Combine(Directory.GetCurrentDirectory(), SCRIPTS_PATH);
-  string command = "run";
+  var command = "run";
+  var workingDirectory = Path.Combine(Directory.GetCurrentDirectory(), SCRIPTS_PATH);
+  var options = new DenoExecuteBaseOptions() { WorkingDirectory = workingDirectory };
   string[] args = ["app.ts"];
+  var output = await Deno.Execute<string>(command, options, args);
 
-  await Deno.Execute(cwd, command, args);
-})
-.WithName("Execute");
+  return Results.Ok(output);
+});
 
 app.Run();
