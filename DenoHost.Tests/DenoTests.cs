@@ -4,30 +4,47 @@ using System.Text.Json;
 
 namespace DenoHost.Tests;
 
+class Result
+{
+  public required string Message { get; set; }
+  public bool HasImports { get; set; }
+}
 public class DenoTests
 {
   [Fact]
-  public void IsJsonLike_ReturnsTrue_ForValidJsonObject()
+  public void IsJsonFileLike_ReturnsFalse_ForValidJsonPath()
   {
-    var json = "{ \"foo\": 1 }";
-    var method = typeof(Deno).GetMethod("IsJsonLike", BindingFlags.NonPublic | BindingFlags.Static);
+    var notJsonPath = "{ \"foo\": 1 }";
+    var method = typeof(Deno).GetMethod("IsJsonPathLike", BindingFlags.NonPublic | BindingFlags.Static);
     Assert.NotNull(method);
 
-    var result = method.Invoke(null, [json]);
+    var result = method.Invoke(null, [notJsonPath]);
+    Assert.NotNull(result);
+    Assert.False((bool)result);
+  }
+
+  [Fact]
+  public void IsJsonFileLike_ReturnsTrue_ForJsoncPath()
+  {
+    var notJson = "foo.json";
+    var method = typeof(Deno).GetMethod("IsJsonPathLike", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var result = method.Invoke(null, [notJson]);
     Assert.NotNull(result);
     Assert.True((bool)result);
   }
 
   [Fact]
-  public void IsJsonLike_ReturnsFalse_ForNonJson()
+  public void IsJsonFileLike_ReturnsTrue_ForJsonPath()
   {
-    var notJson = "foo";
-    var method = typeof(Deno).GetMethod("IsJsonLike", BindingFlags.NonPublic | BindingFlags.Static);
+    var notJson = "foo.jsonc";
+    var method = typeof(Deno).GetMethod("IsJsonPathLike", BindingFlags.NonPublic | BindingFlags.Static);
     Assert.NotNull(method);
 
     var result = method.Invoke(null, [notJson]);
     Assert.NotNull(result);
-    Assert.False((bool)result);
+    Assert.True((bool)result);
   }
 
   [Fact]
@@ -336,31 +353,6 @@ public class DenoTests
   }
 
   [Theory]
-  [InlineData("{ \"test\": \"value\" }", true)]
-  [InlineData("[ \"item1\", \"item2\" ]", true)]
-  [InlineData("  { \"spaced\": true }  ", true)]
-  [InlineData("  [ \"spaced\", \"array\" ]  ", true)]
-  [InlineData("not json", false)]
-  [InlineData("{ incomplete", false)]
-  [InlineData("incomplete }", false)]
-  [InlineData("[ incomplete", false)]
-  [InlineData("incomplete ]", false)]
-  [InlineData("", false)]
-  [InlineData("   ", false)]
-  public void IsJsonLike_CorrectlyIdentifiesJsonStrings(string input, bool expected)
-  {
-    // Arrange
-    var method = typeof(Deno).GetMethod("IsJsonLike", BindingFlags.NonPublic | BindingFlags.Static);
-    Assert.NotNull(method);
-
-    // Act
-    var result = method.Invoke(null, [input]);
-
-    // Assert
-    Assert.Equal(expected, (bool)result!);
-  }
-
-  [Theory]
   [InlineData(new string[] { "arg1", "arg2" }, "cmd", "cmd arg1 arg2")]
   [InlineData(new string[] { "--flag", "value" }, "run", "run --flag value")]
   [InlineData(new string[0], "version", "version")]
@@ -525,7 +517,7 @@ public class DenoTests
     var nonExistentPath = "./non_existent_config.json";
 
     // Act & Assert
-    var ex = await Assert.ThrowsAsync<Exception>(async () =>
+    var ex = await Assert.ThrowsAsync<FileNotFoundException>(async () =>
     {
       await Deno.Execute("run", nonExistentPath, ["script.ts"]);
     });
@@ -799,13 +791,12 @@ public class DenoTests
     };
 
     // Act & Assert
-    var ex = await Assert.ThrowsAsync<Exception>(async () =>
+    var exception = await Record.ExceptionAsync(async () =>
     {
       await Deno.Execute(options);
     });
 
-    // Should fail due to deno.exe not found, not due to null args
-    Assert.Contains("not found", ex.Message);
+    Assert.Null(exception);
   }
 
   [Fact(Skip = "Requires deno.exe")]
@@ -823,7 +814,7 @@ public class DenoTests
     Assert.Equal(result2.Trim(), result3.Trim());
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact()]
   public async Task Execute_WithComplexImportMap_ResolvesCorrectly()
   {
     // Arrange
@@ -849,12 +840,13 @@ public class DenoTests
 
     try
     {
+
       // Act
-      var result = await Deno.Execute<dynamic>("run", config, ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<Result>("run", config, ["--allow-read", scriptPath]);
 
       // Assert
-      Assert.Equal("Import map test", (string)result.message);
-      Assert.True((bool)result.hasImports);
+      Assert.Equal("Import map test", (string)result.Message);
+      Assert.True((bool)result.HasImports);
     }
     finally
     {
