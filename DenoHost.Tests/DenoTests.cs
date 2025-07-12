@@ -1,14 +1,26 @@
 using DenoHost.Core;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DenoHost.Tests;
 
-class Result
+class ResultA
 {
+  [JsonPropertyName("message")]
   public required string Message { get; set; }
+
+  [JsonPropertyName("hasImports")]
   public bool HasImports { get; set; }
 }
+
+class ResultB
+{
+  public required string Message { get; set; }
+
+  public bool HasImports { get; set; }
+}
+
 public class DenoTests
 {
   [Fact]
@@ -81,7 +93,7 @@ public class DenoTests
   }
 
   // Integration test: requires deno.exe and a test script
-  [Fact(Skip = "Requires deno.exe and test script")]
+  [Fact(Skip = "dynamic does not yet work")]
   public async Task Execute_RunSimpleScript_ReturnsExpectedOutput()
   {
     // Arrange: create a simple Deno script
@@ -172,7 +184,7 @@ public class DenoTests
     });
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact]
   public async Task Execute_WithValidCommandString_DoesNotThrow()
   {
     // Act & Assert - should not throw for valid version command
@@ -181,7 +193,7 @@ public class DenoTests
     Assert.Contains("deno", result.ToLower());
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact]
   public async Task Execute_WithValidArgsArray_DoesNotThrow()
   {
     // Act & Assert - should not throw for valid version command
@@ -190,7 +202,7 @@ public class DenoTests
     Assert.Contains("deno", result.ToLower());
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact]
   public async Task Execute_WithBaseOptions_WorkingDirectoryIsRespected()
   {
     // Arrange
@@ -198,7 +210,7 @@ public class DenoTests
     var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = tempDir };
     var scriptPath = Path.Combine(tempDir, "test_cwd.ts");
 
-    File.WriteAllText(scriptPath, "console.log(JSON.stringify(Deno.cwd()));");
+    File.WriteAllText(scriptPath, "console.log(Deno.cwd());");
 
     try
     {
@@ -214,7 +226,7 @@ public class DenoTests
     }
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact]
   public async Task Execute_WithDenoConfig_ConfigIsUsed()
   {
     // Arrange
@@ -240,7 +252,7 @@ public class DenoTests
     }
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact]
   public async Task Execute_WithJsonConfigString_ConfigIsUsed()
   {
     // Arrange
@@ -408,7 +420,7 @@ public class DenoTests
     Assert.Null(exception);
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact(Skip = "dynamic does not yet work")]
   public async Task Execute_WithComplexDenoConfig_ExecutesSuccessfully()
   {
     // Arrange
@@ -451,7 +463,7 @@ public class DenoTests
     }
   }
 
-  [Fact()]
+  [Fact]
   public async Task Execute_WithBaseOptionsAndArgsArray_WorksCorrectly()
   {
     // Arrange
@@ -477,7 +489,7 @@ public class DenoTests
     });
   }
 
-  [Fact()]
+  [Fact]
   public async Task Execute_WithConfigPath_LoadsExternalConfig()
   {
     // Arrange
@@ -526,7 +538,7 @@ public class DenoTests
     Assert.True(ex.InnerException is FileNotFoundException || ex.Message.Contains("not exist"));
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact]
   public async Task Execute_GenericReturnType_DeserializesCorrectly()
   {
     // Arrange
@@ -558,7 +570,7 @@ public class DenoTests
     }
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact]
   public async Task Execute_StringReturnType_ReturnsRawOutput()
   {
     // Arrange
@@ -689,7 +701,7 @@ public class DenoTests
     }
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact]
   public async Task Execute_ConcurrentExecutions_HandleCorrectly()
   {
     // Arrange
@@ -711,7 +723,7 @@ public class DenoTests
     });
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact(Skip = "dynamic does not yet work")]
   public async Task Execute_WithEnvironmentVariables_WorksCorrectly()
   {
     // This test would require extending the Deno class to support environment variables
@@ -738,7 +750,7 @@ public class DenoTests
     }
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact(Skip = "dynamic does not yet work")]
   public async Task Execute_WithLargeOutput_HandlesCorrectly()
   {
     // Arrange
@@ -799,7 +811,7 @@ public class DenoTests
     Assert.Null(exception);
   }
 
-  [Fact(Skip = "Requires deno.exe")]
+  [Fact]
   public async Task Execute_MultipleOverloads_ProduceSameResult()
   {
     // Test that different overloads produce the same result for equivalent calls
@@ -814,8 +826,8 @@ public class DenoTests
     Assert.Equal(result2.Trim(), result3.Trim());
   }
 
-  [Fact()]
-  public async Task Execute_WithComplexImportMap_ResolvesCorrectly()
+  [Fact]
+  public async Task Execute_WithComplexImportMap_ResolvesCorrectly1()
   {
     // Arrange
     var config = new DenoConfig
@@ -842,7 +854,55 @@ public class DenoTests
     {
 
       // Act
-      var result = await Deno.Execute<Result>("run", config, ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<ResultA>("run", config, ["--allow-read", scriptPath]);
+
+      // Assert
+      Assert.Equal("Import map test", (string)result.Message);
+      Assert.True((bool)result.HasImports);
+    }
+    finally
+    {
+      File.Delete(scriptPath);
+    }
+  }
+
+  [Fact]
+  public async Task Execute_WithComplexImportMap_ResolvesCorrectly2()
+  {
+    var baseOptions = new DenoExecuteOptions
+    {
+      WorkingDirectory = Directory.GetCurrentDirectory(),
+      JsonSerializerOptions = new JsonSerializerOptions
+      {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+      },
+      Config = new DenoConfig
+      {
+        Imports = new Dictionary<string, string>
+        {
+          ["@/"] = "./",
+          ["@lib/"] = "./lib/",
+          ["@utils/"] = "./utils/",
+          ["std/"] = "https://deno.land/std@0.200.0/"
+        }
+      }
+    };
+
+    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "import_map_test.ts");
+    File.WriteAllText(scriptPath, @"
+      // This would normally import from the mapped paths
+      console.log(JSON.stringify({ 
+        message: 'Import map test', 
+        hasImports: true 
+      }));
+    ");
+
+    try
+    {
+
+      // Act
+      var result = await Deno.Execute<ResultB>("run", baseOptions, ["--allow-read", scriptPath]);
 
       // Assert
       Assert.Equal("Import map test", (string)result.Message);
