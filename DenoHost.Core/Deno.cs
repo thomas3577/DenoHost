@@ -351,35 +351,35 @@ public static class Deno
 
   private static async Task<T> InternalExecute<T>(string? workingDirectory, string? command, Type? resultType, string[]? args)
   {
-    workingDirectory ??= Directory.GetCurrentDirectory();
-
-    var fileName = GetDenoPath();
-    var arguments = BuildArguments(args, command);
-
-    if (string.IsNullOrWhiteSpace(arguments))
-      throw new ArgumentException("No command or arguments provided for Deno execution.");
-
-    // Logging
-    Logger?.LogInformation("Executing Deno: {FileName} {Arguments} in {WorkingDirectory}", fileName, arguments, workingDirectory);
-
     var stopwatch = Stopwatch.StartNew();
-
-    var process = new Process
-    {
-      StartInfo = new ProcessStartInfo
-      {
-        WorkingDirectory = workingDirectory,
-        FileName = fileName,
-        Arguments = arguments,
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-        UseShellExecute = false,
-        CreateNoWindow = true,
-      }
-    };
 
     try
     {
+      workingDirectory ??= Directory.GetCurrentDirectory();
+
+      var fileName = GetDenoPath();
+      var arguments = BuildArguments(args, command);
+
+      if (string.IsNullOrWhiteSpace(arguments))
+        throw new ArgumentException("No command or arguments provided for Deno execution.");
+
+      // Logging
+      Logger?.LogInformation("Executing Deno: {FileName} {Arguments} in {WorkingDirectory}", fileName, arguments, workingDirectory);
+
+      var process = new Process
+      {
+        StartInfo = new ProcessStartInfo
+        {
+          WorkingDirectory = workingDirectory,
+          FileName = fileName,
+          Arguments = arguments,
+          RedirectStandardOutput = true,
+          RedirectStandardError = true,
+          UseShellExecute = false,
+          CreateNoWindow = true,
+        }
+      };
+
       process.Start();
 
       string output = await process.StandardOutput.ReadToEndAsync();
@@ -412,7 +412,7 @@ public static class Deno
         ? (T)deserializedResult
         : throw new InvalidOperationException("Deserialization returned null.");
     }
-    catch (Exception ex) when (!(ex is InvalidOperationException))
+    catch (Exception ex)
     {
       stopwatch.Stop();
       Logger?.LogError(ex, "Deno execution encountered an error after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
