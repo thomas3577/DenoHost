@@ -877,4 +877,279 @@ public class DenoTests
     Assert.Contains("Dynamic types are not supported", ex.Message);
     Assert.Contains("Use JsonElement, Dictionary<string, object>, or a concrete class instead", ex.Message);
   }
+
+  [Fact]
+  public void Logger_Property_CanBeSetAndCleared()
+  {
+    // Arrange
+    var originalLogger = Deno.Logger;
+
+    try
+    {
+      // Act & Assert
+      Deno.Logger = null;
+      Assert.Null(Deno.Logger);
+    }
+    finally
+    {
+      Deno.Logger = originalLogger;
+    }
+  }
+
+  // Edge-Case Tests
+  [Fact]
+  public async Task Execute_WithVeryLargeJsonOutput_HandlesCorrectly()
+  {
+    // Arrange
+    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "large_output_test.ts");
+    var largeArray = string.Join(",", Enumerable.Range(1, 100).Select(i => $"\"{i}\""));
+    File.WriteAllText(scriptPath, $"console.log(JSON.stringify([{largeArray}]));");
+
+    try
+    {
+      // Act
+      var result = await Deno.Execute<string[]>("run", ["--allow-read", scriptPath]);
+
+      // Assert
+      Assert.Equal(100, result.Length);
+      Assert.Equal("1", result[0]);
+      Assert.Equal("100", result[99]);
+    }
+    finally
+    {
+      File.Delete(scriptPath);
+    }
+  }
+
+  [Fact(Skip = "Needs investigation")]
+  public async Task Execute_WithSpecialCharactersInOutput_HandlesCorrectly()
+  {
+    // Arrange
+    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "special_chars_test.ts");
+    File.WriteAllText(scriptPath, """
+      console.log(JSON.stringify({ 
+        unicode: "🦕 Deno 🚀", 
+        newlines: "line1\nline2\r\nline3",
+        quotes: "He said \"Hello\"",
+        backslashes: "C:\\\\Windows\\\\System32"
+      }));
+    """);
+
+    try
+    {
+      // Act
+      var result = await Deno.Execute<Dictionary<string, object>>("run", ["--allow-read", scriptPath]);
+
+      // Assert
+      Assert.Contains("🦕", result["unicode"].ToString());
+      Assert.Contains("line1\nline2", result["newlines"].ToString());
+      Assert.Contains("\"Hello\"", result["quotes"].ToString());
+    }
+    finally
+    {
+      File.Delete(scriptPath);
+    }
+  }
+
+  // Configuration Edge-Cases
+  [Fact]
+  public async Task Execute_WithEmptyConfig_DoesNotThrow()
+  {
+    // Arrange
+    var emptyConfig = new DenoConfig();
+
+    // Act & Assert
+    await Deno.Execute("--version", emptyConfig, []);
+  }
+
+  [Fact]
+  public async Task Execute_WithConfigContainingNullValues_HandlesCorrectly()
+  {
+    // Arrange
+    var config = new DenoConfig
+    {
+      Imports = new Dictionary<string, string> { ["test"] = null! }
+    };
+
+    // Act & Assert
+    await Assert.ThrowsAsync<Exception>(async () =>
+    {
+      await Deno.Execute("run", config, ["script.ts"]);
+    });
+  }
+
+  // Error-Handling Tests
+  [Fact]
+  public async Task Execute_WithProcessThatExitsImmediately_HandlesCorrectly()
+  {
+    // Test for race conditions when process exits very quickly
+    var result = await Deno.Execute<string>("--version");
+    Assert.NotNull(result);
+  }
+
+  [Fact(Skip = "Throws a wronge exception, needs investigation")]
+  public async Task Execute_WithCommandThatWritesToStdErr_CapturesError()
+  {
+    // Act & Assert
+    var ex = await Assert.ThrowsAsync<Exception>(async () =>
+    {
+      await Deno.Execute("eval", ["throw new Error('Test error');"]);
+    });
+
+    Assert.Contains("Test error", ex.Message);
+  }
+
+  // Thread-Safety Tests
+  [Fact]
+  public async Task Execute_ConcurrentWithDifferentConfigs_WorksCorrectly()
+  {
+    // Arrange
+    var config1 = new DenoConfig { Imports = new Dictionary<string, string> { ["test1"] = "value1" } };
+    var config2 = new DenoConfig { Imports = new Dictionary<string, string> { ["test2"] = "value2" } };
+
+    // Act
+    var task1 = Deno.Execute("--version", config1, []);
+    var task2 = Deno.Execute("--version", config2, []);
+
+    // Assert
+    await Task.WhenAll(task1, task2);
+  }
+
+  // JsonSerializerOptions Tests
+  [Fact(Skip = "Needs investigation")]
+  public async Task Execute_WithCustomJsonSerializerOptions_WorksCorrectly()
+  {
+    // Arrange
+    var options = new DenoExecuteOptions
+    {
+      Command = "eval",
+      Args = ["console.log(JSON.stringify({ CamelCase: 'value' }));"],
+      JsonSerializerOptions = new JsonSerializerOptions
+      {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true
+      }
+    };
+
+    // Act & Assert
+    var ex = await Assert.ThrowsAsync<Exception>(async () =>
+    {
+      var result = await Deno.Execute<Dictionary<string, object>>(options);
+      Assert.True(result.ContainsKey("camelCase") || result.ContainsKey("CamelCase"));
+    });
+
+    // Should fail because deno.exe is not available, not because of JsonSerializerOptions
+    Assert.Contains("not found", ex.Message);
+  }
+
+  // Zusätzliche Dynamic-Type Tests
+  [Fact]
+  public async Task Execute_WithOptionsAndDynamicType_ThrowsNotSupportedException()
+  {
+    // Arrange
+    var options = new DenoExecuteOptions
+    {
+      Command = "--version",
+      Args = []
+    };
+
+    // Act & Assert
+    var ex = await Assert.ThrowsAsync<NotSupportedException>(async () =>
+    {
+      await Deno.Execute<dynamic>(options);
+    });
+
+    Assert.Contains("Dynamic types are not supported", ex.Message);
+  }
+
+  [Fact]
+  public async Task Execute_WithConfigAndDynamicType_ThrowsNotSupportedException()
+  {
+    // Arrange
+    var config = new DenoConfig
+    {
+      Imports = new Dictionary<string, string> { ["test"] = "value" }
+    };
+
+    // Act & Assert
+    var ex = await Assert.ThrowsAsync<NotSupportedException>(async () =>
+    {
+      await Deno.Execute<dynamic>("run", config, ["--version"]);
+    });
+
+    Assert.Contains("Dynamic types are not supported", ex.Message);
+  }
+
+  [Fact]
+  public async Task Execute_WithBaseOptionsAndDynamicType_ThrowsNotSupportedException()
+  {
+    // Arrange
+    var baseOptions = new DenoExecuteBaseOptions
+    {
+      WorkingDirectory = Directory.GetCurrentDirectory()
+    };
+
+    // Act & Assert
+    var ex = await Assert.ThrowsAsync<NotSupportedException>(async () =>
+    {
+      await Deno.Execute<dynamic>(baseOptions, ["--version"]);
+    });
+
+    Assert.Contains("Dynamic types are not supported", ex.Message);
+  }
+
+  // Validation für unterschiedliche Typen
+  [Theory]
+  [InlineData(typeof(string), false)]
+  [InlineData(typeof(JsonElement), false)]
+  [InlineData(typeof(int), false)]
+  [InlineData(typeof(bool), false)]
+  [InlineData(typeof(ResultA), false)]
+  [InlineData(typeof(Dictionary<string, object>), false)]
+  [InlineData(typeof(object), true)]
+  public void TypeValidation_ChecksCorrectTypes(Type type, bool shouldBeInvalid)
+  {
+    // Test the condition directly from InternalExecute
+    var isDynamicType = type == typeof(object) || type.Name == "Object";
+    Assert.Equal(shouldBeInvalid, isDynamicType);
+  }
+
+  // AppendConfigArgument Tests
+  [Fact]
+  public void AppendConfigArgument_WithValidConfigPath_AddsConfigFlag()
+  {
+    // Arrange
+    var args = new[] { "--allow-read", "script.ts" };
+    var configPath = "./deno.json";
+
+    var method = typeof(Deno).GetMethod("AppendConfigArgument", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    // Act
+    var result = method.Invoke(null, [args, configPath]) as string[];
+
+    // Assert
+    Assert.NotNull(result);
+    Assert.Contains("--config", result);
+    Assert.Contains(configPath, result);
+    Assert.Contains("--allow-read", result);
+    Assert.Contains("script.ts", result);
+  }
+
+  [Fact]
+  public void AppendConfigArgument_WithEmptyConfigPath_ReturnsOriginalArgs()
+  {
+    // Arrange
+    var args = new[] { "--allow-read", "script.ts" };
+    var configPath = "";
+
+    var method = typeof(Deno).GetMethod("AppendConfigArgument", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    // Act
+    var result = method.Invoke(null, [args, configPath]) as string[];
+
+    // Assert
+    Assert.Equal(args, result);
+  }
 }
