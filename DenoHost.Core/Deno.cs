@@ -351,6 +351,15 @@ public static class Deno
 
   private static async Task<T> InternalExecute<T>(string? workingDirectory, string? command, Type? resultType, JsonSerializerOptions? jsonSerializerOptions, ILogger? logger, string[]? args)
   {
+    ArgumentNullException.ThrowIfNull(resultType);
+
+    // dynamic nicht unterstützen
+    if (resultType == typeof(object) || resultType.Name == "Object")
+    {
+      throw new NotSupportedException(
+        "Dynamic types are not supported. Use JsonElement, Dictionary<string, object>, or a concrete class instead.");
+    }
+
     var stopwatch = Stopwatch.StartNew();
 
     Logger = logger ?? Logger;
@@ -405,8 +414,6 @@ public static class Deno
 
       Logger?.LogInformation("Deno execution completed successfully in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
       Logger?.LogDebug("Deno output: {Output}", output);
-
-      ArgumentNullException.ThrowIfNull(resultType);
 
       var typeName = typeof(T).Name;
       var deserializedResult = typeName == "String" ? output : JsonSerializer.Deserialize(output, resultType, jsonSerializerOptions);

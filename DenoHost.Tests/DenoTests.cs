@@ -92,28 +92,6 @@ public class DenoTests
     });
   }
 
-  // Integration test: requires deno.exe and a test script
-  [Fact(Skip = "dynamic does not yet work")]
-  public async Task Execute_RunSimpleScript_ReturnsExpectedOutput()
-  {
-    // Arrange: create a simple Deno script
-    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "test_script.ts");
-    File.WriteAllText(scriptPath, "console.log(JSON.stringify({ hello: 'world' }));");
-
-    try
-    {
-      // Act
-      var result = await Deno.Execute<dynamic>("run", ["--allow-read", scriptPath]);
-
-      // Assert
-      Assert.Equal("world", (string)result.hello);
-    }
-    finally
-    {
-      File.Delete(scriptPath);
-    }
-  }
-
   [Fact]
   public async Task Execute_WithNullOptions_ThrowsArgumentNullException()
   {
@@ -420,49 +398,6 @@ public class DenoTests
     Assert.Null(exception);
   }
 
-  [Fact(Skip = "dynamic does not yet work")]
-  public async Task Execute_WithComplexDenoConfig_ExecutesSuccessfully()
-  {
-    // Arrange
-    var config = new DenoConfig
-    {
-      CompilerOptions = new Dictionary<string, object>
-      {
-        ["strict"] = true,
-        ["target"] = "ES2022"
-      },
-      Imports = new Dictionary<string, string>
-      {
-        ["@std/"] = "https://deno.land/std@0.200.0/",
-        ["@test/"] = "./test/"
-      },
-      Tasks = new Dictionary<string, string>
-      {
-        ["test"] = "deno test --allow-all",
-        ["start"] = "deno run --allow-all main.ts"
-      }
-    };
-
-    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "complex_config_test.ts");
-    File.WriteAllText(scriptPath, @"
-      console.log('Complex config test');
-      console.log(JSON.stringify({ success: true }));
-    ");
-
-    try
-    {
-      // Act
-      var result = await Deno.Execute<dynamic>("run", config, ["--allow-read", scriptPath]);
-
-      // Assert
-      Assert.True((bool)result.success);
-    }
-    finally
-    {
-      File.Delete(scriptPath);
-    }
-  }
-
   [Fact]
   public async Task Execute_WithBaseOptionsAndArgsArray_WorksCorrectly()
   {
@@ -723,59 +658,6 @@ public class DenoTests
     });
   }
 
-  [Fact(Skip = "dynamic does not yet work")]
-  public async Task Execute_WithEnvironmentVariables_WorksCorrectly()
-  {
-    // This test would require extending the Deno class to support environment variables
-    // For now, test basic execution with script that reads environment
-
-    // Arrange
-    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "env_test.ts");
-    File.WriteAllText(scriptPath, @"
-      const env = Deno.env.get('PATH');
-      console.log(JSON.stringify({ hasPath: !!env }));
-    ");
-
-    try
-    {
-      // Act
-      var result = await Deno.Execute<dynamic>("run", ["--allow-env", scriptPath]);
-
-      // Assert
-      Assert.True((bool)result.hasPath);
-    }
-    finally
-    {
-      File.Delete(scriptPath);
-    }
-  }
-
-  [Fact(Skip = "dynamic does not yet work")]
-  public async Task Execute_WithLargeOutput_HandlesCorrectly()
-  {
-    // Arrange
-    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "large_output_test.ts");
-    File.WriteAllText(scriptPath, @"
-      const largeArray = Array.from({ length: 1000 }, (_, i) => ({ id: i, value: `item_${i}` }));
-      console.log(JSON.stringify({ count: largeArray.length, first: largeArray[0], last: largeArray[999] }));
-    ");
-
-    try
-    {
-      // Act
-      var result = await Deno.Execute<dynamic>("run", [scriptPath]);
-
-      // Assert
-      Assert.Equal(1000, (int)result.count);
-      Assert.Equal(0, (int)result.first.id);
-      Assert.Equal(999, (int)result.last.id);
-    }
-    finally
-    {
-      File.Delete(scriptPath);
-    }
-  }
-
   [Fact]
   public async Task Execute_WithTimeoutScenario_ThrowsAppropriateException()
   {
@@ -931,5 +813,68 @@ public class DenoTests
 
     // Should contain both standard output and error information
     Assert.True(ex.Message.Contains("Standard Output:") || ex.Message.Contains("Standard Error:"));
+  }
+
+  [Fact]
+  public async Task Execute_RunSimpleScript_ReturnsExpectedOutput()
+  {
+    // Arrange
+    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "test_script.ts");
+    File.WriteAllText(scriptPath, "console.log(JSON.stringify({ hello: 'world' }));");
+
+    try
+    {
+      // Act - JsonElement statt dynamic
+      var result = await Deno.Execute<JsonElement>("run", ["--allow-read", scriptPath]);
+
+      // Assert
+      Assert.Equal("world", result.GetProperty("hello").GetString());
+    }
+    finally
+    {
+      File.Delete(scriptPath);
+    }
+  }
+
+  [Fact]
+  public async Task Execute_RunSimpleScript_WithDictionary()
+  {
+    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "test_script.ts");
+    File.WriteAllText(scriptPath, "console.log(JSON.stringify({ hello: 'world' }));");
+
+    // Act
+    var result = await Deno.Execute<Dictionary<string, object>>("run", ["--allow-read", scriptPath]);
+
+    // Assert
+    var helloElement = (JsonElement)result["hello"];
+    Assert.Equal("world", helloElement.GetString());
+  }
+
+  [Fact]
+  public async Task Execute_WithDynamicType_ThrowsNotSupportedException()
+  {
+    // Act & Assert
+    var ex = await Assert.ThrowsAsync<NotSupportedException>(async () =>
+    {
+      await Deno.Execute<dynamic>("--version");
+    });
+
+    // Assert
+    Assert.Contains("Dynamic types are not supported", ex.Message);
+    Assert.Contains("Use JsonElement, Dictionary<string, object>, or a concrete class instead", ex.Message);
+  }
+
+  [Fact]
+  public async Task Execute_WithObjectType_ThrowsNotSupportedException()
+  {
+    // Act & Assert
+    var ex = await Assert.ThrowsAsync<NotSupportedException>(async () =>
+    {
+      await Deno.Execute<object>("--version");
+    });
+
+    // Assert
+    Assert.Contains("Dynamic types are not supported", ex.Message);
+    Assert.Contains("Use JsonElement, Dictionary<string, object>, or a concrete class instead", ex.Message);
   }
 }
