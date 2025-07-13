@@ -921,7 +921,7 @@ public class DenoTests
     }
   }
 
-  [Fact(Skip = "Needs investigation")]
+  [Fact]
   public async Task Execute_WithSpecialCharactersInOutput_HandlesCorrectly()
   {
     // Arrange
@@ -931,9 +931,9 @@ public class DenoTests
         unicode: "🦕 Deno 🚀", 
         newlines: "line1\nline2\r\nline3",
         quotes: "He said \"Hello\"",
-        backslashes: "C:\\\\Windows\\\\System32"
+        backslashes: "C:\\Windows\\System32"
       }));
-    """);
+    """, System.Text.Encoding.UTF8);
 
     try
     {
@@ -944,6 +944,7 @@ public class DenoTests
       Assert.Contains("🦕", result["unicode"].ToString());
       Assert.Contains("line1\nline2", result["newlines"].ToString());
       Assert.Contains("\"Hello\"", result["quotes"].ToString());
+      Assert.Contains("C:\\Windows\\System32", result["backslashes"].ToString());
     }
     finally
     {
@@ -987,16 +988,42 @@ public class DenoTests
     Assert.NotNull(result);
   }
 
-  [Fact(Skip = "Throws a wronge exception, needs investigation")]
-  public async Task Execute_WithCommandThatWritesToStdErr_CapturesError()
+  [Fact]
+  public async Task Execute_WithCommandThatWritesToStdErr_CapturesError1()
   {
     // Act & Assert
     var ex = await Assert.ThrowsAsync<Exception>(async () =>
     {
-      await Deno.Execute("eval", ["throw new Error('Test error');"]);
+      await Deno.Execute("eval", ["\"console.error('Test error'); Deno.exit(1);\""]);
     });
 
     Assert.Contains("Test error", ex.Message);
+  }
+
+  [Fact]
+  public async Task Execute_WithCommandThatWritesToStdErr_CapturesError2()
+  {
+    // Arrange
+    var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "stderr_test.ts");
+    File.WriteAllText(scriptPath, """
+      console.error("Test error");
+      Deno.exit(1);
+    """);
+
+    try
+    {
+      // Act & Assert
+      var ex = await Assert.ThrowsAsync<Exception>(async () =>
+      {
+        await Deno.Execute("run", ["--allow-read", scriptPath]);
+      });
+
+      Assert.Contains("Test error", ex.Message);
+    }
+    finally
+    {
+      File.Delete(scriptPath);
+    }
   }
 
   // Thread-Safety Tests
@@ -1016,14 +1043,14 @@ public class DenoTests
   }
 
   // JsonSerializerOptions Tests
-  [Fact(Skip = "Needs investigation")]
+  [Fact]
   public async Task Execute_WithCustomJsonSerializerOptions_WorksCorrectly()
   {
     // Arrange
     var options = new DenoExecuteOptions
     {
       Command = "eval",
-      Args = ["console.log(JSON.stringify({ CamelCase: 'value' }));"],
+      Args = ["\"console.log(JSON.stringify({ CamelCase: 'value' }));\""],
       JsonSerializerOptions = new JsonSerializerOptions
       {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -1032,14 +1059,8 @@ public class DenoTests
     };
 
     // Act & Assert
-    var ex = await Assert.ThrowsAsync<Exception>(async () =>
-    {
-      var result = await Deno.Execute<Dictionary<string, object>>(options);
-      Assert.True(result.ContainsKey("camelCase") || result.ContainsKey("CamelCase"));
-    });
-
-    // Should fail because deno.exe is not available, not because of JsonSerializerOptions
-    Assert.Contains("not found", ex.Message);
+    var result = await Deno.Execute<Dictionary<string, object>>(options);
+    Assert.True(result.ContainsKey("CamelCase"));
   }
 
   // Zusätzliche Dynamic-Type Tests

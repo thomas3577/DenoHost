@@ -389,6 +389,8 @@ public static class Deno
           RedirectStandardError = true,
           UseShellExecute = false,
           CreateNoWindow = true,
+          StandardOutputEncoding = System.Text.Encoding.UTF8,
+          StandardErrorEncoding = System.Text.Encoding.UTF8
         }
       };
 
