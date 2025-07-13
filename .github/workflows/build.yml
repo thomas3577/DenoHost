@@ -1,5 +1,8 @@
 name: Build and Publish NuGet Package
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [main]
