@@ -27,7 +27,7 @@
       <DenoDownloadFilename>deno-x86_64-apple-darwin.zip</DenoDownloadFilename>
     </PropertyGroup>
 
-    <Message Text="DownloadFilename resolved to: $(DownloadFilename)" Importance="High" />
+    <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
 
     <Exec Condition="'$(OS)' == 'Windows_NT'"
           Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
