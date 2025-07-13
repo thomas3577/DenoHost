@@ -1,6 +1,8 @@
 # DenoHost
 
-![Build & Publish](https://github.com/thomas3577/DenoHost/actions/workflows/build.yml/badge.svg)
+![Build](https://github.com/thomas3577/DenoHost/actions/workflows/build.yml/badge.svg)
+![NuGet](https://img.shields.io/nuget/v/DenoHost.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
 > 🦕 Use Deno from within your .NET applications – cross-platform, cleanly
 > packaged, and NuGet-ready.
@@ -44,14 +46,11 @@ provides a simple, consistent API for execution.
 ```csharp
 using DenoHost;
 
-await Deno.Execute("console.log('Hello from Deno');");
-```
+string cwd = Path.Combine(Directory.GetCurrentDirectory(), SCRIPTS_PATH);
+string command = "run";
+string[] args = ["app.ts"];
 
-Or with result:
-
-```csharp
-string? output = await Deno.Execute<string>("console.log('42');");
-Console.WriteLine(output); // "42"
+await Deno.Execute(cwd, command, args);
 ```
 
 ## 🛠️ Requirements

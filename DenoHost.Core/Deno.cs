@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace DenoHost.Core;
 
@@ -16,13 +17,18 @@ public static class Deno
   private const string DenoExecutableName = "deno.exe";
 
   /// <summary>
+  /// Optional logger for Deno operations. Set this to enable logging.
+  /// </summary>
+  public static ILogger? Logger { get; set; }
+
+  /// <summary>
   /// Executes a Deno command with the specified options.
   /// </summary>
   /// <param name="options">The execution options for Deno.</param>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(DenoExecuteOptions options)
   {
-    await Execute<object>(options);
+    await Execute<string>(options);
   }
 
   /// <summary>
@@ -64,7 +70,7 @@ public static class Deno
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command)
   {
-    await Execute<object>(command);
+    await Execute<string>(command);
   }
 
   /// <summary>
@@ -79,7 +85,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command)
   {
-    return await InternalExecute<T>(null, command, typeof(T), null);
+    return await InternalExecute<T>(null, command, typeof(T), null, null, null);
   }
 
   /// <summary>
@@ -95,7 +101,7 @@ public static class Deno
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions)
   {
-    await Execute<object>(command, baseOptions);
+    await Execute<string>(command, baseOptions);
   }
 
   /// <summary>
@@ -112,7 +118,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions)
   {
-    return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T), null);
+    return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, null);
   }
 
   /// <summary>
@@ -128,7 +134,7 @@ public static class Deno
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, string[] args)
   {
-    await Execute<object>(command, args);
+    await Execute<string>(command, args);
   }
 
   /// <summary>
@@ -145,7 +151,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, string[] args)
   {
-    return await InternalExecute<T>(null, command, typeof(T), args);
+    return await InternalExecute<T>(null, command, typeof(T), null, null, args);
   }
 
   /// <summary>
@@ -163,7 +169,7 @@ public static class Deno
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions, string[] args)
   {
-    await Execute<object>(command, baseOptions, args);
+    await Execute<string>(command, baseOptions, args);
   }
 
   /// <summary>
@@ -182,7 +188,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions, string[] args)
   {
-    return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T), args);
+    return await InternalExecute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, args);
   }
 
   /// <summary>
@@ -196,7 +202,7 @@ public static class Deno
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string[] args)
   {
-    await Execute<object>(args);
+    await Execute<string>(args);
   }
 
   /// <summary>
@@ -211,7 +217,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string[] args)
   {
-    return await InternalExecute<T>(null, null, typeof(T), args);
+    return await InternalExecute<T>(null, null, typeof(T), null, null, args);
   }
 
   /// <summary>
@@ -227,7 +233,7 @@ public static class Deno
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(DenoExecuteBaseOptions baseOptions, string[] args)
   {
-    await Execute<object>(baseOptions, args);
+    await Execute<string>(baseOptions, args);
   }
 
   /// <summary>
@@ -244,7 +250,9 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(DenoExecuteBaseOptions baseOptions, string[] args)
   {
-    return await InternalExecute<T>(baseOptions.WorkingDirectory, null, typeof(T), args);
+    return baseOptions == null
+      ? throw new ArgumentNullException(nameof(baseOptions))
+      : await InternalExecute<T>(baseOptions.WorkingDirectory, null, typeof(T), null, null, args);
   }
 
   /// <summary>
@@ -269,7 +277,7 @@ public static class Deno
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, string configOrPath, string[] args)
   {
-    await Execute<object>(command, configOrPath, args);
+    await Execute<string>(command, configOrPath, args);
   }
 
   /// <summary>
@@ -296,8 +304,8 @@ public static class Deno
   public static async Task<T> Execute<T>(string command, string configOrPath, string[] args)
   {
     var configPath = EnsureConfigFile(configOrPath);
-    var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
-    var result = await InternalExecute<T>(null, command, typeof(T), allArgs);
+    var allArgs = AppendConfigArgument(args, configPath);
+    var result = await InternalExecute<T>(null, command, typeof(T), null, null, allArgs);
 
     DeleteIfTempFile(configPath, configOrPath);
 
@@ -313,7 +321,7 @@ public static class Deno
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, DenoConfig config, string[] args)
   {
-    await Execute<object>(command, config, args);
+    await Execute<string>(command, config, args);
   }
 
   /// <summary>
@@ -327,11 +335,11 @@ public static class Deno
   public static async Task<T> Execute<T>(string command, DenoConfig config, string[] args)
   {
     var configPath = WriteTempConfig(config);
-    var allArgs = args.Prepend("--config").Prepend(configPath).ToArray();
+    var allArgs = AppendConfigArgument(args, configPath);
 
     try
     {
-      var result = await InternalExecute<T>(null, command, typeof(T), allArgs);
+      var result = await InternalExecute<T>(null, command, typeof(T), null, null, allArgs);
 
       return result;
     }
@@ -341,60 +349,104 @@ public static class Deno
     }
   }
 
-  private static async Task<T> InternalExecute<T>(string? workingDirectory, string? command, Type? resultType, string[]? args)
+  private static async Task<T> InternalExecute<T>(string? workingDirectory, string? command, Type? resultType, JsonSerializerOptions? jsonSerializerOptions, ILogger? logger, string[]? args)
   {
-    workingDirectory ??= Directory.GetCurrentDirectory();
+    ArgumentNullException.ThrowIfNull(resultType);
 
-    var fileName = GetDenoPath();
-    var arguments = BuildArguments(args, command);
-
-    var process = new Process
+    // dynamic nicht unterstützen
+    if (resultType == typeof(object) || resultType.Name == "Object")
     {
-      StartInfo = new ProcessStartInfo
+      throw new NotSupportedException(
+        "Dynamic types are not supported. Use JsonElement, Dictionary<string, object>, or a concrete class instead.");
+    }
+
+    var stopwatch = Stopwatch.StartNew();
+
+    Logger = logger ?? Logger;
+
+    try
+    {
+      workingDirectory ??= Directory.GetCurrentDirectory();
+
+      var fileName = GetDenoPath();
+      var arguments = BuildArguments(args, command);
+
+      if (string.IsNullOrWhiteSpace(arguments))
+        throw new ArgumentException("No command or arguments provided for Deno execution.");
+
+      // Logging
+      Logger?.LogInformation("Deno execution on: {WorkingDirectory}", workingDirectory);
+      Logger?.LogInformation("Command: deno {arguments} {fileName}", string.Join(' ', arguments), fileName);
+
+      var process = new Process
       {
-        WorkingDirectory = workingDirectory,
-        FileName = fileName,
-        Arguments = arguments,
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-        UseShellExecute = false,
-        CreateNoWindow = true,
+        StartInfo = new ProcessStartInfo
+        {
+          WorkingDirectory = workingDirectory,
+          FileName = fileName,
+          Arguments = arguments,
+          RedirectStandardOutput = true,
+          RedirectStandardError = true,
+          UseShellExecute = false,
+          CreateNoWindow = true,
+          StandardOutputEncoding = System.Text.Encoding.UTF8,
+          StandardErrorEncoding = System.Text.Encoding.UTF8
+        }
+      };
+
+      process.Start();
+
+      string output = await process.StandardOutput.ReadToEndAsync();
+      string error = await process.StandardError.ReadToEndAsync();
+
+      await process.WaitForExitAsync();
+      stopwatch.Stop();
+
+      if (process.ExitCode != 0)
+      {
+        Logger?.LogError("Deno execution failed with exit code {ExitCode} after {ElapsedMs}ms. Error: {Error}",
+          process.ExitCode, stopwatch.ElapsedMilliseconds, error);
+
+        throw new Exception(
+          $"Deno exited with code {process.ExitCode}.{Environment.NewLine}" +
+          $"Standard Output:{Environment.NewLine}{output}{Environment.NewLine}" +
+          $"Standard Error:{Environment.NewLine}{error}"
+        );
       }
-    };
 
-    process.Start();
+      Logger?.LogInformation("Deno execution completed successfully in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+      Logger?.LogDebug("Deno output: {Output}", output);
 
-    string output = await process.StandardOutput.ReadToEndAsync();
-    string error = await process.StandardError.ReadToEndAsync();
+      var typeName = typeof(T).Name;
+      var deserializedResult = typeName == "String" ? output : JsonSerializer.Deserialize(output, resultType, jsonSerializerOptions);
 
-    await process.WaitForExitAsync();
-
-    if (process.ExitCode != 0)
-      throw new Exception(
-        $"Deno exited with code {process.ExitCode}.{Environment.NewLine}" +
-        $"Standard Output:{Environment.NewLine}{output}{Environment.NewLine}" +
-        $"Standard Error:{Environment.NewLine}{error}"
-      );
-
-    if (resultType == null)
-      throw new ArgumentNullException(nameof(resultType), "Result type cannot be null.");
-
-    var deserializedResult = JsonSerializer.Deserialize(output, resultType);
-
-    return deserializedResult != null
-      ? (T)deserializedResult
-      : throw new InvalidOperationException("Deserialization returned null.");
+      return deserializedResult != null
+        ? (T)deserializedResult
+        : throw new InvalidOperationException("Deserialization returned null.");
+    }
+    catch (Exception ex)
+    {
+      stopwatch.Stop();
+      Logger?.LogError(ex, "Deno execution encountered an error after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+      throw;
+    }
   }
 
   private static string BuildArguments(string[]? args, string? command = null)
   {
     var argsStr = string.Join(" ", args ?? []);
     if (command == null)
-    {
       return argsStr;
-    }
 
-    return $"{command} {argsStr}";
+    return $"{command} {argsStr}".Trim();
+  }
+
+  private static string[] AppendConfigArgument(string[] args, string configPath)
+  {
+    if (string.IsNullOrWhiteSpace(configPath))
+      return args;
+
+    return [.. args, "--config", configPath];
   }
 
   private static string GetDenoPath()
@@ -416,38 +468,43 @@ public static class Deno
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
       return "linux-x64";
     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-    {
       return RuntimeInformation.OSArchitecture == Architecture.Arm64
           ? "osx-arm64"
           : "osx-x64";
-    }
 
     throw new PlatformNotSupportedException("Unsupported OS platform.");
   }
 
-
   private static string WriteTempConfig(DenoConfig config)
   {
-    string tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
+    var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
 
     File.WriteAllText(tempPath, config.ToJson());
+    Logger?.LogDebug("Created temporary config file: {ConfigPath}", tempPath);
 
     return tempPath;
   }
 
-  private static bool IsJsonLike(string input)
+  private static bool IsJsonPathLike(string input)
   {
+    if (string.IsNullOrWhiteSpace(input))
+      return false;
+
     input = input.Trim();
 
-    return input.StartsWith('{') && input.EndsWith('}') ||
-           input.StartsWith('[') && input.EndsWith(']');
+    // Simple config path detection: Does it end with .json or .jsonc?
+    if (input.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
+        input.EndsWith(".jsonc", StringComparison.OrdinalIgnoreCase))
+      return true;
+
+    return false;
   }
 
   private static string EnsureConfigFile(string configOrPath)
   {
-    if (IsJsonLike(configOrPath))
+    if (!IsJsonPathLike(configOrPath))
     {
-      string tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
+      var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
       File.WriteAllText(tempPath, configOrPath);
       return tempPath;
     }
@@ -460,10 +517,8 @@ public static class Deno
 
   private static void DeleteIfTempFile(string resolvedPath, string original)
   {
-    if (IsJsonLike(original))
-    {
+    if (!IsJsonPathLike(original))
       DeleteTempFile(resolvedPath);
-    }
   }
 
   private static void DeleteTempFile(string resolvedPath)
@@ -471,8 +526,14 @@ public static class Deno
     try
     {
       if (File.Exists(resolvedPath))
+      {
         File.Delete(resolvedPath);
+        Logger?.LogDebug("Deleted temporary file: {FilePath}", resolvedPath);
+      }
     }
-    catch { /* ignore */ }
+    catch (Exception ex)
+    {
+      Logger?.LogWarning(ex, "Failed to delete temporary file: {FilePath}", resolvedPath);
+    }
   }
 }
