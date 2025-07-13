@@ -30,6 +30,24 @@ provides a simple, consistent API for execution.
 
 ## 📦 NuGet Packages
 
+Die Packages sind sowohl über NuGet.org als auch über GitHub Packages verfügbar:
+
+### NuGet.org
+
+```bash
+dotnet add package DenoHost.Core
+```
+
+### GitHub Packages
+
+```bash
+# Zunächst GitHub Packages als Quelle hinzufügen
+dotnet nuget add source --username USERNAME --password GITHUB_TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/thomas3577/index.json"
+
+# Dann Package installieren
+dotnet add package DenoHost.Core --source github
+```
+
 | Package                        | Description                  | Platforms     |
 | ------------------------------ | ---------------------------- | ------------- |
 | `DenoHost.Core`                | Core execution logic (API)   | all           |
@@ -67,3 +85,4 @@ MIT License © Thomas Huber
 
 - [deno.com](https://deno.com/)
 - [NuGet Gallery](https://www.nuget.org/packages?q=DenoHost)
+- [GitHub Packages](https://github.com/thomas3577/deno-dotnet/packages)

@@ -2,6 +2,7 @@ name: Build and Publish NuGet Package
 
 permissions:
   contents: write
+  packages: write
 
 on:
   push:
@@ -168,6 +169,9 @@ jobs:
       - name: Push Runtime Package to NuGet
         run: dotnet nuget push ./nupkg/runtime/${{ matrix.rid }}/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
+      - name: Push Runtime Package to GitHub Packages
+        run: dotnet nuget push ./nupkg/runtime/${{ matrix.rid }}/*.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload Runtime Package to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -186,6 +190,9 @@ jobs:
 
       - name: Push Core Package to NuGet
         run: dotnet nuget push ./nupkg/core/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+
+      - name: Push Core Package to GitHub Packages
+        run: dotnet nuget push ./nupkg/core/*.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Core Package to GitHub Release
         uses: softprops/action-gh-release@v2
