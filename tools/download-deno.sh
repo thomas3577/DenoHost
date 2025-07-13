@@ -29,7 +29,8 @@ else
 fi
 
 DOWNLOAD_URL="https://github.com/denoland/deno/releases/download/v$DENO_VERSION/$DOWNLOAD_FILENAME"
-TMP_ZIP="/tmp/deno.zip"
+# Use unique temp file name to avoid conflicts when multiple projects build in parallel
+TMP_ZIP="/tmp/deno-$(uuidgen | cut -d'-' -f1).zip"
 EXTRACT_DIR=$(dirname "$EXECUTABLE_PATH")
 
 echo "Downloading Deno from $DOWNLOAD_URL"
@@ -37,7 +38,12 @@ curl -L "$DOWNLOAD_URL" -o "$TMP_ZIP"
 
 echo "Extracting to $EXTRACT_DIR"
 unzip -o "$TMP_ZIP" -d "$EXTRACT_DIR"
-rm "$TMP_ZIP"
 
+# Clean up temp file with error handling
+if ! rm "$TMP_ZIP" 2>/dev/null; then
+  echo "Warning: Could not remove temp file $TMP_ZIP"
+fi
+
+# Ensure the binary is executable
 chmod +x "$EXECUTABLE_PATH"
 echo "Deno setup complete at $EXECUTABLE_PATH"
