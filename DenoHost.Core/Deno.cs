@@ -371,7 +371,6 @@ public static class Deno
       if (string.IsNullOrWhiteSpace(arguments))
         throw new ArgumentException("No command or arguments provided for Deno execution.");
 
-      // Logging
       Logger?.LogInformation("Command: deno {Arguments} {FileName}", string.Join(' ', arguments), fileName);
 
       var process = new Process
@@ -447,7 +446,7 @@ public static class Deno
 
   private static string GetDenoPath()
   {
-    var rid = GetRuntimeId(); // Supported: win-x64, linux-x64, osx-arm64, osx-x64
+    var rid = GetRuntimeId();
     var filename = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "deno.exe" : "deno";
     var path = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", filename);
 
@@ -488,7 +487,6 @@ public static class Deno
 
     input = input.Trim();
 
-    // Simple config path detection: Does it end with .json or .jsonc?
     if (input.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
         input.EndsWith(".jsonc", StringComparison.OrdinalIgnoreCase))
       return true;
