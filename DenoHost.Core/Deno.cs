@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -14,8 +13,6 @@ namespace DenoHost.Core;
 /// </summary>
 public static class Deno
 {
-  private const string DenoExecutableName = "deno.exe";
-
   /// <summary>
   /// Optional logger for Deno operations. Set this to enable logging.
   /// </summary>
@@ -96,7 +93,7 @@ public static class Deno
   /// <code>
   /// var command = "run --allow-read script.ts";
   /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
-  /// await Deno.Execute(command, options); 
+  /// await Deno.Execute(command, options);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions)
@@ -113,7 +110,7 @@ public static class Deno
   /// <code>
   /// var command = "run --allow-read script.ts";
   /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
-  /// var result = await Deno.Execute<MyResult>(command, options); 
+  /// var result = await Deno.Execute<MyResult>(command, options);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions)
@@ -129,7 +126,7 @@ public static class Deno
   /// <code>
   /// var command = "run";
   /// var args = new[] { "--allow-read", "script.ts" };
-  /// await Deno.Execute(command, args); 
+  /// await Deno.Execute(command, args);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, string[] args)
@@ -146,7 +143,7 @@ public static class Deno
   /// <code>
   /// var command = "run";
   /// var args = new[] { "--allow-read", "script.ts" };
-  /// var result = await Deno.Execute<MyResult>(command, args); 
+  /// var result = await Deno.Execute<MyResult>(command, args);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, string[] args)
@@ -164,7 +161,7 @@ public static class Deno
   /// var command = "run";
   /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
   /// var args = new[] { "--allow-read", "script.ts" };
-  /// await Deno.Execute(command, options, args); 
+  /// await Deno.Execute(command, options, args);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions, string[] args)
@@ -183,7 +180,7 @@ public static class Deno
   /// var command = "run";
   /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
   /// var args = new[] { "--allow-read", "script.ts" };
-  /// var result = await Deno.Execute(command, options, args);  
+  /// var result = await Deno.Execute(command, options, args);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions, string[] args)
@@ -197,7 +194,7 @@ public static class Deno
   /// <param name="args">Arguments for Deno.</param>
   /// <code>
   /// var args = new ["run", "--allow-read", "script.ts"];
-  /// await Deno.Execute(args); 
+  /// await Deno.Execute(args);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(string[] args)
@@ -212,7 +209,7 @@ public static class Deno
   /// <param name="args">Arguments for Deno.</param>
   /// <code>
   /// var args = new ["run", "--allow-read", "script.ts"];
-  /// var result = await Deno.Execute<MyResult>(args); 
+  /// var result = await Deno.Execute<MyResult>(args);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string[] args)
@@ -228,7 +225,7 @@ public static class Deno
   /// <code>
   /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
   /// var args = new ["run", "--allow-read", "script.ts"];
-  /// await Deno.Execute(options, args); 
+  /// await Deno.Execute(options, args);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static async Task Execute(DenoExecuteBaseOptions baseOptions, string[] args)
@@ -245,7 +242,7 @@ public static class Deno
   /// <code>
   /// var options = new DenoExecuteBaseOptions { WorkingDirectory = "/path/to/dir" };
   /// var args = new ["run", "--allow-read", "script.ts"];
-  /// var result = await Deno.Execute<MyResult>(options, args); 
+  /// var result = await Deno.Execute<MyResult>(options, args);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(DenoExecuteBaseOptions baseOptions, string[] args)
@@ -267,7 +264,7 @@ public static class Deno
   /// var configPath = "./deno.json";
   /// var args = new[] { "--allow-read", "script.ts" };
   /// await Deno.Execute(command, configPath, args);
-  /// 
+  ///
   /// // Var 2:
   /// var command = "run";
   /// var configPath = "{ \"imports\": { \"@std/fs\": \"jsr:@std/fs@^1.0.18\" } }"; // JSON string
@@ -293,7 +290,7 @@ public static class Deno
   /// var configPath = "./deno.json";
   /// var args = new[] { "--allow-read", "script.ts" };
   /// var result = await Deno.Execute<MyResult>(command, configPath, args);
-  /// 
+  ///
   /// // Var 2:
   /// var command = "run";
   /// var configPath = "{ \"imports\": { \"@std/fs\": \"jsr:@std/fs@^1.0.18\" } }"; // JSON string
@@ -353,7 +350,7 @@ public static class Deno
   {
     ArgumentNullException.ThrowIfNull(resultType);
 
-    // dynamic nicht unterstützen
+    // dynamic not supported
     if (resultType == typeof(object) || resultType.Name == "Object")
     {
       throw new NotSupportedException(
@@ -375,8 +372,7 @@ public static class Deno
         throw new ArgumentException("No command or arguments provided for Deno execution.");
 
       // Logging
-      Logger?.LogInformation("Deno execution on: {WorkingDirectory}", workingDirectory);
-      Logger?.LogInformation("Command: deno {arguments} {fileName}", string.Join(' ', arguments), fileName);
+      Logger?.LogInformation("Command: deno {Arguments} {FileName}", string.Join(' ', arguments), fileName);
 
       var process = new Process
       {
@@ -407,7 +403,7 @@ public static class Deno
         Logger?.LogError("Deno execution failed with exit code {ExitCode} after {ElapsedMs}ms. Error: {Error}",
           process.ExitCode, stopwatch.ElapsedMilliseconds, error);
 
-        throw new Exception(
+        throw new InvalidOperationException(
           $"Deno exited with code {process.ExitCode}.{Environment.NewLine}" +
           $"Standard Output:{Environment.NewLine}{output}{Environment.NewLine}" +
           $"Standard Error:{Environment.NewLine}{error}"
@@ -428,7 +424,7 @@ public static class Deno
     {
       stopwatch.Stop();
       Logger?.LogError(ex, "Deno execution encountered an error after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
-      throw;
+      throw new InvalidOperationException($"An error occurred during Deno execution after {stopwatch.ElapsedMilliseconds}ms. See inner exception for details.", ex);
     }
   }
 
