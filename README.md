@@ -1,7 +1,7 @@
 # DenoHost
 
 ![Build](https://github.com/thomas3577/DenoHost/actions/workflows/build.yml/badge.svg)
-![NuGet](https://img.shields.io/nuget/v/DenoHost.svg)
+![NuGet](https://img.shields.io/nuget/v/DenoHost.Core.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
 > 🦕 Use Deno from within your .NET applications – cross-platform, cleanly
@@ -64,11 +64,10 @@ dotnet add package DenoHost.Core --source github
 ```csharp
 using DenoHost;
 
-string cwd = Path.Combine(Directory.GetCurrentDirectory(), SCRIPTS_PATH);
-string command = "run";
-string[] args = ["app.ts"];
+var options = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
+string[] args = ["run", "app.ts"];
 
-await Deno.Execute(cwd, command, args);
+await Deno.Execute(options, args);
 ```
 
 ## 🛠️ Requirements
