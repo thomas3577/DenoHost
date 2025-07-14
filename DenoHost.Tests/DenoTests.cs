@@ -86,7 +86,7 @@ public class DenoTests
   [Fact]
   public async Task Execute_ThrowsForInvalidCommand()
   {
-    await Assert.ThrowsAsync<Exception>(static async () =>
+    await Assert.ThrowsAsync<InvalidOperationException>(static async () =>
     {
       await Deno.Execute("invalidcommand");
     });
@@ -122,7 +122,7 @@ public class DenoTests
   [Fact]
   public async Task Execute_WithEmptyCommand_ThrowsException()
   {
-    await Assert.ThrowsAsync<ArgumentException>(async () =>
+    await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute("");
     });
@@ -131,7 +131,7 @@ public class DenoTests
   [Fact]
   public async Task Execute_WithNullCommand_ThrowsException()
   {
-    await Assert.ThrowsAsync<ArgumentException>(async () =>
+    await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute((string)null!);
     });
@@ -140,7 +140,7 @@ public class DenoTests
   [Fact]
   public async Task Execute_WithEmptyArgs_ThrowsException()
   {
-    await Assert.ThrowsAsync<ArgumentException>(async () =>
+    await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute([]);
     });
@@ -149,7 +149,7 @@ public class DenoTests
   [Fact]
   public async Task Execute_WithNullArgs_ThrowsException()
   {
-    await Assert.ThrowsAsync<ArgumentException>(async () =>
+    await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute((string[])null!);
     });
@@ -238,7 +238,7 @@ public class DenoTests
   {
     var invalidJson = "{ invalid json }";
 
-    await Assert.ThrowsAsync<Exception>(async () =>
+    await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute("run", invalidJson, ["script.ts"]);
     });
@@ -480,7 +480,7 @@ public class DenoTests
   {
     var invalidJsonConfig = "{ malformed json without closing brace";
 
-    await Assert.ThrowsAsync<Exception>(async () =>
+    await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute("run", invalidJsonConfig, ["script.ts"]);
     });
@@ -589,12 +589,13 @@ public class DenoTests
   [Fact]
   public async Task Execute_WithTimeoutScenario_ThrowsAppropriateException()
   {
-    var ex = await Assert.ThrowsAsync<Exception>(async () =>
+    var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute("invalid-command-that-does-not-exist");
     });
 
-    Assert.Contains("exited with code", ex.Message);
+    Assert.Contains("An error occurred during Deno execution after", ex.Message);
+    Assert.Contains("exited with code", ex.InnerException?.Message);
   }
 
   [Fact]
@@ -709,15 +710,14 @@ public class DenoTests
   [Fact]
   public async Task Execute_ErrorHandling_PreservesStackTrace()
   {
-    var ex = await Assert.ThrowsAsync<Exception>(async () =>
+    var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute("non-existent-command", ["--invalid-flag"]);
     });
 
     Assert.NotNull(ex.Message);
-    Assert.Contains("exited with code", ex.Message);
-
-    Assert.True(ex.Message.Contains("Standard Output:") || ex.Message.Contains("Standard Error:"));
+    Assert.Contains("An error occurred during Deno execution after", ex.Message);
+    Assert.Contains("exited with code", ex.InnerException?.Message);
   }
 
   [Fact]
@@ -855,7 +855,7 @@ public class DenoTests
       Imports = new Dictionary<string, string> { ["test"] = null! }
     };
 
-    await Assert.ThrowsAsync<Exception>(async () =>
+    await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute("run", config, ["script.ts"]);
     });
@@ -871,12 +871,13 @@ public class DenoTests
   [Fact]
   public async Task Execute_WithCommandThatWritesToStdErr_CapturesError1()
   {
-    var ex = await Assert.ThrowsAsync<Exception>(async () =>
+    var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
       await Deno.Execute("eval", ["\"console.error('Test error'); Deno.exit(1);\""]);
     });
 
-    Assert.Contains("Test error", ex.Message);
+    Assert.Contains("An error occurred during Deno execution after", ex.Message);
+    Assert.Contains("Test error", ex.InnerException?.Message);
   }
 
   [Fact]
@@ -890,12 +891,13 @@ public class DenoTests
 
     try
     {
-      var ex = await Assert.ThrowsAsync<Exception>(async () =>
+      var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
       {
         await Deno.Execute("run", ["--allow-read", scriptPath]);
       });
 
-      Assert.Contains("Test error", ex.Message);
+      Assert.Contains("An error occurred during Deno execution after", ex.Message);
+      Assert.Contains("Test error", ex.InnerException?.Message);
     }
     finally
     {
