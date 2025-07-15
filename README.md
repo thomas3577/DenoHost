@@ -4,6 +4,11 @@
 ![NuGet](https://img.shields.io/nuget/v/DenoHost.Core.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
+> ⚠️ **EXPERIMENTAL ALPHA** ⚠️\
+> This library is in active development. APIs and features may change
+> significantly between releases.\
+> Not recommended for production use. Use for testing and experimentation only.
+
 > 🦕 Use Deno from within your .NET applications – cross-platform, cleanly
 > packaged, and NuGet-ready.
 
