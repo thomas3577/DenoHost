@@ -16,6 +16,7 @@ TestResults/
 .vscode/
 .idea/
 .vs/
+.user
 
 # Deno binaries
 deno
