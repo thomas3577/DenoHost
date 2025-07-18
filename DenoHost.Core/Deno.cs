@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -300,11 +299,11 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, string configOrPath, string[] args)
   {
-    var configPath = EnsureConfigFile(configOrPath);
-    var allArgs = AppendConfigArgument(args, configPath);
+    var configPath = Helper.EnsureConfigFile(configOrPath);
+    var allArgs = Helper.AppendConfigArgument(args, configPath);
     var result = await InternalExecute<T>(null, command, typeof(T), null, null, allArgs);
 
-    DeleteIfTempFile(configPath, configOrPath);
+    Helper.DeleteIfTempFile(configPath, configOrPath);
 
     return result;
   }
@@ -331,8 +330,8 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, DenoConfig config, string[] args)
   {
-    var configPath = WriteTempConfig(config);
-    var allArgs = AppendConfigArgument(args, configPath);
+    var configPath = Helper.WriteTempConfig(config);
+    var allArgs = Helper.AppendConfigArgument(args, configPath);
 
     try
     {
@@ -342,7 +341,7 @@ public static class Deno
     }
     finally
     {
-      DeleteTempFile(configPath);
+      Helper.DeleteTempFile(configPath);
     }
   }
 
@@ -365,8 +364,8 @@ public static class Deno
     {
       workingDirectory ??= Directory.GetCurrentDirectory();
 
-      var fileName = GetDenoPath();
-      var arguments = BuildArguments(args, command);
+      var fileName = Helper.GetDenoPath();
+      var arguments = Helper.BuildArguments(args, command);
 
       if (string.IsNullOrWhiteSpace(arguments))
         throw new ArgumentException("No command or arguments provided for Deno execution.");
@@ -424,110 +423,6 @@ public static class Deno
       stopwatch.Stop();
       Logger?.LogError(ex, "Deno execution encountered an error after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
       throw new InvalidOperationException($"An error occurred during Deno execution after {stopwatch.ElapsedMilliseconds}ms. See inner exception for details.", ex);
-    }
-  }
-
-  private static string BuildArguments(string[]? args, string? command = null)
-  {
-    var argsStr = string.Join(" ", args ?? []);
-    if (command == null)
-      return argsStr;
-
-    return $"{command} {argsStr}".Trim();
-  }
-
-  private static string[] AppendConfigArgument(string[] args, string configPath)
-  {
-    if (string.IsNullOrWhiteSpace(configPath))
-      return args;
-
-    return [.. args, "--config", configPath];
-  }
-
-  private static string GetDenoPath()
-  {
-    var rid = GetRuntimeId();
-    var filename = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "deno.exe" : "deno";
-    var path = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", filename);
-
-    if (!File.Exists(path))
-      throw new FileNotFoundException("Deno executable not found.", path);
-
-    return path;
-  }
-
-  private static string GetRuntimeId()
-  {
-    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-      return "win-x64";
-    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-      return "linux-x64";
-    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-      return RuntimeInformation.OSArchitecture == Architecture.Arm64
-          ? "osx-arm64"
-          : "osx-x64";
-
-    throw new PlatformNotSupportedException("Unsupported OS platform.");
-  }
-
-  private static string WriteTempConfig(DenoConfig config)
-  {
-    var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
-
-    File.WriteAllText(tempPath, config.ToJson());
-    Logger?.LogDebug("Created temporary config file: {ConfigPath}", tempPath);
-
-    return tempPath;
-  }
-
-  private static bool IsJsonPathLike(string input)
-  {
-    if (string.IsNullOrWhiteSpace(input))
-      return false;
-
-    input = input.Trim();
-
-    if (input.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
-        input.EndsWith(".jsonc", StringComparison.OrdinalIgnoreCase))
-      return true;
-
-    return false;
-  }
-
-  private static string EnsureConfigFile(string configOrPath)
-  {
-    if (!IsJsonPathLike(configOrPath))
-    {
-      var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
-      File.WriteAllText(tempPath, configOrPath);
-      return tempPath;
-    }
-
-    if (!File.Exists(configOrPath))
-      throw new FileNotFoundException("The specified configuration path does not exist.", configOrPath);
-
-    return configOrPath;
-  }
-
-  private static void DeleteIfTempFile(string resolvedPath, string original)
-  {
-    if (!IsJsonPathLike(original))
-      DeleteTempFile(resolvedPath);
-  }
-
-  private static void DeleteTempFile(string resolvedPath)
-  {
-    try
-    {
-      if (File.Exists(resolvedPath))
-      {
-        File.Delete(resolvedPath);
-        Logger?.LogDebug("Deleted temporary file: {FilePath}", resolvedPath);
-      }
-    }
-    catch (Exception ex)
-    {
-      Logger?.LogWarning(ex, "Failed to delete temporary file: {FilePath}", resolvedPath);
     }
   }
 }
