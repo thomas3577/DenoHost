@@ -21,7 +21,7 @@ public class DenoTests
   [Fact]
   public void IsJsonFileLike_DetectsJsonFiles()
   {
-    var method = typeof(Deno).GetMethod("IsJsonPathLike", BindingFlags.NonPublic | BindingFlags.Static);
+    var method = typeof(Helper).GetMethod("IsJsonPathLike", BindingFlags.NonPublic | BindingFlags.Static);
     Assert.NotNull(method);
 
     Assert.False((bool)method.Invoke(null, ["{ \"foo\": 1 }"])!); // JSON content
@@ -39,7 +39,7 @@ public class DenoTests
   [InlineData(null, null, "")]
   public void BuildArguments_CombinesArgsAndCommandCorrectly(string[]? args, string? command, string expected)
   {
-    var method = typeof(Deno).GetMethod("BuildArguments", BindingFlags.NonPublic | BindingFlags.Static);
+    var method = typeof(Helper).GetMethod("BuildArguments", BindingFlags.NonPublic | BindingFlags.Static);
     Assert.NotNull(method);
 
     var result = method.Invoke(null, [args, command]) as string;
@@ -49,7 +49,7 @@ public class DenoTests
   [Fact]
   public void GetRuntimeId_ReturnsValidRuntimeId()
   {
-    var method = typeof(Deno).GetMethod("GetRuntimeId", BindingFlags.NonPublic | BindingFlags.Static);
+    var method = typeof(Helper).GetMethod("GetRuntimeId", BindingFlags.NonPublic | BindingFlags.Static);
     Assert.NotNull(method);
 
     var result = method.Invoke(null, null) as string;
@@ -420,7 +420,7 @@ public class DenoTests
       Imports = new Dictionary<string, string> { ["test"] = "value" }
     };
 
-    var method = typeof(Deno).GetMethod("WriteTempConfig", BindingFlags.NonPublic | BindingFlags.Static);
+    var method = typeof(Helper).GetMethod("WriteTempConfig", BindingFlags.NonPublic | BindingFlags.Static);
     Assert.NotNull(method);
 
     var tempPath = method.Invoke(null, [config]) as string;
@@ -446,7 +446,7 @@ public class DenoTests
   [Fact]
   public void EnsureConfigFile_HandlesJsonStringAndFilePath()
   {
-    var method = typeof(Deno).GetMethod("EnsureConfigFile", BindingFlags.NonPublic | BindingFlags.Static);
+    var method = typeof(Helper).GetMethod("EnsureConfigFile", BindingFlags.NonPublic | BindingFlags.Static);
     Assert.NotNull(method);
 
     // Test with JSON string
