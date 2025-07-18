@@ -33,6 +33,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Setup .NET 9.0 SDK (only for C#)
+      if: matrix.language == 'csharp'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
@@ -42,6 +48,7 @@ jobs:
     - name: Build C# project (only if manual)
       if: matrix.build-mode == 'manual'
       run: |
+        dotnet --version
         dotnet restore
         dotnet build --no-incremental
 
