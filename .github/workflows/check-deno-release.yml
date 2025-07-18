@@ -12,22 +12,26 @@ jobs:
       - name: Fetch latest Deno release
         id: deno
         run: |
-          tag=$(curl -s https://api.github.com/repos/denoland/deno/releases/latest | jq -r .tag_name)
-          echo "Latest Deno release: $tag"
-          echo "deno_tag=$tag" >> "$GITHUB_OUTPUT"
+          full_tag=$(curl -s https://api.github.com/repos/denoland/deno/releases/latest | jq -r .tag_name)
+          echo "Latest Deno release: $full_tag"
+          tag_core=${full_tag#v}  # remove leading "v" if present
+          echo "tag_core=$tag_core" >> "$GITHUB_OUTPUT"
+          echo "full_tag=$full_tag" >> "$GITHUB_OUTPUT"
 
       - name: Check if tag with this Deno version exists in DenoHost
         id: check
         run: |
-          deno_tag=${{ steps.deno.outputs.deno_tag }}
+          tag_core=${{ steps.deno.outputs.tag_core }}
           git_tags=$(git ls-remote --tags https://github.com/thomas3577/DenoHost.git | awk -F/ '{print $NF}')
-          found=$(echo "$git_tags" | grep -E "^v${deno_tag}(-|$)" || true)
+          echo "Existing tags in DenoHost:"
+          echo "$git_tags"
+          found=$(echo "$git_tags" | grep -E "^v${tag_core}(-|$)" || true)
 
           if [[ -n "$found" ]]; then
             echo "✅ Already released: $found"
             echo "already_exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "⚠️ No existing tag for v$deno_tag"
+            echo "⚠️ No existing tag for v$tag_core"
             echo "already_exists=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -40,11 +44,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
           git init
-          git remote add origin https://github.com/thomas3577/DenoHost.git
+          git remote add origin https://x-access-token:${GH_TOKEN}@github.com/thomas3577/DenoHost.git
           git fetch origin main
 
-          deno_tag=${{ steps.deno.outputs.deno_tag }}
-          new_tag="v${deno_tag}-alpha.1"
+          tag_core=${{ steps.deno.outputs.tag_core }}
+          new_tag="v${tag_core}-alpha.1"
 
+          echo "Creating and pushing new tag: $new_tag"
           git tag "$new_tag" origin/main
           git push origin "$new_tag"
