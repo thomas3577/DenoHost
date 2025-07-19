@@ -3,7 +3,7 @@
 **Description**\
 Briefly describe what this PR changes and why.
 
-**Type of change**
+**Type of change:**
 
 - [ ] Bug fix
 - [ ] New feature
@@ -11,7 +11,7 @@ Briefly describe what this PR changes and why.
 - [ ] Documentation
 - [ ] Other
 
-**Checklist**
+**Checklist:**
 
 - [ ] Code builds and tests pass
 - [ ] Documentation/examples updated (if needed)
