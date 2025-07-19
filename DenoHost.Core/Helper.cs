@@ -102,7 +102,7 @@ internal static class Helper
     }
     catch (Exception ex)
     {
-      // throw new IOException($"Failed to delete temporary file: {resolvedPath}", ex);
+      throw new IOException($"Failed to delete temporary file: {resolvedPath}", ex);
     }
   }
 }

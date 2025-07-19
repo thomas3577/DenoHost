@@ -1,6 +1,7 @@
 # DenoHost
 
 ![Build](https://github.com/thomas3577/DenoHost/actions/workflows/build.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)
 ![NuGet](https://img.shields.io/nuget/v/DenoHost.Core.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 

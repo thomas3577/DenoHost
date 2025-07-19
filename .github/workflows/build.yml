@@ -126,8 +126,22 @@ jobs:
       - name: Check deno.exe exists
         run: test -f DenoHost.Tests/bin/Release/net9.0/runtimes/win-x64/native/deno.exe
 
-      - name: Run Unit Tests
-        run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release --no-build
+      - name: Run Unit Tests with Coverage
+        run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate Coverage Report
+        run: reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Cobertura;Badges"
+
+      - name: Upload Coverage Reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage-report/Cobertura.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
   test-on-linux:
     name: Run Tests on linux
