@@ -5,6 +5,7 @@
         "redhat.vscode-yaml",
         "ms-dotnettools.csdevkit",
         "yzhang.markdown-all-in-one",
-        "davidanson.vscode-markdownlint"
+        "davidanson.vscode-markdownlint",
+        "denoland.vscode-deno"
     ]
 }

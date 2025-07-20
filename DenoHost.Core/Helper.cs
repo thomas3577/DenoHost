@@ -8,11 +8,22 @@ internal static class Helper
 {
   internal static string BuildArguments(string[]? args, string? command = null)
   {
-    var argsStr = string.Join(" ", args ?? []);
-    if (command == null)
-      return argsStr;
+    var argsArray = BuildArgumentsArray(args, command);
+    return string.Join(" ", argsArray);
+  }
 
-    return $"{command} {argsStr}".Trim();
+  internal static string[] BuildArgumentsArray(string[]? args, string? command = null)
+  {
+    if (command == null)
+      return args ?? [];
+
+    var result = new string[1 + (args?.Length ?? 0)];
+    result[0] = command;
+
+    if (args != null)
+      Array.Copy(args, 0, result, 1, args.Length);
+
+    return result;
   }
 
   internal static string[] AppendConfigArgument(string[] args, string configPath)
