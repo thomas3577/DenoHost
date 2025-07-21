@@ -4,6 +4,9 @@
 OPEN_REPORT=${1:-true}
 REPORT_TYPES=${2:-"Html;Badges;Cobertura;SonarQube"}
 
+# Change to the project root directory (parent of tools folder)
+cd "$(dirname "$0")/.."
+
 # Color definitions for consistent output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -23,6 +26,12 @@ fi
 
 echo -e "${CYAN}📊 Generating coverage report...${NC}"
 
+if ! command -v reportgenerator > /dev/null; then
+    echo -e "${RED}❌ Report generation failed! ReportGenerator tool not found.${NC}"
+    echo -e "${YELLOW}💡 Install with: dotnet tool install -g dotnet-reportgenerator-globaltool${NC}"
+    exit 1
+fi
+
 reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"$REPORT_TYPES"
 
 if [ $? -ne 0 ]; then
@@ -37,12 +46,12 @@ if [ -f "$COBERTURA_PATH" ]; then
     if command -v xmllint > /dev/null; then
         LINE_RATE=$(xmllint --xpath "string(//@line-rate)" "$COBERTURA_PATH" 2>/dev/null)
         BRANCH_RATE=$(xmllint --xpath "string(//@branch-rate)" "$COBERTURA_PATH" 2>/dev/null)
-        
+
         if [ -n "$LINE_RATE" ] && [ -n "$BRANCH_RATE" ]; then
             # Calculate percentages with one decimal place (matching PowerShell)
             LINE_PERCENT=$(echo "scale=1; $LINE_RATE * 100" | bc 2>/dev/null || echo "$LINE_RATE * 100" | awk '{printf "%.1f", $1 * 100}')
             BRANCH_PERCENT=$(echo "scale=1; $BRANCH_RATE * 100" | bc 2>/dev/null || echo "$BRANCH_RATE * 100" | awk '{printf "%.1f", $1 * 100}')
-            
+
             echo ""
             echo -e "${GREEN}📈 Coverage Summary:${NC}"
             echo -e "${YELLOW}   Line Coverage:   ${LINE_PERCENT}%${NC}"
@@ -55,11 +64,11 @@ fi
 # Open report if requested
 if [ "$OPEN_REPORT" = "true" ] && [ -f "coverage-report/index.html" ]; then
     echo -e "${CYAN}🌐 Opening coverage report in browser...${NC}"
-    
+
     # Open HTML report (Linux)
     if command -v xdg-open > /dev/null; then
         xdg-open coverage-report/index.html
-    # Open HTML report (macOS)  
+    # Open HTML report (macOS)
     elif command -v open > /dev/null; then
         open coverage-report/index.html
     else
