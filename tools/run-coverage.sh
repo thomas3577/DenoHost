@@ -7,35 +7,27 @@ REPORT_TYPES=${2:-"Html;Badges;Cobertura;SonarQube"}
 # Change to the project root directory (parent of tools folder)
 cd "$(dirname "$0")/.."
 
-# Color definitions for consistent output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-GRAY='\033[0;37m'
-NC='\033[0m' # No Color
-
-echo -e "${CYAN}🧪 Running tests with coverage collection...${NC}"
+echo "Running tests with coverage collection..."
 
 dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults
 
 if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ Tests failed!${NC}"
+    echo "Tests failed!"
     exit $?
 fi
 
-echo -e "${CYAN}📊 Generating coverage report...${NC}"
+echo "Generating coverage report..."
 
 if ! command -v reportgenerator > /dev/null; then
-    echo -e "${RED}❌ Report generation failed! ReportGenerator tool not found.${NC}"
-    echo -e "${YELLOW}💡 Install with: dotnet tool install -g dotnet-reportgenerator-globaltool${NC}"
+    echo "Report generation failed! ReportGenerator tool not found."
+    echo "Install with: dotnet tool install -g dotnet-reportgenerator-globaltool"
     exit 1
 fi
 
 reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"$REPORT_TYPES"
 
 if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ Report generation failed!${NC}"
+    echo "Report generation failed!"
     exit $?
 fi
 
@@ -53,9 +45,9 @@ if [ -f "$COBERTURA_PATH" ]; then
             BRANCH_PERCENT=$(echo "scale=1; $BRANCH_RATE * 100" | bc 2>/dev/null || echo "$BRANCH_RATE * 100" | awk '{printf "%.1f", $1 * 100}')
 
             echo ""
-            echo -e "${GREEN}📈 Coverage Summary:${NC}"
-            echo -e "${YELLOW}   Line Coverage:   ${LINE_PERCENT}%${NC}"
-            echo -e "${YELLOW}   Branch Coverage: ${BRANCH_PERCENT}%${NC}"
+            echo "Coverage Summary:"
+            echo "  Line Coverage:   ${LINE_PERCENT}%"
+            echo "  Branch Coverage: ${BRANCH_PERCENT}%"
             echo ""
         fi
     fi
@@ -63,7 +55,7 @@ fi
 
 # Open report if requested
 if [ "$OPEN_REPORT" = "true" ] && [ -f "coverage-report/index.html" ]; then
-    echo -e "${CYAN}🌐 Opening coverage report in browser...${NC}"
+    echo "Opening coverage report in browser..."
 
     # Open HTML report (Linux)
     if command -v xdg-open > /dev/null; then
@@ -72,9 +64,9 @@ if [ "$OPEN_REPORT" = "true" ] && [ -f "coverage-report/index.html" ]; then
     elif command -v open > /dev/null; then
         open coverage-report/index.html
     else
-        echo -e "${YELLOW}⚠️  Could not open browser automatically. Please open coverage-report/index.html manually.${NC}"
+        echo "Could not open browser automatically. Please open coverage-report/index.html manually."
     fi
 fi
 
-echo -e "${GREEN}✅ Coverage report generated successfully!${NC}"
-echo -e "${GRAY}📁 Report location: coverage-report/index.html${NC}"
+echo "Coverage report generated successfully!"
+echo "Report location: coverage-report/index.html"
