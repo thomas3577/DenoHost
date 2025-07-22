@@ -13,8 +13,118 @@ class TestResult
     public bool HasImports { get; set; }
 }
 
-public class DenoTests
+/// <summary>
+/// Test fixture for managing temporary files created during tests.
+/// Automatically cleans up all created files when the test class is disposed.
+/// </summary>
+public class TempFileFixture : IDisposable
 {
+    private readonly List<string> _tempFiles = new();
+    private readonly string _tempDirectory;
+
+    public TempFileFixture()
+    {
+        _tempDirectory = Path.Combine(Path.GetTempPath(), $"DenoTests_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(_tempDirectory);
+    }
+
+    /// <summary>
+    /// Creates a temporary file in the test temp directory and tracks it for cleanup.
+    /// </summary>
+    /// <param name="fileName">The file name (without path)</param>
+    /// <param name="content">The file content</param>
+    /// <returns>The full path to the created file</returns>
+    public string CreateTempFile(string fileName, string content)
+    {
+        var filePath = Path.Combine(_tempDirectory, fileName);
+        File.WriteAllText(filePath, content);
+        _tempFiles.Add(filePath);
+        return filePath;
+    }
+
+    /// <summary>
+    /// Creates a temporary file with a unique name and tracks it for cleanup.
+    /// </summary>
+    /// <param name="prefix">The file prefix</param>
+    /// <param name="extension">The file extension (including dot)</param>
+    /// <param name="content">The file content</param>
+    /// <returns>The full path to the created file</returns>
+    public string CreateTempFile(string prefix, string extension, string content)
+    {
+        var fileName = $"{prefix}_{Guid.NewGuid():N}{extension}";
+        return CreateTempFile(fileName, content);
+    }
+
+    /// <summary>
+    /// Gets the temp directory for this test fixture.
+    /// </summary>
+    public string TempDirectory => _tempDirectory;
+
+    public void Dispose()
+    {
+        // Clean up individual tracked files
+        foreach (var file in _tempFiles)
+        {
+            try
+            {
+                if (File.Exists(file))
+                    File.Delete(file);
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+
+        // Clean up the entire temp directory
+        try
+        {
+            if (Directory.Exists(_tempDirectory))
+                Directory.Delete(_tempDirectory, recursive: true);
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
+
+        // Also clean up any orphaned deno_config files in the main temp directory
+        try
+        {
+            var mainTempDir = Path.GetTempPath();
+            var orphanedConfigs = Directory.GetFiles(mainTempDir, "deno_config_*.json");
+            foreach (var file in orphanedConfigs)
+            {
+                try
+                {
+                    // Only delete files older than 1 hour to avoid deleting files from concurrent tests
+                    var fileInfo = new FileInfo(file);
+                    if (DateTime.Now - fileInfo.CreationTime > TimeSpan.FromHours(1))
+                    {
+                        File.Delete(file);
+                    }
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
+    }
+}
+
+public class DenoTests : IClassFixture<TempFileFixture>
+{
+    private readonly TempFileFixture _tempFileFixture;
+
+    public DenoTests(TempFileFixture tempFileFixture)
+    {
+        _tempFileFixture = tempFileFixture;
+    }
+
     #region Validation Tests
 
     [Fact]
@@ -90,21 +200,11 @@ public class DenoTests
     [Fact]
     public async Task Execute_WithWorkingDirectory_RespectsWorkingDirectory()
     {
-        var tempDir = Path.GetTempPath();
-        var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = tempDir };
-        var scriptPath = Path.Combine(tempDir, "test_cwd.ts");
+        var scriptPath = _tempFileFixture.CreateTempFile("test_cwd.ts", "console.log(Deno.cwd());");
+        var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = _tempFileFixture.TempDirectory };
 
-        File.WriteAllText(scriptPath, "console.log(Deno.cwd());");
-
-        try
-        {
-            var result = await Deno.Execute<string>("run", baseOptions, ["--allow-read", "test_cwd.ts"]);
-            Assert.Contains(tempDir.TrimEnd(Path.DirectorySeparatorChar), result);
-        }
-        finally
-        {
-            File.Delete(scriptPath);
-        }
+        var result = await Deno.Execute<string>("run", baseOptions, ["--allow-read", "test_cwd.ts"]);
+        Assert.Contains(_tempFileFixture.TempDirectory.TrimEnd(Path.DirectorySeparatorChar), result);
     }
 
     #endregion
@@ -122,34 +222,18 @@ public class DenoTests
             }
         };
 
-        var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "test_config.ts");
-        File.WriteAllText(scriptPath, "console.log('Config test passed');");
+        var scriptPath = _tempFileFixture.CreateTempFile("test_config.ts", "console.log('Config test passed');");
 
-        try
-        {
-            await Deno.Execute("run", config, ["--allow-net", scriptPath]);
-        }
-        finally
-        {
-            File.Delete(scriptPath);
-        }
+        await Deno.Execute("run", config, ["--allow-net", scriptPath]);
     }
 
     [Fact]
     public async Task Execute_WithJsonConfigString_UsesConfig()
     {
         var jsonConfig = """{ "imports": { "@test/": "https://deno.land/std@0.200.0/" } }""";
-        var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "test_json_config.ts");
-        File.WriteAllText(scriptPath, "console.log('JSON config test passed');");
+        var scriptPath = _tempFileFixture.CreateTempFile("test_json_config.ts", "console.log('JSON config test passed');");
 
-        try
-        {
-            await Deno.Execute("run", jsonConfig, ["--allow-net", scriptPath]);
-        }
-        finally
-        {
-            File.Delete(scriptPath);
-        }
+        await Deno.Execute("run", jsonConfig, ["--allow-net", scriptPath]);
     }
 
     [Fact]
@@ -157,10 +241,36 @@ public class DenoTests
     {
         var invalidJson = "{ invalid json }";
 
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        try
         {
-            await Deno.Execute("run", invalidJson, ["script.ts"]);
-        });
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            {
+                await Deno.Execute("run", invalidJson, ["script.ts"]);
+            });
+        }
+        finally
+        {
+            // Clean up any temporary config file that might have been created
+            // The Helper.EnsureConfigFile method creates a temp file for invalid JSON
+            var tempDir = Path.GetTempPath();
+            var configFiles = Directory.GetFiles(tempDir, "deno_config_*.json");
+
+            foreach (var file in configFiles)
+            {
+                try
+                {
+                    var content = File.ReadAllText(file);
+                    if (content == invalidJson)
+                    {
+                        File.Delete(file);
+                    }
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
+        }
     }
 
     [Fact]
@@ -418,7 +528,6 @@ public class DenoTests
         await Deno.Execute("--version");
 
         // This should cover the simple Execute(string command) method
-        // and its closing brace (line 67)
         // No exception means success for this void method
         Assert.True(true); // Explicit assertion to satisfy linter
     }
@@ -433,7 +542,6 @@ public class DenoTests
 
         await Deno.Execute("--version", baseOptions);
 
-        // This should cover lines 96-98
         // No exception means success for this void method
         Assert.True(true); // Explicit assertion to satisfy linter
     }
@@ -448,7 +556,6 @@ public class DenoTests
 
         var result = await Deno.Execute<string>("--version", baseOptions);
 
-        // This should cover lines 113-115
         Assert.NotNull(result);
         Assert.Contains("deno", result.ToLower());
     }
@@ -461,7 +568,6 @@ public class DenoTests
             Command = "--version"
         };
 
-        // This should cover line 25 (closing brace of void Execute method)
         await Deno.Execute(options);
 
         // No exception means success for this void method
@@ -475,9 +581,24 @@ public class DenoTests
 
         var result = await Deno.Execute<string>(args);
 
-        // This should cover Execute<T>(string[] args) method around line 212
         Assert.NotNull(result);
         Assert.Contains("deno", result.ToLower());
+    }
+
+    [Fact]
+    public async Task Execute_VoidMethod_WithCommandBaseOptionsAndArgs_ExecutesCorrectly()
+    {
+        var command = "run";
+        var baseOptions = new DenoExecuteBaseOptions
+        {
+            WorkingDirectory = Path.GetTempPath()
+        };
+        var args = new[] { "--help" };
+
+        await Deno.Execute(command, baseOptions, args);
+
+        // No exception means success for this void method
+        Assert.True(true); // Explicit assertion to satisfy linter
     }
 
     [Fact]
@@ -489,8 +610,18 @@ public class DenoTests
         };
         var args = new[] { "--version" };
 
-        // This should cover Execute(DenoExecuteBaseOptions baseOptions, string[] args) around line 228
         await Deno.Execute(baseOptions, args);
+
+        // No exception means success for this void method
+        Assert.True(true); // Explicit assertion to satisfy linter
+    }
+
+    [Fact]
+    public async Task Execute_VoidMethod_WithArgs_ExecutesCorrectly()
+    {
+        var args = new[] { "--version" };
+
+        await Deno.Execute(args);
 
         // No exception means success for this void method
         Assert.True(true); // Explicit assertion to satisfy linter
@@ -505,7 +636,6 @@ public class DenoTests
         };
         var args = new[] { "--version" };
 
-        // This should cover Execute<T>(DenoExecuteBaseOptions baseOptions, string[] args) around line 242-248
         var result = await Deno.Execute<string>(baseOptions, args);
 
         Assert.NotNull(result);
@@ -517,7 +647,6 @@ public class DenoTests
     {
         var args = new[] { "--version" };
 
-        // This should cover the ArgumentNullException path in Execute<T>(DenoExecuteBaseOptions baseOptions, string[] args)
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
         {
             await Deno.Execute<string>((DenoExecuteBaseOptions)null!, args);
@@ -541,6 +670,125 @@ public class DenoTests
         finally
         {
             Deno.Logger = originalLogger;
+        }
+    }
+
+    #endregion
+
+    #region Large Output Tests
+
+    [Fact]
+    public async Task Execute_WithLargeStdout_HandlesCorrectly()
+    {
+        // Test with large stdout output (>64KB) to ensure no deadlock
+        var size = 100000; // 100KB
+        var script = $"console.log('x'.repeat({size}));";
+
+        var tempDir = Path.GetTempPath();
+        var scriptPath = Path.Combine(tempDir, $"large_output_{Guid.NewGuid():N}.ts");
+
+        File.WriteAllText(scriptPath, script);
+
+        try
+        {
+            var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath]);
+
+            Assert.NotNull(result);
+            Assert.Equal(size, result.Trim().Length);
+            Assert.All(result.Trim(), c => Assert.Equal('x', c));
+        }
+        finally
+        {
+            if (File.Exists(scriptPath))
+                File.Delete(scriptPath);
+        }
+    }
+
+    [Fact]
+    public async Task Execute_WithLargeStderr_HandlesCorrectly()
+    {
+        // Test with large stderr output to ensure no deadlock
+        var size = 50000; // 50KB
+        var script = $"console.error('e'.repeat({size})); console.log('success');";
+
+        var tempDir = Path.GetTempPath();
+        var scriptPath = Path.Combine(tempDir, $"large_stderr_{Guid.NewGuid():N}.ts");
+
+        File.WriteAllText(scriptPath, script);
+
+        try
+        {
+            var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath]);
+
+            Assert.NotNull(result);
+            Assert.Equal("success", result.Trim());
+        }
+        finally
+        {
+            if (File.Exists(scriptPath))
+                File.Delete(scriptPath);
+        }
+    }
+
+    [Fact]
+    public async Task Execute_WithLargeStdoutAndStderr_HandlesCorrectly()
+    {
+        // Test with both large stdout and stderr simultaneously
+        var stdoutSize = 30000; // 30KB
+        var stderrSize = 30000; // 30KB
+        var script = $@"
+            console.error('e'.repeat({stderrSize}));
+            console.log('x'.repeat({stdoutSize}));
+        ";
+
+        var tempDir = Path.GetTempPath();
+        var scriptPath = Path.Combine(tempDir, $"large_both_{Guid.NewGuid():N}.ts");
+
+        File.WriteAllText(scriptPath, script);
+
+        try
+        {
+            var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath]);
+
+            Assert.NotNull(result);
+            Assert.Equal(stdoutSize, result.Trim().Length);
+            Assert.All(result.Trim(), c => Assert.Equal('x', c));
+        }
+        finally
+        {
+            if (File.Exists(scriptPath))
+                File.Delete(scriptPath);
+        }
+    }
+
+    [Fact]
+    public async Task Execute_WithMultipleOutputBursts_HandlesCorrectly()
+    {
+        // Test with multiple output bursts to stress test the parallel reading
+        var script = @"
+            for (let i = 0; i < 10; i++) {
+                console.log('stdout_'.repeat(1000));
+                console.error('stderr_'.repeat(1000));
+            }
+            console.log('final');
+        ";
+
+        var tempDir = Path.GetTempPath();
+        var scriptPath = Path.Combine(tempDir, $"burst_output_{Guid.NewGuid():N}.ts");
+
+        File.WriteAllText(scriptPath, script);
+
+        try
+        {
+            var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath]);
+
+            Assert.NotNull(result);
+            Assert.EndsWith("final", result.Trim());
+        }
+        finally
+        {
+            if (File.Exists(scriptPath))
+                File.Delete(scriptPath);
         }
     }
 
