@@ -37,8 +37,8 @@ internal static class Helper
   internal static string GetDenoPath()
   {
     var rid = GetRuntimeId();
-    var filename = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "deno.exe" : "deno";
-    var path = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", filename);
+    var fileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "deno.exe" : "deno";
+    var path = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", fileName);
 
     if (!File.Exists(path))
       throw new FileNotFoundException("Deno executable not found.", path);

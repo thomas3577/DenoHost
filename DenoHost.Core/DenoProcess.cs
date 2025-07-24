@@ -18,6 +18,7 @@ public class DenoProcess : IDisposable
     private readonly string _workingDirectory;
     private readonly string[] _args;
     private readonly ILogger? _logger;
+    private readonly string? _tempConfigPath;
     private bool _disposed;
     private readonly Lock _lock = new();
 
@@ -109,6 +110,148 @@ public class DenoProcess : IDisposable
         _args = allArgs;
         _workingDirectory = workingDirectory ?? Directory.GetCurrentDirectory();
         _logger = logger ?? Deno.Logger;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DenoProcess"/> class with base options.
+    /// </summary>
+    /// <param name="command">The Deno command to execute.</param>
+    /// <param name="baseOptions">Base options such as working directory and logger.</param>
+    /// <param name="args">Additional arguments to pass to the Deno process.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="baseOptions"/> is null.</exception>
+    public DenoProcess(string command, DenoExecuteBaseOptions baseOptions, string[]? args = null)
+    {
+        ArgumentNullException.ThrowIfNull(baseOptions);
+
+        if (string.IsNullOrWhiteSpace(command))
+            throw new ArgumentException("Command cannot be null or empty.", nameof(command));
+
+        var allArgs = Helper.BuildArgumentsArray(args, command);
+        _args = allArgs;
+        _workingDirectory = baseOptions.WorkingDirectory ?? Directory.GetCurrentDirectory();
+        _logger = baseOptions.Logger ?? Deno.Logger;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DenoProcess"/> class with base options.
+    /// </summary>
+    /// <param name="baseOptions">Base options such as working directory and logger.</param>
+    /// <param name="args">Arguments to pass to the Deno process.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="baseOptions"/> or <paramref name="args"/> is null.</exception>
+    public DenoProcess(DenoExecuteBaseOptions baseOptions, string[] args)
+    {
+        ArgumentNullException.ThrowIfNull(baseOptions);
+        ArgumentNullException.ThrowIfNull(args);
+
+        _args = args;
+        _workingDirectory = baseOptions.WorkingDirectory ?? Directory.GetCurrentDirectory();
+        _logger = baseOptions.Logger ?? Deno.Logger;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DenoProcess"/> class with a configuration file or path.
+    /// </summary>
+    /// <param name="command">The Deno command to execute.</param>
+    /// <param name="configOrPath">Configuration as JSON string or path to a configuration file.</param>
+    /// <param name="args">Additional arguments to pass to the Deno process.</param>
+    /// <param name="workingDirectory">The working directory for the process. If null, uses current directory.</param>
+    /// <param name="logger">Optional logger for process operations.</param>
+    public DenoProcess(string command, string configOrPath, string[]? args = null, string? workingDirectory = null, ILogger? logger = null)
+    {
+        if (string.IsNullOrWhiteSpace(command))
+            throw new ArgumentException("Command cannot be null or empty.", nameof(command));
+
+        ArgumentNullException.ThrowIfNull(configOrPath);
+
+        var configPath = Helper.EnsureConfigFile(configOrPath);
+        var allArgs = Helper.AppendConfigArgument(args ?? [], configPath);
+        var commandArgs = Helper.BuildArgumentsArray(allArgs, command);
+
+        _args = commandArgs;
+        _workingDirectory = workingDirectory ?? Directory.GetCurrentDirectory();
+        _logger = logger ?? Deno.Logger;
+
+        // Store config info for cleanup if it's a temp file
+        _tempConfigPath = !Helper.IsJsonPathLike(configOrPath) ? configPath : null;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DenoProcess"/> class with a configuration object.
+    /// </summary>
+    /// <param name="command">The Deno command to execute.</param>
+    /// <param name="config">The Deno configuration object.</param>
+    /// <param name="args">Additional arguments to pass to the Deno process.</param>
+    /// <param name="workingDirectory">The working directory for the process. If null, uses current directory.</param>
+    /// <param name="logger">Optional logger for process operations.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="config"/> is null.</exception>
+    public DenoProcess(string command, DenoConfig config, string[]? args = null, string? workingDirectory = null, ILogger? logger = null)
+    {
+        if (string.IsNullOrWhiteSpace(command))
+            throw new ArgumentException("Command cannot be null or empty.", nameof(command));
+
+        ArgumentNullException.ThrowIfNull(config);
+
+        var configPath = Helper.WriteTempConfig(config);
+        var allArgs = Helper.AppendConfigArgument(args ?? [], configPath);
+        var commandArgs = Helper.BuildArgumentsArray(allArgs, command);
+
+        _args = commandArgs;
+        _workingDirectory = workingDirectory ?? Directory.GetCurrentDirectory();
+        _logger = logger ?? Deno.Logger;
+
+        // Store temp config path for cleanup
+        _tempConfigPath = configPath;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DenoProcess"/> class with execution options.
+    /// </summary>
+    /// <param name="options">The execution options for the Deno process.</param>
+    /// <param name="workingDirectory">The working directory override. If null, uses options.WorkingDirectory or current directory.</param>
+    /// <param name="logger">Logger override. If null, uses options.Logger or Deno.Logger.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="options"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if both Config and ConfigOrPath are set.</exception>
+    public DenoProcess(DenoExecuteOptions options, string? workingDirectory = null, ILogger? logger = null)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var command = options.Command;
+        var configOrPath = options.ConfigOrPath;
+        var config = options.Config;
+        var args = options.Args;
+
+        if (config != null && !string.IsNullOrWhiteSpace(configOrPath))
+            throw new ArgumentException("Either 'config' or 'configOrPath' should be provided, not both.");
+
+        if (string.IsNullOrWhiteSpace(command))
+            throw new ArgumentException("Command cannot be null or empty.", nameof(command));
+
+        string[]? finalArgs;
+        string? tempConfigPath = null;
+
+        if (config != null)
+        {
+            var configPath = Helper.WriteTempConfig(config);
+            var allArgs = Helper.AppendConfigArgument(args ?? [], configPath);
+            finalArgs = Helper.BuildArgumentsArray(allArgs, command);
+            tempConfigPath = configPath;
+        }
+        else if (!string.IsNullOrWhiteSpace(configOrPath))
+        {
+            var configPath = Helper.EnsureConfigFile(configOrPath);
+            var allArgs = Helper.AppendConfigArgument(args ?? [], configPath);
+            finalArgs = Helper.BuildArgumentsArray(allArgs, command);
+            tempConfigPath = !Helper.IsJsonPathLike(configOrPath) ? configPath : null;
+        }
+        else
+        {
+            finalArgs = Helper.BuildArgumentsArray(args ?? [], command);
+        }
+
+        _args = finalArgs;
+        _workingDirectory = workingDirectory ?? options.WorkingDirectory ?? Directory.GetCurrentDirectory();
+        _logger = logger ?? options.Logger ?? Deno.Logger;
+        _tempConfigPath = tempConfigPath;
     }
 
     /// <summary>
@@ -396,6 +539,19 @@ public class DenoProcess : IDisposable
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Error occurred while disposing DenoProcess");
+        }
+
+        // Clean up temporary config file if it exists
+        if (!string.IsNullOrEmpty(_tempConfigPath))
+        {
+            try
+            {
+                Helper.DeleteTempFile(_tempConfigPath);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error occurred while cleaning up temporary config file: {ConfigPath}", _tempConfigPath);
+            }
         }
 
         GC.SuppressFinalize(this);
