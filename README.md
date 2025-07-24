@@ -53,6 +53,8 @@ dotnet add package DenoHost.Core
 
 ## Deno.Execute Example
 
+For simple script execution with immediate results:
+
 ```csharp
 using DenoHost;
 
@@ -75,15 +77,6 @@ using var denoProcess = new DenoProcess(
     args: ["--allow-read", "server.ts"],
     workingDirectory: "./scripts"
 );
-
-// Subscribe to events
-denoProcess.OutputDataReceived += (sender, e) => {
-    Console.WriteLine($"Output: {e.Data}");
-};
-
-denoProcess.ProcessExited += (sender, e) => {
-    Console.WriteLine($"Process exited with code: {e.ExitCode}");
-};
 
 // Start the process
 await denoProcess.StartAsync();
