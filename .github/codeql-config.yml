@@ -1,0 +1,31 @@
+# CodeQL Configuration for DenoHost Project
+# This file is automatically detected by GitHub Actions
+
+name: "DenoHost CodeQL Config"
+
+# Only analyze relevant paths
+paths:
+  - "DenoHost.Core/**"
+  - "DenoHost.Tests/**"
+
+# Ignore unimportant paths  
+paths-ignore:
+  - "coverage-report/**"
+  - "TestResults/**"
+  - "tools/**"
+
+# Query sets for different languages
+queries:
+  - uses: security-and-quality
+    
+# C# specific configuration
+packs:
+  csharp:
+    - codeql/csharp-queries
+    
+# Custom categories
+categories:
+  - security
+  - reliability  
+  - performance
+  - maintainability
