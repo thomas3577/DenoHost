@@ -428,18 +428,14 @@ public class DenoProcess : IDisposable
 
         try
         {
-            // Try graceful shutdown first
-            if (!process.CloseMainWindow())
+            // Try graceful shutdown first by closing standard input
+            try
             {
-                // If CloseMainWindow fails, try to terminate gracefully
-                try
-                {
-                    process.Close();
-                }
-                catch (InvalidOperationException)
-                {
-                    // Process might have already exited
-                }
+                process.StandardInput.Close();
+            }
+            catch (InvalidOperationException)
+            {
+                // Process might have already exited or input stream not available
             }
 
             // Wait for the process to exit gracefully
@@ -458,8 +454,11 @@ public class DenoProcess : IDisposable
 
                 try
                 {
-                    process.Kill(entireProcessTree: true);
-                    await process.WaitForExitAsync(cancellationToken);
+                    if (!process.HasExited)
+                    {
+                        process.Kill(entireProcessTree: true);
+                        await process.WaitForExitAsync(cancellationToken);
+                    }
                     _logger?.LogInformation("Deno process terminated forcefully");
                 }
                 catch (Exception ex)
