@@ -8,11 +8,22 @@ internal static class Helper
 {
   internal static string BuildArguments(string[]? args, string? command = null)
   {
-    var argsStr = string.Join(" ", args ?? []);
-    if (command == null)
-      return argsStr;
+    var argsArray = BuildArgumentsArray(args, command);
+    return string.Join(" ", argsArray);
+  }
 
-    return $"{command} {argsStr}".Trim();
+  internal static string[] BuildArgumentsArray(string[]? args, string? command = null)
+  {
+    if (command == null)
+      return args ?? [];
+
+    var result = new string[1 + (args?.Length ?? 0)];
+    result[0] = command;
+
+    if (args != null)
+      Array.Copy(args, 0, result, 1, args.Length);
+
+    return result;
   }
 
   internal static string[] AppendConfigArgument(string[] args, string configPath)
@@ -26,8 +37,8 @@ internal static class Helper
   internal static string GetDenoPath()
   {
     var rid = GetRuntimeId();
-    var filename = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "deno.exe" : "deno";
-    var path = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", filename);
+    var fileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "deno.exe" : "deno";
+    var path = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", fileName);
 
     if (!File.Exists(path))
       throw new FileNotFoundException("Deno executable not found.", path);

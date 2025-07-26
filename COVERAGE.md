@@ -5,8 +5,8 @@
 **Generate local coverage report:**
 
 ```powershell
-.\run-coverage.ps1                    # With automatic browser opening
-.\run-coverage.ps1 -OpenReport:$false # Generate report only
+.\tools\run-coverage.ps1                    # With automatic browser opening
+.\tools\run-coverage.ps1 -OpenReport:$false # Generate report only
 ```
 
 ## Bash Script for Linux/macOS
@@ -14,9 +14,9 @@
 **Generate local coverage report:**
 
 ```bash
-chmod +x run-coverage.sh
-./run-coverage.sh                    # With automatic browser opening
-./run-coverage.sh false              # Generate report only
+chmod +x tools/run-coverage.sh
+./tools/run-coverage.sh                    # With automatic browser opening
+./tools/run-coverage.sh false              # Generate report only
 ```
 
 ## Additional Coverage Options

@@ -51,7 +51,9 @@ dotnet add package DenoHost.Core
 
 ---
 
-## 🚀 Usage Example
+## Deno.Execute Example
+
+For simple script execution with immediate results:
 
 ```csharp
 using DenoHost;
@@ -62,7 +64,31 @@ string[] args = ["run", "app.ts"];
 await Deno.Execute(options, args);
 ```
 
-## 🛠️ Requirements
+## DenoProcess Example
+
+For long-running processes with interactive communication:
+
+```csharp
+using DenoHost.Core;
+
+// Create a managed Deno process
+using var denoProcess = new DenoProcess(
+    command: "run",
+    args: ["--allow-read", "server.ts"],
+    workingDirectory: "./scripts"
+);
+
+// Start the process
+await denoProcess.StartAsync();
+
+// Send input to the process
+await denoProcess.SendInputAsync("hello");
+
+// Stop gracefully when done
+await denoProcess.StopAsync();
+```
+
+## �🛠️ Requirements
 
 - .NET 9.0+
 - Deno version is bundled per RID via GitHub Releases
