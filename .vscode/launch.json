@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Example",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-example",
+      "program": "${workspaceFolder}/DenoHost.Example/bin/Debug/net9.0/DenoHost.Example.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/DenoHost.Example",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_WATCH": "1"
+      }
+    },
+    {
+      "name": "Attach to DenoHost.Example",
+      "type": "coreclr",
+      "request": "attach"
+    }
+  ]
+}

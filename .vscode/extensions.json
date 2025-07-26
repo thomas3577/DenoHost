@@ -1,11 +1,11 @@
 {
-    "recommendations": [
-        "github.vscode-github-actions",
-        "github.vscode-codeql",
-        "redhat.vscode-yaml",
-        "ms-dotnettools.csdevkit",
-        "yzhang.markdown-all-in-one",
-        "davidanson.vscode-markdownlint",
-        "denoland.vscode-deno"
-    ]
+  "recommendations": [
+    "github.vscode-github-actions",
+    "github.vscode-codeql",
+    "redhat.vscode-yaml",
+    "ms-dotnettools.csdevkit",
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    "denoland.vscode-deno"
+  ]
 }

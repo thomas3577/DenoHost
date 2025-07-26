@@ -7,4 +7,25 @@ indent_size = 2
 indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
+
+# C# Files
+[*.cs]
+indent_size = 2
+indent_style = space
+tab_width = 2
+
+# JSON Files
+[*.json]
+indent_size = 2
+indent_style = space
+
+# XML Files  
+[*.{html,xml,csproj,props,targets}]
+indent_size = 2
+indent_style = space
+
+# TypeScript/JavaScript
+[*.{ts,js}]
+indent_size = 2
+indent_style = space
 quote_type = single

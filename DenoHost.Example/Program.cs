@@ -23,7 +23,7 @@ app.MapGet("/", static async (HttpContext context) =>
   string[] args = ["app.ts"];
   var output = await Deno.Execute<string>(command, options, args);
 
-  return Results.Ok(output);
+  return Results.Text(output);
 });
 
 // New endpoint to demonstrate DenoProcess examples
@@ -38,7 +38,7 @@ app.MapGet("/demo", static async (HttpContext context) =>
     // Run basic functionality example
     await DenoProcessExample.BasicUsageExample(logger);
 
-    return Results.Ok("DenoProcess demonstration completed successfully. Check the logs for details.");
+    return Results.Text("DenoProcess demonstration completed successfully. Check the logs for details.");
   }
   catch (Exception ex)
   {
@@ -55,7 +55,7 @@ app.MapGet("/demo/wait", static async (HttpContext context) =>
   try
   {
     await DenoProcessExample.WaitForExitExample(logger);
-    return Results.Ok("WaitForExit example completed.");
+    return Results.Text("WaitForExit example completed.");
   }
   catch (Exception ex)
   {
@@ -72,7 +72,7 @@ app.MapGet("/demo/interactive", static async (HttpContext context) =>
   try
   {
     await DenoProcessExample.InteractiveExample(logger);
-    return Results.Ok("Interactive example completed.");
+    return Results.Text("Interactive example completed.");
   }
   catch (Exception ex)
   {

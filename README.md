@@ -9,7 +9,6 @@
 > This library is in active development. APIs and features may change
 > significantly between releases.\
 > Not recommended for production use. Use for testing and experimentation only.
-
 > 🦕 Use Deno from within your .NET applications – cross-platform, cleanly
 > packaged, and NuGet-ready.
 
@@ -73,9 +72,9 @@ using DenoHost.Core;
 
 // Create a managed Deno process
 using var denoProcess = new DenoProcess(
-    command: "run",
-    args: ["--allow-read", "server.ts"],
-    workingDirectory: "./scripts"
+  command: "run",
+  args: ["--allow-read", "server.ts"],
+  workingDirectory: "./scripts"
 );
 
 // Start the process

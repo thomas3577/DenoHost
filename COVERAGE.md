@@ -4,7 +4,7 @@
 
 **Generate local coverage report:**
 
-```powershell
+```shell
 .\tools\run-coverage.ps1                    # With automatic browser opening
 .\tools\run-coverage.ps1 -OpenReport:$false # Generate report only
 ```
