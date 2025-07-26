@@ -14,13 +14,13 @@ namespace DenoHost.Core;
 /// </summary>
 public class DenoProcess : IDisposable
 {
-    private Process? _process;
     private readonly string _workingDirectory;
     private readonly string[] _args;
     private readonly ILogger? _logger;
     private readonly string? _tempConfigPath;
-    private bool _disposed;
     private readonly Lock _lock = new();
+    private Process? _process;
+    private bool _disposed;
 
     /// <summary>
     /// Gets a value indicating whether the Deno process is currently running.
@@ -29,7 +29,7 @@ public class DenoProcess : IDisposable
     {
         get
         {
-            lock (_lock)
+            using (_lock.EnterScope())
             {
                 try
                 {
@@ -51,7 +51,7 @@ public class DenoProcess : IDisposable
     {
         get
         {
-            lock (_lock)
+            using (_lock.EnterScope())
             {
                 try
                 {
@@ -73,7 +73,7 @@ public class DenoProcess : IDisposable
     {
         get
         {
-            lock (_lock)
+            using (_lock.EnterScope())
             {
                 try
                 {
@@ -288,7 +288,7 @@ public class DenoProcess : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        lock (_lock)
+        using (_lock.EnterScope())
         {
             if (_process != null)
                 throw new InvalidOperationException("Process is already started. Call Stop() before starting again.");
@@ -374,7 +374,7 @@ public class DenoProcess : IDisposable
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            lock (_lock)
+            using (_lock.EnterScope())
             {
                 _process = process;
             }
@@ -416,7 +416,7 @@ public class DenoProcess : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         Process? process;
-        lock (_lock)
+        using (_lock.EnterScope())
         {
             process = _process;
         }
@@ -448,7 +448,7 @@ public class DenoProcess : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         Process? process;
-        lock (_lock)
+        using (_lock.EnterScope())
         {
             process = _process;
             _process = null;
@@ -535,7 +535,7 @@ public class DenoProcess : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         Process? process;
-        lock (_lock)
+        using (_lock.EnterScope())
         {
             process = _process;
         }
@@ -576,7 +576,7 @@ public class DenoProcess : IDisposable
         _disposed = true;
 
         Process? process;
-        lock (_lock)
+        using (_lock.EnterScope())
         {
             process = _process;
             _process = null;
