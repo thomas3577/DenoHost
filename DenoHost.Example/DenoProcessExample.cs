@@ -16,10 +16,10 @@ public static class DenoProcessExample
 
     // Create a DenoProcess instance
     using var denoProcess = new DenoProcess(
-        command: "run",
-        args: ["--allow-read", "scripts/long-running.ts"],
-        workingDirectory: Directory.GetCurrentDirectory(),
-        logger: logger
+      command: "run",
+      args: ["--allow-read", "scripts/long-running.ts"],
+      workingDirectory: Directory.GetCurrentDirectory(),
+      logger: logger
     );
 
     // Subscribe to events
@@ -74,9 +74,9 @@ public static class DenoProcessExample
     logger.LogInformation("=== DenoProcess Restart Example ===");
 
     using var denoProcess = new DenoProcess(
-        command: "run",
-        args: ["--allow-read", "scripts/app.ts"],
-        logger: logger
+      command: "run",
+      args: ["--allow-read", "scripts/app.ts"],
+      logger: logger
     );
 
     try
@@ -112,9 +112,9 @@ public static class DenoProcessExample
     logger.LogInformation("=== DenoProcess WaitForExit Example ===");
 
     using var denoProcess = new DenoProcess(
-        command: "run",
-        args: ["scripts/finite-task.ts"],
-        logger: logger
+      command: "run",
+      args: ["scripts/finite-task.ts"],
+      logger: logger
     );
 
     try
@@ -140,9 +140,9 @@ public static class DenoProcessExample
     logger.LogInformation("=== DenoProcess Error Handling Example ===");
 
     using var denoProcess = new DenoProcess(
-        command: "run",
-        args: ["non-existent-script.ts"],
-        logger: logger
+      command: "run",
+      args: ["non-existent-script.ts"],
+      logger: logger
     );
 
     try
@@ -168,9 +168,9 @@ public static class DenoProcessExample
     logger.LogInformation("=== DenoProcess Interactive Example ===");
 
     using var denoProcess = new DenoProcess(
-        command: "run",
-        args: ["--allow-read", "scripts/interactive.ts"],
-        logger: logger
+      command: "run",
+      args: ["--allow-read", "scripts/interactive.ts"],
+      logger: logger
     );
 
     var responses = new List<string>();
