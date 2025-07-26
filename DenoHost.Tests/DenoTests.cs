@@ -13,10 +13,6 @@ class TestResult
     public bool HasImports { get; set; }
 }
 
-/// <summary>
-/// Test fixture for managing temporary files created during tests.
-/// Automatically cleans up all created files when the test class is disposed.
-/// </summary>
 public class TempFileFixture : IDisposable
 {
     private readonly List<string> _tempFiles = new();

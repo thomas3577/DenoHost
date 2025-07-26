@@ -1,21 +1,16 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using DenoHost.Core;
-using System.Diagnostics;
 
 namespace DenoHost.Tests;
 
-/// <summary>
-/// Comprehensive tests for the DenoProcess class, including all constructor overloads, 
-/// functionality, error scenarios, lifecycle methods, and coverage improvements.
-/// </summary>
-public class DenoProcessComprehensiveTests
+public class DenoProcessTests
 {
     private readonly ILogger _logger;
 
-    public DenoProcessComprehensiveTests()
+    public DenoProcessTests()
     {
-        _logger = NullLogger<DenoProcessComprehensiveTests>.Instance;
+        _logger = NullLogger<DenoProcessTests>.Instance;
     }
 
     #region Constructor Tests
