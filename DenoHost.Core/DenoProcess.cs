@@ -31,7 +31,15 @@ public class DenoProcess : IDisposable
         {
             lock (_lock)
             {
-                return _process != null && !_process.HasExited;
+                try
+                {
+                    return _process != null && !_process.HasExited;
+                }
+                catch (InvalidOperationException)
+                {
+                    // Process has been disposed
+                    return false;
+                }
             }
         }
     }
@@ -45,7 +53,15 @@ public class DenoProcess : IDisposable
         {
             lock (_lock)
             {
-                return _process?.Id;
+                try
+                {
+                    return _process?.Id;
+                }
+                catch (InvalidOperationException)
+                {
+                    // Process has been disposed
+                    return null;
+                }
             }
         }
     }
@@ -59,9 +75,17 @@ public class DenoProcess : IDisposable
         {
             lock (_lock)
             {
-                if (_process == null || !_process.HasExited)
+                try
+                {
+                    if (_process == null || !_process.HasExited)
+                        return null;
+                    return _process.ExitCode;
+                }
+                catch (InvalidOperationException)
+                {
+                    // Process has been disposed or exit code not available
                     return null;
-                return _process.ExitCode;
+                }
             }
         }
     }
@@ -298,8 +322,15 @@ public class DenoProcess : IDisposable
         {
             if (e.Data != null)
             {
-                OutputDataReceived?.Invoke(this, e);
-                _logger?.LogDebug("Deno stdout: {Data}", e.Data);
+                try
+                {
+                    OutputDataReceived?.Invoke(this, e);
+                    _logger?.LogDebug("Deno stdout: {Data}", e.Data);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Error in OutputDataReceived event handler");
+                }
             }
         };
 
@@ -307,16 +338,30 @@ public class DenoProcess : IDisposable
         {
             if (e.Data != null)
             {
-                ErrorDataReceived?.Invoke(this, e);
-                _logger?.LogDebug("Deno stderr: {Data}", e.Data);
+                try
+                {
+                    ErrorDataReceived?.Invoke(this, e);
+                    _logger?.LogDebug("Deno stderr: {Data}", e.Data);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Error in ErrorDataReceived event handler");
+                }
             }
         };
 
         process.Exited += (sender, e) =>
         {
-            var exitCode = process.ExitCode;
-            _logger?.LogInformation("Deno process exited with code {ExitCode}", exitCode);
-            ProcessExited?.Invoke(this, new ProcessExitedEventArgs(exitCode));
+            try
+            {
+                var exitCode = process.ExitCode;
+                _logger?.LogInformation("Deno process exited with code {ExitCode}", exitCode);
+                ProcessExited?.Invoke(this, new ProcessExitedEventArgs(exitCode));
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error in ProcessExited event handler");
+            }
         };
 
         try
@@ -530,14 +575,33 @@ public class DenoProcess : IDisposable
 
         _disposed = true;
 
-        try
+        Process? process;
+        lock (_lock)
         {
-            // Stop the process synchronously if it's still running
-            StopAsync().GetAwaiter().GetResult();
+            process = _process;
+            _process = null;
         }
-        catch (Exception ex)
+
+        // Force kill the process immediately during disposal to avoid deadlocks
+        if (process != null)
         {
-            _logger?.LogError(ex, "Error occurred while disposing DenoProcess");
+            try
+            {
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                    // Give it a brief moment to clean up, but don't wait indefinitely
+                    if (!process.WaitForExit(1000))
+                    {
+                        _logger?.LogWarning("Process did not exit within 1 second during disposal");
+                    }
+                }
+                process.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error occurred while disposing DenoProcess");
+            }
         }
 
         // Clean up temporary config file if it exists
