@@ -1,0 +1,16 @@
+# CodeQL Workspace for DenoHost
+# This file tells VS Code how to handle CodeQL queries
+
+database: "./codeql-db"
+extractor: "csharp"
+
+# Query paths
+queries:
+  - ".github/codeql/"
+
+# Library paths (for imports)
+library-path:
+  - "${CODEQL_HOME}/csharp/ql/lib"
+  
+# Output format
+output-format: "sarif-latest"

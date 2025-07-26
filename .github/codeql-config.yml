@@ -14,18 +14,6 @@ paths-ignore:
   - "TestResults/**"
   - "tools/**"
 
-# Query sets for different languages
+# Use standard security and quality queries
 queries:
   - uses: security-and-quality
-    
-# C# specific configuration
-packs:
-  csharp:
-    - codeql/csharp-queries
-    
-# Custom categories
-categories:
-  - security
-  - reliability  
-  - performance
-  - maintainability
