@@ -7,13 +7,12 @@ currently being supported with security updates.
 
 | Version          | Supported          |
 | ---------------- | ------------------ |
-| v2.4.2-alpha.6   | :white_check_mark: |
-| < v2.4.2-alpha.6 | :x:                |
+| v2.4.3-alpha.7   | :white_check_mark: |
+| < v2.4.3-alpha.7 | :x:                |
 
 ## 📢 Reporting a Vulnerability
 
 Use this section to tell people how to report a vulnerability.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Tell them where to go, how often they can expect to get an update on a reported
+vulnerability, what to expect if the vulnerability is accepted or declined, etc.

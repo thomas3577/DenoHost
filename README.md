@@ -87,7 +87,7 @@ await denoProcess.SendInputAsync("hello");
 await denoProcess.StopAsync();
 ```
 
-## �🛠️ Requirements
+## 🛠️ Requirements
 
 - .NET 9.0+
 - Deno version is bundled per RID via GitHub Releases
@@ -95,7 +95,11 @@ await denoProcess.StopAsync();
 
 ## 📄 License
 
-MIT License © Thomas Huber
+This project is licensed under the [MIT License](./LICENSE).
+
+## 🛡️ Security Policy
+
+See [SECURITY.md](./SECURITY.md) for how to report vulnerabilities.
 
 ## 🌐 Links
 
