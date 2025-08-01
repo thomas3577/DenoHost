@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using DenoHost.Core.IPC;
 
 namespace DenoHost.Core;
 
@@ -18,8 +21,14 @@ public class DenoProcess : IDisposable
   private readonly string[] _args;
   private readonly ILogger? _logger;
   private readonly string? _tempConfigPath;
+  private readonly IpcTransportType? _ipcTransportType;
+  private readonly string? _ipcEndpointName;
+  private readonly ConcurrentDictionary<string, TaskCompletionSource<JsonElement>> _pendingRequests = new();
+  private readonly ConcurrentDictionary<string, Func<JsonElement, Task<JsonElement>>> _registeredMethods = new();
   private readonly Lock _lock = new();
   private Process? _process;
+  private IIpcTransport? _ipcTransport;
+  private int _nextRequestId = 1;
   private bool _disposed;
 
   /// <summary>
@@ -106,16 +115,26 @@ public class DenoProcess : IDisposable
   public event EventHandler<DataReceivedEventArgs>? ErrorDataReceived;
 
   /// <summary>
+  /// Event that is raised when a structured message is received from the Deno process.
+  /// This event is only raised when structured communication is enabled.
+  /// </summary>
+  public event EventHandler<StructuredMessageEventArgs>? StructuredMessageReceived;
+
+  /// <summary>
   /// Initializes a new instance of the <see cref="DenoProcess"/> class.
   /// </summary>
   /// <param name="args">The arguments to pass to the Deno process.</param>
   /// <param name="workingDirectory">The working directory for the process. If null, uses current directory.</param>
   /// <param name="logger">Optional logger for process operations.</param>
-  public DenoProcess(string[] args, string? workingDirectory = null, ILogger? logger = null)
+  /// <param name="ipcTransportType">The type of IPC transport to use. If null, uses standard streams.</param>
+  /// <param name="ipcEndpointName">The name of the IPC endpoint. If null, generates a unique name.</param>
+  public DenoProcess(string[] args, string? workingDirectory = null, ILogger? logger = null, IpcTransportType? ipcTransportType = null, string? ipcEndpointName = null)
   {
     _args = args ?? throw new ArgumentNullException(nameof(args));
     _workingDirectory = workingDirectory ?? Directory.GetCurrentDirectory();
     _logger = logger ?? Deno.Logger;
+    _ipcTransportType = ipcTransportType;
+    _ipcEndpointName = ipcEndpointName ?? (ipcTransportType.HasValue ? IpcTransportFactory.GenerateUniqueEndpointName("denohost") : null);
   }
 
   /// <summary>
@@ -125,7 +144,9 @@ public class DenoProcess : IDisposable
   /// <param name="args">Additional arguments to pass to the Deno process.</param>
   /// <param name="workingDirectory">The working directory for the process. If null, uses current directory.</param>
   /// <param name="logger">Optional logger for process operations.</param>
-  public DenoProcess(string command, string[]? args = null, string? workingDirectory = null, ILogger? logger = null)
+  /// <param name="ipcTransportType">The type of IPC transport to use. If null, uses standard streams.</param>
+  /// <param name="ipcEndpointName">The name of the IPC endpoint. If null, generates a unique name.</param>
+  public DenoProcess(string command, string[]? args = null, string? workingDirectory = null, ILogger? logger = null, IpcTransportType? ipcTransportType = null, string? ipcEndpointName = null)
   {
     if (string.IsNullOrWhiteSpace(command))
       throw new ArgumentException("Command cannot be null or empty.", nameof(command));
@@ -134,6 +155,8 @@ public class DenoProcess : IDisposable
     _args = allArgs;
     _workingDirectory = workingDirectory ?? Directory.GetCurrentDirectory();
     _logger = logger ?? Deno.Logger;
+    _ipcTransportType = ipcTransportType;
+    _ipcEndpointName = ipcEndpointName ?? (ipcTransportType.HasValue ? IpcTransportFactory.GenerateUniqueEndpointName("denohost") : null);
   }
 
   /// <summary>
@@ -142,8 +165,10 @@ public class DenoProcess : IDisposable
   /// <param name="command">The Deno command to execute.</param>
   /// <param name="baseOptions">Base options such as working directory and logger.</param>
   /// <param name="args">Additional arguments to pass to the Deno process.</param>
+  /// <param name="ipcTransportType">The type of IPC transport to use. If null, uses standard streams.</param>
+  /// <param name="ipcEndpointName">The name of the IPC endpoint. If null, generates a unique name.</param>
   /// <exception cref="ArgumentNullException">Thrown if <paramref name="baseOptions"/> is null.</exception>
-  public DenoProcess(string command, DenoExecuteBaseOptions baseOptions, string[]? args = null)
+  public DenoProcess(string command, DenoExecuteBaseOptions baseOptions, string[]? args = null, IpcTransportType? ipcTransportType = null, string? ipcEndpointName = null)
   {
     ArgumentNullException.ThrowIfNull(baseOptions);
 
@@ -154,6 +179,8 @@ public class DenoProcess : IDisposable
     _args = allArgs;
     _workingDirectory = baseOptions.WorkingDirectory ?? Directory.GetCurrentDirectory();
     _logger = baseOptions.Logger ?? Deno.Logger;
+    _ipcTransportType = ipcTransportType;
+    _ipcEndpointName = ipcEndpointName ?? (ipcTransportType.HasValue ? IpcTransportFactory.GenerateUniqueEndpointName("denohost") : null);
   }
 
   /// <summary>
@@ -604,6 +631,16 @@ public class DenoProcess : IDisposable
       }
     }
 
+    // Clean up IPC transport
+    try
+    {
+      _ipcTransport?.Dispose();
+    }
+    catch (Exception ex)
+    {
+      _logger?.LogError(ex, "Error occurred while disposing IPC transport");
+    }
+
     // Clean up temporary config file if it exists
     if (!string.IsNullOrEmpty(_tempConfigPath))
     {
@@ -618,6 +655,166 @@ public class DenoProcess : IDisposable
     }
 
     GC.SuppressFinalize(this);
+  }
+
+  /// <summary>
+  /// Initializes the IPC transport and starts the server.
+  /// </summary>
+  /// <param name="cancellationToken">Cancellation token for the operation.</param>
+  private async Task InitializeIpcTransportAsync(CancellationToken cancellationToken)
+  {
+    if (_ipcTransportType == null || _ipcEndpointName == null)
+      return;
+
+    try
+    {
+      _logger?.LogInformation("Initializing IPC transport: {TransportType} at {Endpoint}", _ipcTransportType, _ipcEndpointName);
+
+      _ipcTransport = IpcTransportFactory.CreateServer(_ipcEndpointName, _ipcTransportType.Value, _logger);
+
+      // Set up event handlers
+      _ipcTransport.MessageReceived += OnIpcMessageReceived;
+      _ipcTransport.Connected += OnIpcConnected;
+      _ipcTransport.Disconnected += OnIpcDisconnected;
+
+      // Start the server
+      await _ipcTransport.StartServerAsync(cancellationToken);
+
+      _logger?.LogInformation("IPC transport server started successfully");
+    }
+    catch (Exception ex)
+    {
+      _logger?.LogError(ex, "Failed to initialize IPC transport");
+      _ipcTransport?.Dispose();
+      _ipcTransport = null;
+      throw;
+    }
+  }
+
+  /// <summary>
+  /// Handles IPC message received events.
+  /// </summary>
+  /// <param name="sender">The transport that received the message.</param>
+  /// <param name="e">Event arguments containing the message.</param>
+  private void OnIpcMessageReceived(object? sender, IpcMessageReceivedEventArgs e)
+  {
+    try
+    {
+      _logger?.LogDebug("Received IPC message: {Message}", e.Message);
+      // For now, just log the message. In the future, this could parse structured messages
+      // when the structured communication feature is implemented.
+    }
+    catch (Exception ex)
+    {
+      _logger?.LogError(ex, "Error processing IPC message");
+    }
+  }
+
+  /// <summary>
+  /// Handles IPC connection events.
+  /// </summary>
+  /// <param name="sender">The transport that connected.</param>
+  /// <param name="e">Event arguments.</param>
+  private void OnIpcConnected(object? sender, EventArgs e)
+  {
+    _logger?.LogInformation("Deno process connected via IPC");
+  }
+
+  /// <summary>
+  /// Handles IPC disconnection events.
+  /// </summary>
+  /// <param name="sender">The transport that disconnected.</param>
+  /// <param name="e">Event arguments containing disconnection details.</param>
+  private void OnIpcDisconnected(object? sender, IpcDisconnectedEventArgs e)
+  {
+    _logger?.LogInformation("Deno process disconnected from IPC: {Reason}", e.Reason);
+    if (e.Exception != null)
+    {
+      _logger?.LogError(e.Exception, "IPC disconnection due to error");
+    }
+  }
+
+  /// <summary>
+  /// Calls a method on the Deno process and waits for the response.
+  /// </summary>
+  /// <param name="methodName">The name of the method to call.</param>
+  /// <param name="parameters">The parameters to pass to the method.</param>
+  /// <param name="cancellationToken">Cancellation token to observe while waiting for the task to complete.</param>
+  /// <returns>A task that represents the asynchronous call operation. The task result contains the method response.</returns>
+  /// <exception cref="InvalidOperationException">Thrown if the process is not running.</exception>
+  public async Task<JsonElement> CallMethodAsync(string methodName, JsonElement? parameters = null, CancellationToken cancellationToken = default)
+  {
+    ObjectDisposedException.ThrowIf(_disposed, this);
+
+    if (!IsRunning)
+      throw new InvalidOperationException("Process is not running.");
+
+    var requestId = Interlocked.Increment(ref _nextRequestId).ToString();
+    var tcs = new TaskCompletionSource<JsonElement>();
+
+    _pendingRequests[requestId] = tcs;
+
+    try
+    {
+      var request = new JsonRpcRequest
+      {
+        JsonRpc = "2.0",
+        Id = requestId,
+        Method = methodName,
+        Params = parameters
+      };
+
+      var json = JsonSerializer.Serialize(request, JsonSerializerOptions.Default);
+      await SendInputAsync(json, cancellationToken);
+
+      using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+      linkedCts.CancelAfter(TimeSpan.FromSeconds(30)); // Default timeout
+
+      return await tcs.Task.WaitAsync(linkedCts.Token);
+    }
+    finally
+    {
+      _pendingRequests.TryRemove(requestId, out _);
+    }
+  }
+
+  /// <summary>
+  /// Registers a method that can be called from the Deno process.
+  /// </summary>
+  /// <param name="methodName">The name of the method to register.</param>
+  /// <param name="handler">The handler function that will be called when the method is invoked.</param>
+  public void RegisterMethod(string methodName, Func<JsonElement, Task<JsonElement>> handler)
+  {
+    ArgumentNullException.ThrowIfNull(handler);
+
+    _registeredMethods[methodName] = handler;
+    _logger?.LogDebug("Registered method: {MethodName}", methodName);
+  }
+
+  /// <summary>
+  /// Sends a notification to the Deno process (fire-and-forget).
+  /// </summary>
+  /// <param name="methodName">The name of the method to notify.</param>
+  /// <param name="parameters">The parameters to pass to the method.</param>
+  /// <param name="cancellationToken">Cancellation token to observe while waiting for the task to complete.</param>
+  /// <returns>A task that represents the asynchronous send operation.</returns>
+  /// <exception cref="InvalidOperationException">Thrown if the process is not running.</exception>
+  public async Task SendNotificationAsync(string methodName, JsonElement? parameters = null, CancellationToken cancellationToken = default)
+  {
+    ObjectDisposedException.ThrowIf(_disposed, this);
+
+    if (!IsRunning)
+      throw new InvalidOperationException("Process is not running.");
+
+    var notification = new JsonRpcNotification
+    {
+      JsonRpc = "2.0",
+      Method = methodName,
+      Params = parameters
+    };
+
+    var json = JsonSerializer.Serialize(notification, JsonSerializerOptions.Default);
+    await SendInputAsync(json, cancellationToken);
   }
 
   /// <summary>
@@ -642,4 +839,132 @@ public class ProcessExitedEventArgs(int exitCode) : EventArgs
   /// Gets the exit code of the process.
   /// </summary>
   public int ExitCode { get; } = exitCode;
+}
+
+/// <summary>
+/// Provides data for the StructuredMessageReceived event.
+/// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="StructuredMessageEventArgs"/> class.
+/// </remarks>
+/// <param name="message">The structured message that was received.</param>
+public class StructuredMessageEventArgs(JsonRpcMessage message) : EventArgs
+{
+  /// <summary>
+  /// Gets the structured message that was received.
+  /// </summary>
+  public JsonRpcMessage Message { get; } = message;
+}
+
+/// <summary>
+/// Base class for JSON-RPC messages.
+/// </summary>
+public abstract class JsonRpcMessage
+{
+  /// <summary>
+  /// Gets or sets the JSON-RPC version (always "2.0").
+  /// </summary>
+  public string JsonRpc { get; set; } = "2.0";
+
+  /// <summary>
+  /// Gets or sets the message ID (optional for notifications).
+  /// </summary>
+  public string? Id { get; set; }
+}
+
+/// <summary>
+/// Represents a JSON-RPC request.
+/// </summary>
+public class JsonRpcRequest : JsonRpcMessage
+{
+  /// <summary>
+  /// Gets or sets the method name to call.
+  /// </summary>
+  public string Method { get; set; } = string.Empty;
+
+  /// <summary>
+  /// Gets or sets the method parameters.
+  /// </summary>
+  public JsonElement? Params { get; set; }
+}
+
+/// <summary>
+/// Represents a JSON-RPC response.
+/// </summary>
+public class JsonRpcResponse : JsonRpcMessage
+{
+  /// <summary>
+  /// Gets or sets the result (for successful responses).
+  /// </summary>
+  public JsonElement? Result { get; set; }
+
+  /// <summary>
+  /// Gets or sets the error (for error responses).
+  /// </summary>
+  public JsonRpcError? Error { get; set; }
+}
+
+/// <summary>
+/// Represents a JSON-RPC notification (request without response).
+/// </summary>
+public class JsonRpcNotification : JsonRpcMessage
+{
+  /// <summary>
+  /// Gets or sets the method name to call.
+  /// </summary>
+  public string Method { get; set; } = string.Empty;
+
+  /// <summary>
+  /// Gets or sets the method parameters.
+  /// </summary>
+  public JsonElement? Params { get; set; }
+}
+
+/// <summary>
+/// Represents a JSON-RPC error.
+/// </summary>
+public class JsonRpcError
+{
+  /// <summary>
+  /// Gets or sets the error code.
+  /// </summary>
+  public int Code { get; set; }
+
+  /// <summary>
+  /// Gets or sets the error message.
+  /// </summary>
+  public string Message { get; set; } = string.Empty;
+
+  /// <summary>
+  /// Gets or sets additional error data.
+  /// </summary>
+  public JsonElement? Data { get; set; }
+}
+
+/// <summary>
+/// Exception thrown when a JSON-RPC error occurs.
+/// </summary>
+public class JsonRpcException : Exception
+{
+  /// <summary>
+  /// Gets the JSON-RPC error code.
+  /// </summary>
+  public int Code { get; }
+
+  /// <summary>
+  /// Gets additional error data.
+  /// </summary>
+  public new JsonElement? Data { get; }
+
+  /// <summary>
+  /// Initializes a new instance of the <see cref="JsonRpcException"/> class.
+  /// </summary>
+  /// <param name="code">The error code.</param>
+  /// <param name="message">The error message.</param>
+  /// <param name="data">Additional error data.</param>
+  public JsonRpcException(int code, string message, JsonElement? data = null) : base(message)
+  {
+    Code = code;
+    Data = data;
+  }
 }
