@@ -1,0 +1,44 @@
+name: 'Deno Release Check'
+description: 'Check for new Deno releases and create appropriate tags'
+inputs:
+  github-token:
+    description: 'GitHub token'
+    required: true
+  prerelease-type:
+    description: 'Pre-release type (alpha, beta, rc, preview)'
+    required: false
+    default: 'alpha'
+outputs:
+  created-tag:
+    description: 'The created tag name (if any)'
+    value: ${{ steps.create-tag.outputs.new_tag }}
+  already-exists:
+    description: 'Whether tag already exists'
+    value: ${{ steps.check.outputs.already_exists }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Deno
+      uses: denoland/setup-deno@v2.0.3
+      
+    - name: Fetch latest Deno release
+      id: deno
+      shell: bash
+      run: deno run --allow-net ${{ github.action_path }}/scripts/fetch-deno-release.ts
+
+    - name: Check existing tags
+      id: check
+      shell: bash
+      env:
+        TAG_CORE: ${{ steps.deno.outputs.tag_core }}
+      run: deno run --allow-net ${{ github.action_path }}/scripts/check-existing-tags.ts
+
+    - name: Create new tag
+      id: create-tag
+      if: steps.check.outputs.already_exists == 'false'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        TAG_CORE: ${{ steps.deno.outputs.tag_core }}
+        PRERELEASE_TYPE: ${{ inputs.prerelease-type }}
+      run: deno run --allow-net --allow-env --allow-run ${{ github.action_path }}/scripts/create-tag.ts

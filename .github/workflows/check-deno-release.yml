@@ -12,47 +12,19 @@ jobs:
   check_new_deno:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch latest Deno release
-        id: deno
-        run: |
-          full_tag=$(curl -s https://api.github.com/repos/denoland/deno/releases/latest | jq -r .tag_name)
-          echo "Latest Deno release: $full_tag"
-          tag_core=${full_tag#v}  # remove leading "v" if present
-          echo "tag_core=$tag_core" >> "$GITHUB_OUTPUT"
-          echo "full_tag=$full_tag" >> "$GITHUB_OUTPUT"
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Check if tag with this Deno version exists in DenoHost
-        id: check
-        run: |
-          tag_core=${{ steps.deno.outputs.tag_core }}
-          git_tags=$(git ls-remote --tags https://github.com/thomas3577/DenoHost.git | awk -F/ '{print $NF}')
-          echo "Existing tags in DenoHost:"
-          echo "$git_tags"
-          found=$(echo "$git_tags" | grep -E "^v${tag_core}(-|$)" || true)
+      - name: Check Deno release and create tag
+        id: deno-check
+        uses: ./.github/actions/deno-release-check
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-          if [[ -n "$found" ]]; then
-            echo "✅ Already released: $found"
-            echo "already_exists=true" >> "$GITHUB_OUTPUT"
+      - name: Display results
+        run: |
+          if [[ "${{ steps.deno-check.outputs.already-exists }}" == "true" ]]; then
+            echo "✅ Tag already exists, no action needed"
           else
-            echo "⚠️ No existing tag for v$tag_core"
-            echo "already_exists=false" >> "$GITHUB_OUTPUT"
+            echo "🎉 Created new tag: ${{ steps.deno-check.outputs.created-tag }}"
           fi
-
-      - name: Create new tag and push
-        if: steps.check.outputs.already_exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
-          git init
-          git remote add origin https://x-access-token:${GH_TOKEN}@github.com/thomas3577/DenoHost.git
-          git fetch origin main
-
-          tag_core=${{ steps.deno.outputs.tag_core }}
-          new_tag="v${tag_core}-alpha.1"
-
-          echo "Creating and pushing new tag: $new_tag"
-          git tag "$new_tag" origin/main
-          git push origin "$new_tag"
