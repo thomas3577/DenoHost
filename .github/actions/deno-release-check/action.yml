@@ -24,14 +24,14 @@ runs:
     - name: Fetch latest Deno release
       id: deno
       shell: bash
-      run: deno run --allow-net ${{ github.action_path }}/scripts/fetch-deno-release.ts
+      run: deno run --allow-net --allow-env --allow-write ${{ github.action_path }}/scripts/fetch-deno-release.ts
 
     - name: Check existing tags
       id: check
       shell: bash
       env:
         TAG_CORE: ${{ steps.deno.outputs.tag_core }}
-      run: deno run --allow-net ${{ github.action_path }}/scripts/check-existing-tags.ts
+      run: deno run --allow-net --allow-env --allow-write ${{ github.action_path }}/scripts/check-existing-tags.ts
 
     - name: Create new tag
       id: create-tag
