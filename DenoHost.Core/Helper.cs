@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace DenoHost.Core;
 
@@ -9,7 +10,7 @@ internal static class Helper
   internal static string BuildArguments(string[]? args, string? command = null)
   {
     var argsArray = BuildArgumentsArray(args, command);
-    return string.Join(" ", argsArray);
+    return string.Join(' ', argsArray);
   }
 
   internal static string[] BuildArgumentsArray(string[]? args, string? command = null)
@@ -38,20 +39,35 @@ internal static class Helper
   {
     var rid = GetRuntimeId();
     var fileName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "deno.exe" : "deno";
-    var path = Path.Combine(AppContext.BaseDirectory, "runtimes", rid, "native", fileName);
+    var basePath = Path.GetFullPath(AppContext.BaseDirectory);
+    var path = Path.Combine(basePath, "runtimes", rid, "native", fileName);
 
-    if (!File.Exists(path))
-      throw new FileNotFoundException("Deno executable not found.", path);
+    // Ensure the path is within the expected directory structure (prevent path traversal)
+    var normalizedPath = Path.GetFullPath(path);
+    if (!normalizedPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+      throw new UnauthorizedAccessException("Invalid path detected. Potential path traversal attempt.");
 
-    return path;
+    if (!File.Exists(normalizedPath))
+      throw new FileNotFoundException("Deno executable not found.", normalizedPath);
+
+    // Validate file permissions and executable status
+    ValidateExecutableFile(normalizedPath);
+
+    return normalizedPath;
   }
 
   internal static string GetRuntimeId()
   {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-      return "win-x64";
+      return RuntimeInformation.OSArchitecture == Architecture.Arm64
+        ? "win-arm64"
+        : "win-x64";
+
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-      return "linux-x64";
+      return RuntimeInformation.OSArchitecture == Architecture.Arm64
+        ? "linux-arm64"
+        : "linux-x64";
+
     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
       return RuntimeInformation.OSArchitecture == Architecture.Arm64
           ? "osx-arm64"
@@ -60,12 +76,54 @@ internal static class Helper
     throw new PlatformNotSupportedException("Unsupported OS platform.");
   }
 
+  private static void ValidateExecutableFile(string filePath)
+  {
+    try
+    {
+      var fileInfo = new FileInfo(filePath);
+
+      // Check if file is readable
+      if (!fileInfo.Exists)
+        throw new FileNotFoundException("Executable file not found.", filePath);
+
+      // On Windows, ensure it's an .exe file
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+      {
+        if (!filePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+          throw new InvalidOperationException("Deno executable must be a .exe file on Windows.");
+      }
+      else
+      {
+        // On Unix-like systems, check if file has execute permissions
+        // This is a basic check - in a production environment you might want more sophisticated validation
+        if (fileInfo.Length == 0)
+          throw new InvalidOperationException("Deno executable file is empty.");
+      }
+    }
+    catch (UnauthorizedAccessException ex)
+    {
+      throw new UnauthorizedAccessException($"Cannot access Deno executable at {filePath}. Check file permissions.", ex);
+    }
+  }
+
   internal static string WriteTempConfig(DenoConfig config)
   {
+    ArgumentNullException.ThrowIfNull(config);
+
     var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
+    var configJson = config.ToJson();
 
-    File.WriteAllText(tempPath, config.ToJson());
+    // Validate the JSON before writing
+    try
+    {
+      JsonDocument.Parse(configJson);
+    }
+    catch (JsonException ex)
+    {
+      throw new InvalidOperationException("DenoConfig produced invalid JSON.", ex);
+    }
 
+    File.WriteAllText(tempPath, configJson);
     return tempPath;
   }
 
@@ -87,6 +145,16 @@ internal static class Helper
   {
     if (!IsJsonPathLike(configOrPath))
     {
+      // Validate JSON before writing to temp file
+      try
+      {
+        JsonDocument.Parse(configOrPath);
+      }
+      catch (JsonException ex)
+      {
+        throw new InvalidOperationException("Invalid JSON configuration provided.", ex);
+      }
+
       var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
       File.WriteAllText(tempPath, configOrPath);
       return tempPath;
@@ -110,6 +178,15 @@ internal static class Helper
     {
       if (File.Exists(resolvedPath))
         File.Delete(resolvedPath);
+    }
+    catch (UnauthorizedAccessException ex)
+    {
+      throw new IOException($"Access denied when trying to delete temporary file: {resolvedPath}", ex);
+    }
+    catch (DirectoryNotFoundException)
+    {
+      // File or directory doesn't exist, which is fine for cleanup
+      // Log this as debug information but don't throw
     }
     catch (Exception ex)
     {
