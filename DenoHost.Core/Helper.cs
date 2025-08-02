@@ -59,9 +59,13 @@ internal static class Helper
   internal static string GetRuntimeId()
   {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-      return RuntimeInformation.OSArchitecture == Architecture.Arm64
-        ? "win-arm64"
-        : "win-x64";
+    {
+      // Deno currently only supports Windows x64, not ARM64
+      if (RuntimeInformation.OSArchitecture == Architecture.Arm64)
+        throw new PlatformNotSupportedException("Windows ARM64 is not supported by Deno. Only Windows x64 is available.");
+
+      return "win-x64";
+    }
 
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
       return RuntimeInformation.OSArchitecture == Architecture.Arm64
