@@ -2,10 +2,23 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace DenoHost.Core;
+
+/// <summary>
+/// Event IDs for structured logging.
+/// </summary>
+internal static class LogEvents
+{
+  public static readonly EventId DenoExecutionStarted = new(1001, "DenoExecutionStarted");
+  public static readonly EventId DenoExecutionCompleted = new(1002, "DenoExecutionCompleted");
+  public static readonly EventId DenoExecutionFailed = new(1003, "DenoExecutionFailed");
+  public static readonly EventId DenoExecutionError = new(1004, "DenoExecutionError");
+  public static readonly EventId DenoOutput = new(1005, "DenoOutput");
+}
 
 /// <summary>
 /// Internal executor for Deno processes. Handles the core execution logic.
@@ -22,18 +35,21 @@ internal static class DenoExecutor
   /// <param name="jsonSerializerOptions">Optional JSON serializer options.</param>
   /// <param name="logger">Optional logger instance.</param>
   /// <param name="args">Additional arguments for Deno.</param>
+  /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
   /// <returns>The deserialized result of the Deno process.</returns>
   /// <exception cref="ArgumentNullException">Thrown if resultType is null.</exception>
   /// <exception cref="NotSupportedException">Thrown if dynamic types are used.</exception>
   /// <exception cref="ArgumentException">Thrown if no command or arguments are provided.</exception>
   /// <exception cref="InvalidOperationException">Thrown if Deno execution fails or deserialization fails.</exception>
+  /// <exception cref="OperationCanceledException">Thrown if the operation is cancelled.</exception>
   internal static async Task<T> Execute<T>(
     string? workingDirectory,
     string? command,
     Type? resultType,
     JsonSerializerOptions? jsonSerializerOptions,
     ILogger? logger,
-    string[]? args)
+    string[]? args,
+    CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(resultType);
 
@@ -59,9 +75,11 @@ internal static class DenoExecutor
       if (string.IsNullOrWhiteSpace(arguments))
         throw new ArgumentException("No command or arguments provided for Deno execution.");
 
-      effectiveLogger?.LogInformation("Command: deno {Arguments} {FileName}", arguments, fileName);
+      effectiveLogger?.LogInformation(LogEvents.DenoExecutionStarted,
+        "Starting Deno execution: {Arguments} | Working Directory: {WorkingDirectory}",
+        arguments, workingDirectory);
 
-      var process = new Process
+      using var process = new Process
       {
         StartInfo = new ProcessStartInfo
         {
@@ -79,9 +97,9 @@ internal static class DenoExecutor
 
       process.Start();
 
-      var outputTask = process.StandardOutput.ReadToEndAsync();
-      var errorTask = process.StandardError.ReadToEndAsync();
-      var waitForExitTask = process.WaitForExitAsync();
+      var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+      var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+      var waitForExitTask = process.WaitForExitAsync(cancellationToken);
 
       await Task.WhenAll(outputTask, errorTask, waitForExitTask);
 
@@ -91,7 +109,8 @@ internal static class DenoExecutor
 
       if (process.ExitCode != 0)
       {
-        effectiveLogger?.LogError("Deno execution failed with exit code {ExitCode} after {ElapsedMs}ms. Error: {Error}",
+        effectiveLogger?.LogError(LogEvents.DenoExecutionFailed,
+          "Deno execution failed with exit code {ExitCode} after {ElapsedMs}ms. Error: {Error}",
           process.ExitCode, stopwatch.ElapsedMilliseconds, error);
 
         throw new InvalidOperationException(
@@ -101,8 +120,9 @@ internal static class DenoExecutor
         );
       }
 
-      effectiveLogger?.LogInformation("Deno execution completed successfully in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
-      effectiveLogger?.LogDebug("Deno output: {Output}", output);
+      effectiveLogger?.LogInformation(LogEvents.DenoExecutionCompleted,
+        "Deno execution completed successfully in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+      effectiveLogger?.LogDebug(LogEvents.DenoOutput, "Deno output: {Output}", output);
 
       var typeName = typeof(T).Name;
       var deserializedResult = typeName == "String" ? output : JsonSerializer.Deserialize(output, resultType, jsonSerializerOptions);
@@ -114,7 +134,8 @@ internal static class DenoExecutor
     catch (Exception ex)
     {
       stopwatch.Stop();
-      effectiveLogger?.LogError(ex, "Deno execution encountered an error after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+      effectiveLogger?.LogError(LogEvents.DenoExecutionError, ex,
+        "Deno execution encountered an error after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
       throw new InvalidOperationException($"An error occurred during Deno execution after {stopwatch.ElapsedMilliseconds}ms. See inner exception for details.", ex);
     }
   }

@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -78,7 +79,40 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command)
   {
-    return await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, null);
+    return await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, null, default);
+  }
+
+  /// <summary>
+  /// Executes a Deno command with cancellation support.
+  /// </summary>
+  /// <param name="command">The Deno command.</param>
+  /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+  /// <code>
+  /// var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+  /// var command = "run --allow-read script.ts";
+  /// await Deno.ExecuteAsync(command, cts.Token);
+  /// </code>
+  /// <returns>A task representing the asynchronous operation.</returns>
+  public static async Task ExecuteAsync(string command, CancellationToken cancellationToken = default)
+  {
+    await ExecuteAsync<string>(command, cancellationToken);
+  }
+
+  /// <summary>
+  /// Executes a Deno command with cancellation support and returns the result as type <typeparamref name="T"/>.
+  /// </summary>
+  /// <typeparam name="T">The expected return type of the Deno process.</typeparam>
+  /// <param name="command">The Deno command.</param>
+  /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+  /// <code>
+  /// var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+  /// var command = "run --allow-read script.ts";
+  /// var result = await Deno.ExecuteAsync<MyResult>(command, cts.Token);
+  /// </code>
+  /// <returns>The deserialized result of the Deno process.</returns>
+  public static async Task<T> ExecuteAsync<T>(string command, CancellationToken cancellationToken = default)
+  {
+    return await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, null, cancellationToken);
   }
 
   /// <summary>
@@ -111,7 +145,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions)
   {
-    return await DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, null);
+    return await DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, null, default);
   }
 
   /// <summary>
@@ -144,7 +178,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, string[] args)
   {
-    return await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, args);
+    return await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, args, default);
   }
 
   /// <summary>
@@ -181,7 +215,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions, string[] args)
   {
-    return await DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, args);
+    return await DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, args, default);
   }
 
   /// <summary>
@@ -210,7 +244,7 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static async Task<T> Execute<T>(string[] args)
   {
-    return await DenoExecutor.Execute<T>(null, null, typeof(T), null, null, args);
+    return await DenoExecutor.Execute<T>(null, null, typeof(T), null, null, args, default);
   }
 
   /// <summary>
@@ -245,7 +279,7 @@ public static class Deno
   {
     return baseOptions == null
       ? throw new ArgumentNullException(nameof(baseOptions))
-      : await DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, null, typeof(T), null, null, args);
+      : await DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, null, typeof(T), null, null, args, default);
   }
 
   /// <summary>
@@ -298,7 +332,7 @@ public static class Deno
   {
     var configPath = Helper.EnsureConfigFile(configOrPath);
     var allArgs = Helper.AppendConfigArgument(args, configPath);
-    var result = await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, allArgs);
+    var result = await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, allArgs, default);
 
     Helper.DeleteIfTempFile(configPath, configOrPath);
 
@@ -332,7 +366,7 @@ public static class Deno
 
     try
     {
-      var result = await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, allArgs);
+      var result = await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, allArgs, default);
 
       return result;
     }
