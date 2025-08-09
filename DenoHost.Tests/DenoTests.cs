@@ -160,6 +160,28 @@ public class DenoTests : IClassFixture<TempFileFixture>
   }
 
   [Fact]
+  public async Task Execute_WithEmptyArgsArray_ThrowsArgumentException()
+  {
+    var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
+    {
+      await Deno.Execute(Array.Empty<string>());
+    });
+
+    Assert.Contains("Either command or args must be provided", ex.Message);
+  }
+
+  [Fact]
+  public async Task Execute_Generic_WithEmptyArgsArray_ThrowsArgumentException()
+  {
+    var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
+    {
+      await Deno.Execute<string>(Array.Empty<string>());
+    });
+
+    Assert.Contains("Either command or args must be provided", ex.Message);
+  }
+
+  [Fact]
   public async Task Execute_WithInvalidCommand_ThrowsInvalidOperationException()
   {
     await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -201,6 +223,49 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     var result = await Deno.Execute<string>("run", baseOptions, ["--allow-read", "test_cwd.ts"]);
     Assert.Contains(_tempFileFixture.TempDirectory.TrimEnd(Path.DirectorySeparatorChar), result);
+  }
+
+  #endregion
+
+  #region Cancellation Tests
+
+  [Fact]
+  public async Task Execute_WithCancellation_ThrowsWrappedOperationCanceled()
+  {
+    // Arrange: long-running eval (3s)
+    var script = "await new Promise(r=>setTimeout(r,3000)); console.log('done');";
+    using var cts = new CancellationTokenSource(200); // cancel after 200ms
+
+    var sw = System.Diagnostics.Stopwatch.StartNew();
+
+    // Act
+    var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+    {
+      await Deno.Execute<string>("eval", [script], cts.Token);
+    });
+    sw.Stop();
+
+    // Assert
+    Assert.True(sw.Elapsed < TimeSpan.FromSeconds(2), "Execution was not cancelled in expected time window.");
+    Assert.IsType<OperationCanceledException>(ex.InnerException);
+  }
+
+  [Fact]
+  public async Task Execute_WithBaseOptionsAndCancellation_ThrowsWrappedOperationCanceled()
+  {
+    var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = Path.GetTempPath() };
+    var script = "await new Promise(r=>setTimeout(r,4000)); console.log('done');";
+    using var cts = new CancellationTokenSource(250);
+
+    var sw = System.Diagnostics.Stopwatch.StartNew();
+    var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+    {
+      await Deno.Execute<string>("eval", baseOptions, [script], cts.Token);
+    });
+    sw.Stop();
+
+    Assert.True(sw.Elapsed < TimeSpan.FromSeconds(3), "Execution was not cancelled in expected time window.");
+    Assert.IsType<OperationCanceledException>(ex.InnerException);
   }
 
   #endregion
