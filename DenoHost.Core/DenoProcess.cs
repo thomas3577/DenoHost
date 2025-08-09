@@ -604,16 +604,36 @@ public class DenoProcess : IDisposable
       }
     }
 
-    // Clean up temporary config file if it exists
+    // Clean up temporary config file if it exists (retry a few times in case of transient file locks)
     if (!string.IsNullOrEmpty(_tempConfigPath))
     {
-      try
+      var path = _tempConfigPath;
+      if (!string.IsNullOrWhiteSpace(path))
       {
-        Helper.DeleteTempFile(_tempConfigPath);
-      }
-      catch (Exception ex)
-      {
-        _logger?.LogError(ex, "Error occurred while cleaning up temporary config file: {ConfigPath}", _tempConfigPath);
+        const int maxAttempts = 3;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+          try
+          {
+            if (File.Exists(path))
+            {
+              Helper.DeleteTempFile(path);
+            }
+            // If deletion succeeded or file no longer exists, break
+            if (!File.Exists(path))
+              break;
+          }
+          catch (Exception ex) when (attempt < maxAttempts)
+          {
+            _logger?.LogDebug(ex, "Retry {Attempt}/{MaxAttempts} deleting temp config file {ConfigPath}", attempt, maxAttempts, path);
+            Thread.Sleep(50 * attempt);
+          }
+          catch (Exception ex)
+          {
+            _logger?.LogError(ex, "Failed deleting temp config file {ConfigPath}", path);
+            break;
+          }
+        }
       }
     }
 
