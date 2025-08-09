@@ -62,10 +62,7 @@ public static class Deno
   /// await Deno.Execute(command);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command)
-  {
-    await Execute<string>(command);
-  }
+  public static Task Execute(string command) => Execute<string>(command);
 
   /// <summary>
   /// Executes a Deno command and returns the result as type <typeparamref name="T"/>.
@@ -77,10 +74,8 @@ public static class Deno
   /// var result = await Deno.Execute<MyResult>(command);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(string command)
-  {
-    return await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, null, default);
-  }
+  public static Task<T> Execute<T>(string command)
+    => DenoExecutor.Execute<T>(null, command, typeof(T), null, null, null, default);
 
   /// <summary>
   /// Executes a Deno command with cancellation support.
@@ -112,10 +107,8 @@ public static class Deno
   /// await Deno.Execute(command, options);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions)
-  {
-    await Execute<string>(command, baseOptions);
-  }
+  public static Task Execute(string command, DenoExecuteBaseOptions baseOptions)
+    => Execute<string>(command, baseOptions);
 
   /// <summary>
   /// Executes a Deno command with base options and returns the result as type <typeparamref name="T"/>.
@@ -129,10 +122,8 @@ public static class Deno
   /// var result = await Deno.Execute<MyResult>(command, options);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions)
-  {
-    return await DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, null, default);
-  }
+  public static Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions)
+    => DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, null, default);
 
   /// <summary>
   /// Executes a Deno command with base options and cancellation support.
@@ -157,10 +148,8 @@ public static class Deno
   /// await Deno.Execute(command, args);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command, string[] args)
-  {
-    await Execute<string>(command, args);
-  }
+  public static Task Execute(string command, string[] args)
+    => Execute<string>(command, args);
 
   /// <summary>
   /// Executes a Deno command with additional arguments and returns the result as type <typeparamref name="T"/>.
@@ -174,10 +163,8 @@ public static class Deno
   /// var result = await Deno.Execute<MyResult>(command, args);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(string command, string[] args)
-  {
-    return await DenoExecutor.Execute<T>(null, command, typeof(T), null, null, args, default);
-  }
+  public static Task<T> Execute<T>(string command, string[] args)
+    => DenoExecutor.Execute<T>(null, command, typeof(T), null, null, args, default);
 
   /// <summary>
   /// Executes a Deno command with additional arguments and cancellation support.
@@ -204,10 +191,8 @@ public static class Deno
   /// await Deno.Execute(command, options, args);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command, DenoExecuteBaseOptions baseOptions, string[] args)
-  {
-    await Execute<string>(command, baseOptions, args);
-  }
+  public static Task Execute(string command, DenoExecuteBaseOptions baseOptions, string[] args)
+    => Execute<string>(command, baseOptions, args);
 
   /// <summary>
   /// Executes a Deno command with base options and additional arguments and returns the result as type <typeparamref name="T"/>.
@@ -223,10 +208,8 @@ public static class Deno
   /// var result = await Deno.Execute(command, options, args);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions, string[] args)
-  {
-    return await DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, args, default);
-  }
+  public static Task<T> Execute<T>(string command, DenoExecuteBaseOptions baseOptions, string[] args)
+    => DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, command, typeof(T), baseOptions?.JsonSerializerOptions, baseOptions?.Logger, args, default);
 
   /// <summary>
   /// Executes a Deno command with base options and additional arguments with cancellation support.
@@ -249,10 +232,8 @@ public static class Deno
   /// await Deno.Execute(args);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string[] args)
-  {
-    await Execute<string>(args);
-  }
+  public static Task Execute(string[] args)
+    => Execute<string>(args);
 
   /// <summary>
   /// Executes Deno with the specified arguments and returns the result as type <typeparamref name="T"/>.
@@ -264,10 +245,8 @@ public static class Deno
   /// var result = await Deno.Execute<MyResult>(args);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(string[] args)
-  {
-    return await DenoExecutor.Execute<T>(null, null, typeof(T), null, null, args, default);
-  }
+  public static Task<T> Execute<T>(string[] args)
+    => DenoExecutor.Execute<T>(null, null, typeof(T), null, null, args, default);
 
   /// <summary>
   /// Executes Deno with arguments and cancellation support.
@@ -292,10 +271,8 @@ public static class Deno
   /// await Deno.Execute(options, args);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(DenoExecuteBaseOptions baseOptions, string[] args)
-  {
-    await Execute<string>(baseOptions, args);
-  }
+  public static Task Execute(DenoExecuteBaseOptions baseOptions, string[] args)
+    => Execute<string>(baseOptions, args);
 
   /// <summary>
   /// Executes Deno with base options and arguments and returns the result as type <typeparamref name="T"/>.
@@ -309,12 +286,10 @@ public static class Deno
   /// var result = await Deno.Execute<MyResult>(options, args);
   /// </code>
   /// <returns>The deserialized result of the Deno process.</returns>
-  public static async Task<T> Execute<T>(DenoExecuteBaseOptions baseOptions, string[] args)
-  {
-    return baseOptions == null
+  public static Task<T> Execute<T>(DenoExecuteBaseOptions baseOptions, string[] args)
+    => baseOptions == null
       ? throw new ArgumentNullException(nameof(baseOptions))
-      : await DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, null, typeof(T), null, null, args, default);
-  }
+      : DenoExecutor.Execute<T>(baseOptions.WorkingDirectory, null, typeof(T), null, null, args, default);
 
   /// <summary>
   /// Executes Deno with base options, arguments and cancellation support.
@@ -350,10 +325,8 @@ public static class Deno
   /// await Deno.Execute(command, configPath, args);
   /// </code>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command, string configOrPath, string[] args)
-  {
-    await Execute<string>(command, configOrPath, args);
-  }
+  public static Task Execute(string command, string configOrPath, string[] args)
+    => Execute<string>(command, configOrPath, args);
 
   /// <summary>
   /// Executes a Deno command with a configuration file or path and additional arguments and returns the result as type <typeparamref name="T"/>.
@@ -411,10 +384,8 @@ public static class Deno
   /// <param name="config">The Deno configuration object.</param>
   /// <param name="args">Additional arguments for Deno.</param>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public static async Task Execute(string command, DenoConfig config, string[] args)
-  {
-    await Execute<string>(command, config, args);
-  }
+  public static Task Execute(string command, DenoConfig config, string[] args)
+    => Execute<string>(command, config, args);
 
   /// <summary>
   /// Executes a Deno command with a configuration object and additional arguments and returns the result as type <typeparamref name="T"/>.
