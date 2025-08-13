@@ -120,6 +120,11 @@ async function main() {
     Deno.exit(1);
   }
 
+  if (tagCore === "null" || tagCore === "undefined" || tagCore.trim() === "") {
+    console.error(`❌ Invalid TAG_CORE value: '${tagCore}'`);
+    Deno.exit(1);
+  }
+
   console.log(`🏷️ Creating new tag for Deno version: ${tagCore}`);
 
   try {

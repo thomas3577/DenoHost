@@ -36,6 +36,11 @@ async function main() {
   // Remove leading 'v' if present
   const tagCore = fullTag.replace(/^v/, "");
 
+  if (!tagCore || tagCore === "null" || tagCore === "undefined") {
+    console.error(`❌ Invalid tag core extracted: '${tagCore}' from '${fullTag}'`);
+    Deno.exit(1);
+  }
+
   // Set GitHub Actions outputs
   const outputFile = Deno.env.get("GITHUB_OUTPUT");
   if (outputFile) {
