@@ -4,7 +4,6 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <PackageId>DenoHost.Runtime.linux-arm64</PackageId>
     <Description>Deno binary for Linux ARM64</Description>
-    <PackageType>DotnetPlatform</PackageType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
@@ -21,8 +20,10 @@
 
   <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
     <PropertyGroup>
-      <DenoDownloadScriptPathPwsh>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools\download-deno.ps1'))</DenoDownloadScriptPathPwsh>
-      <DenoDownloadScriptPathBash>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools/download-deno.sh'))</DenoDownloadScriptPathBash>
+      <DenoDownloadScriptPathPwsh>
+        $([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools\download-deno.ps1'))</DenoDownloadScriptPathPwsh>
+      <DenoDownloadScriptPathBash>
+        $([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools/download-deno.sh'))</DenoDownloadScriptPathBash>
       <DenoExecutable>$(MSBuildThisFileDirectory)deno</DenoExecutable>
       <DenoDownloadFilename>deno-aarch64-unknown-linux-gnu.zip</DenoDownloadFilename>
     </PropertyGroup>
@@ -30,12 +31,12 @@
     <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
 
     <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
-          ContinueOnError="true" />
+      Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
+      ContinueOnError="true" />
 
     <Exec Condition="'$(OS)' != 'Windows_NT'"
-          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DevDenoVersion)"'
-          ContinueOnError="true" />
+      Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DevDenoVersion)"'
+      ContinueOnError="true" />
   </Target>
 
   <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build">
@@ -45,10 +46,10 @@
 
     <MakeDir Directories="$(RidOutputDir)" />
 
-    <Copy Condition="Exists('deno')" 
-          SourceFiles="deno" 
-          DestinationFiles="$(RidOutputDir)/deno" 
-          SkipUnchangedFiles="true" />
+    <Copy Condition="Exists('deno')"
+      SourceFiles="deno"
+      DestinationFiles="$(RidOutputDir)/deno"
+      SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
