@@ -55,7 +55,7 @@ dotnet add package DenoHost.Core
 For simple script execution with immediate results:
 
 ```csharp
-using DenoHost;
+using DenoHost.Core;
 
 var options = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
 string[] args = ["run", "app.ts"];
