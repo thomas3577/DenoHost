@@ -69,6 +69,10 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Make shell script executable
+        shell: bash
+        run: chmod +x tools/download-deno.sh
+
       - name: Pack Runtime Package
         shell: bash
         run: |

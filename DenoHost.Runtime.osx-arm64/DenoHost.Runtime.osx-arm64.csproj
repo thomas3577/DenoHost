@@ -32,11 +32,13 @@
 
     <Exec Condition="'$(OS)' == 'Windows_NT'"
       Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
-      ContinueOnError="true" />
+      ContinueOnError="true"
+      IgnoreExitCode="true" />
 
     <Exec Condition="'$(OS)' != 'Windows_NT'"
       Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DevDenoVersion)"'
-      ContinueOnError="true" />
+      ContinueOnError="true"
+      IgnoreExitCode="true" />
   </Target>
 
   <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build">

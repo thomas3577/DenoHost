@@ -6,7 +6,8 @@ param (
 
 if (Test-Path $ExecutablePath) {
   Write-Host "Deno already exists at $ExecutablePath"
-  return
+  Write-Host "Deno setup complete at $ExecutablePath"
+  exit 0
 }
 
 # Get last Git-Tag (e.g. "v2.4.1-alpha.1")

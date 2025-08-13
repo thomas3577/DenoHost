@@ -8,6 +8,7 @@ DEV_DENO_VERSION="$3"
 
 if [ -f "$EXECUTABLE_PATH" ]; then
   echo "Deno already exists at $EXECUTABLE_PATH"
+  echo "Deno setup complete at $EXECUTABLE_PATH"
   exit 0
 fi
 
