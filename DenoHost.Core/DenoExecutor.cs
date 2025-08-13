@@ -101,10 +101,10 @@ internal static class DenoExecutor
       var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
       var waitForExitTask = process.WaitForExitAsync(cancellationToken);
 
-      await Task.WhenAll(outputTask, errorTask, waitForExitTask);
+      await Task.WhenAll(outputTask, errorTask, waitForExitTask).ConfigureAwait(false);
 
-      string output = await outputTask;
-      string error = await errorTask;
+      string output = outputTask.Result;
+      string error = errorTask.Result;
       stopwatch.Stop();
 
       if (process.ExitCode != 0)
@@ -130,6 +130,16 @@ internal static class DenoExecutor
       return deserializedResult != null
         ? (T)deserializedResult
         : throw new InvalidOperationException("Deserialization returned null.");
+    }
+    catch (OperationCanceledException ex)
+    {
+      stopwatch.Stop();
+      effectiveLogger?.LogError(LogEvents.DenoExecutionError, ex,
+        "Deno execution was cancelled after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+
+      // Convert TaskCanceledException to OperationCanceledException for consistent API
+      var cancellationEx = ex is TaskCanceledException ? new OperationCanceledException(ex.Message, ex) : ex;
+      throw new InvalidOperationException($"Deno execution was cancelled after {stopwatch.ElapsedMilliseconds}ms.", cancellationEx);
     }
     catch (Exception ex)
     {
