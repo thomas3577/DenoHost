@@ -23,6 +23,7 @@ indent_style = space
 [*.{html,xml,csproj,props,targets}]
 indent_size = 2
 indent_style = space
+max_line_length = off
 
 # TypeScript/JavaScript
 [*.{ts,js}]
