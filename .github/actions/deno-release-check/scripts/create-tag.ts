@@ -136,6 +136,42 @@ async function createAndPushTag(tag: string): Promise<void> {
   await runCommand(["git", "push", "origin", tag]);
 }
 
+async function triggerBuildWorkflow(tag: string): Promise<void> {
+  const ghToken = Deno.env.get("GH_TOKEN");
+  if (!ghToken) {
+    throw new Error("GH_TOKEN environment variable not set");
+  }
+
+  console.log(`🚀 Triggering build workflow for tag: ${tag}`);
+
+  try {
+    const response = await fetch(
+      "https://api.github.com/repos/thomas3577/DenoHost/actions/workflows/build.yml/dispatches",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${ghToken}`,
+          "Accept": "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ref: tag,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to trigger workflow: ${response.status} ${response.statusText}`);
+    }
+
+    console.log(`✅ Successfully triggered build workflow for tag: ${tag}`);
+  } catch (error) {
+    console.error(`⚠️ Failed to trigger build workflow: ${error}`);
+    // Don't fail the entire action if workflow trigger fails
+  }
+}
+
 async function main() {
   const tagCore = Deno.env.get("TAG_CORE");
   const preReleaseType = Deno.env.get("PRERELEASE_TYPE") || "alpha";
@@ -202,6 +238,9 @@ async function main() {
     );
 
     await createAndPushTag(newTag);
+
+    // Trigger the build workflow
+    await triggerBuildWorkflow(newTag);
 
     // Set GitHub Actions outputs
     const outputFile = Deno.env.get("GITHUB_OUTPUT");
