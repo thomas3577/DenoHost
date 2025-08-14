@@ -93,14 +93,39 @@ async function initializeRepo(): Promise<void> {
 
   console.log("📦 Initializing repository...");
 
-  await runCommand(["git", "init"]);
-  await runCommand([
-    "git",
-    "remote",
-    "add",
-    "origin",
-    `https://x-access-token:${ghToken}@github.com/thomas3577/DenoHost.git`,
-  ]);
+  // Check if we're already in a git repository
+  try {
+    await runCommand(["git", "rev-parse", "--git-dir"]);
+    console.log("🔍 Already in a git repository");
+  } catch {
+    console.log("🆕 Initializing new git repository");
+    await runCommand(["git", "init"]);
+  }
+
+  // Check if origin remote already exists
+  try {
+    await runCommand(["git", "remote", "get-url", "origin"]);
+    console.log("🔗 Origin remote already exists");
+
+    // Update the remote URL with token for authentication
+    await runCommand([
+      "git",
+      "remote",
+      "set-url",
+      "origin",
+      `https://x-access-token:${ghToken}@github.com/thomas3577/DenoHost.git`,
+    ]);
+  } catch {
+    console.log("➕ Adding origin remote");
+    await runCommand([
+      "git",
+      "remote",
+      "add",
+      "origin",
+      `https://x-access-token:${ghToken}@github.com/thomas3577/DenoHost.git`,
+    ]);
+  }
+
   await runCommand(["git", "fetch", "origin", "main"]);
 }
 
@@ -155,22 +180,20 @@ async function main() {
           `No existing ${preReleaseType} versions found, starting with ${preReleaseType}.1`,
         );
       }
-    } else {
+    } else if (preReleases.length > 0) {
       // Auto-detect: find the type with the highest number
-      if (preReleases.length > 0) {
-        const highest = preReleases.reduce((prev, current) =>
-          prev.number > current.number ? prev : current
-        );
-        finalPreReleaseType = highest.type;
-        nextNumber = highest.number + 1;
-        console.log(
-          `Highest existing pre-release version: ${highest.type}.${highest.number}`,
-        );
-      } else {
-        console.log(
-          "No existing pre-release versions found, starting with alpha.1",
-        );
-      }
+      const highest = preReleases.reduce((prev, current) =>
+        prev.number > current.number ? prev : current
+      );
+      finalPreReleaseType = highest.type;
+      nextNumber = highest.number + 1;
+      console.log(
+        `Highest existing pre-release version: ${highest.type}.${highest.number}`,
+      );
+    } else {
+      console.log(
+        "No existing pre-release versions found, starting with alpha.1",
+      );
     }
 
     const newTag = `v${tagCore}-${finalPreReleaseType}.${nextNumber}`;
