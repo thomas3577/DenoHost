@@ -9,8 +9,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DenoHost.Core\DenoHost.Core.csproj" />
-    <ProjectReference Include="..\DenoHost.Runtime.linux-x64\DenoHost.Runtime.linux-x64.csproj" />
-    <ProjectReference Include="..\DenoHost.Runtime.win-x64\DenoHost.Runtime.win-x64.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <PackageReference Include="..\DenoHost.Runtime.win-x64\DenoHost.Runtime.win-x64.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+    <PackageReference Include="..\DenoHost.Runtime.linux-x64\DenoHost.Runtime.linux-x64.csproj" />
   </ItemGroup>
 
   <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
@@ -34,5 +40,5 @@
           DestinationFiles="$(TargetRuntimeDir)\$(CurrentDenoFile)"
           SkipUnchangedFiles="true" />
   </Target>
-  
+
 </Project>

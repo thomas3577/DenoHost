@@ -27,8 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DenoHost.Core\DenoHost.Core.csproj" />
-    <ProjectReference Include="..\DenoHost.Runtime.linux-x64\DenoHost.Runtime.linux-x64.csproj" />
-    <ProjectReference Include="..\DenoHost.Runtime.win-x64\DenoHost.Runtime.win-x64.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,7 +49,10 @@
 
     <MakeDir Directories="$(TargetRuntimeDir)" />
 
-    <Copy Condition="Exists('$(RuntimeOutputDir)\$(CurrentDenoFile)')" SourceFiles="$(RuntimeOutputDir)\$(CurrentDenoFile)" DestinationFiles="$(TargetRuntimeDir)\$(CurrentDenoFile)" SkipUnchangedFiles="true" />
+    <Copy Condition="Exists('$(RuntimeOutputDir)\$(CurrentDenoFile)')"
+          SourceFiles="$(RuntimeOutputDir)\$(CurrentDenoFile)"
+          DestinationFiles="$(TargetRuntimeDir)\$(CurrentDenoFile)" 
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
