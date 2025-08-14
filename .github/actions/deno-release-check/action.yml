@@ -20,7 +20,7 @@ runs:
   steps:
     - name: Setup Deno
       uses: denoland/setup-deno@v2.0.3
-      
+
     - name: Fetch latest Deno release
       id: deno
       shell: bash
@@ -41,4 +41,4 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
         TAG_CORE: ${{ steps.deno.outputs.tag_core }}
         PRERELEASE_TYPE: ${{ inputs.prerelease-type }}
-      run: deno run --allow-net --allow-env --allow-run ${{ github.action_path }}/scripts/create-tag.ts
+      run: deno run --allow-net --allow-env --allow-run --allow-write ${{ github.action_path }}/scripts/create-tag.ts
