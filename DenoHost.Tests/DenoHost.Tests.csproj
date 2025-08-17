@@ -19,7 +19,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="NJsonSchema" Version="11.4.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.3">
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -49,10 +49,7 @@
 
     <MakeDir Directories="$(TargetRuntimeDir)" />
 
-    <Copy Condition="Exists('$(RuntimeOutputDir)\$(CurrentDenoFile)')"
-          SourceFiles="$(RuntimeOutputDir)\$(CurrentDenoFile)"
-          DestinationFiles="$(TargetRuntimeDir)\$(CurrentDenoFile)" 
-          SkipUnchangedFiles="true" />
+    <Copy Condition="Exists('$(RuntimeOutputDir)\$(CurrentDenoFile)')" SourceFiles="$(RuntimeOutputDir)\$(CurrentDenoFile)" DestinationFiles="$(TargetRuntimeDir)\$(CurrentDenoFile)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
