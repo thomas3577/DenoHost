@@ -1,8 +1,6 @@
 {
-  "version": "0.0.1",
   "tasks": {
-    "dev": "deno run --watch app.ts",
-    "update": "deno outdated --update --latest"
+    "dev": "deno run --watch app.ts"
   },
   "fmt": {
     "useTabs": false,
