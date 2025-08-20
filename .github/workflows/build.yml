@@ -99,7 +99,7 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Build Solution
-        run: dotnet build DenoHost.sln -c Release -r linux-x64
+        run: dotnet build DenoHost.sln -c Release
 
       - name: Pack Core Project
         run: |
