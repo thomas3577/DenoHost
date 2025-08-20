@@ -11,7 +11,7 @@
     <RuntimeIdentifiers>linux-arm64;linux-x64;osx-arm64;osx-x64;win-x64</RuntimeIdentifiers>
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)'==''">win-x64</RuntimeIdentifier>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
@@ -58,25 +58,42 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
-    <PropertyGroup>
-      <DenoFile Condition="'$(OS)' == 'Windows_NT'">deno.exe</DenoFile>
-      <DenoFile Condition="'$(OS)' != 'Windows_NT'">deno</DenoFile>
+<ItemGroup>
+  <!-- Only ensures build order without linking the runtime project -->
+  <ProjectReference Include="..\DenoHost.Runtime.$(RuntimeIdentifier)\DenoHost.Runtime.$(RuntimeIdentifier).csproj"
+                    ReferenceOutputAssembly="false" />
+</ItemGroup>
 
-      <RuntimeProjectDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(RuntimeIdentifier)</RuntimeProjectDir>
-      <RuntimeOutputDir>$(RuntimeProjectDir)\bin\$(Configuration)\netstandard2.1\runtimes\$(RuntimeIdentifier)\native</RuntimeOutputDir>
-      <TargetRuntimeDir>$(OutputPath)runtimes\$(RuntimeIdentifier)\native</TargetRuntimeDir>
-    </PropertyGroup>
+<Target Name="CopyDenoFromRuntime" AfterTargets="Build">
+  <PropertyGroup>
+    <!-- File name depending on the builder's OS -->
+    <DenoFile Condition="'$(OS)' == 'Windows_NT'">deno.exe</DenoFile>
+    <DenoFile Condition="'$(OS)' != 'Windows_NT'">deno</DenoFile>
 
-    <Message Text="Copying $(DenoFile) from: $(RuntimeOutputDir) to: $(TargetRuntimeDir)" Importance="High" />
-    <Message Text="Build configuration: $(Configuration)" Importance="High" />
+    <!-- Source: Output of the Runtime project -->
+    <RuntimeProjectDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(RuntimeIdentifier)</RuntimeProjectDir>
+    <RuntimeOutputDir>$(RuntimeProjectDir)\bin\$(Configuration)\netstandard2.1\runtimes\$(RuntimeIdentifier)\native</RuntimeOutputDir>
+    <RuntimeSource>$(RuntimeOutputDir)\$(DenoFile)</RuntimeSource>
 
-    <MakeDir Directories="$(TargetRuntimeDir)" />
+    <!-- Target: absolute, not OutputPath -->
+    <TargetRuntimeDir>$(TargetDir)runtimes\$(RuntimeIdentifier)\native\</TargetRuntimeDir>
+    <TargetDest>$(TargetRuntimeDir)$(DenoFile)</TargetDest>
+  </PropertyGroup>
 
-    <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoFile)')" 
-          SourceFiles="$(RuntimeOutputDir)\$(DenoFile)" 
-          DestinationFiles="$(TargetRuntimeDir)\$(DenoFile)" 
-          SkipUnchangedFiles="true" />
-  </Target>
+  <Message Importance="high" Text="Copy deno from: $(RuntimeSource)" />
+  <Message Importance="high" Text="               to: $(TargetDest)" />
+  <Message Importance="high" Text="Configuration: $(Configuration) | RID=$(RuntimeIdentifier)" />
+
+  <!-- Fails early if source is missing -->
+  <Error Condition="!Exists('$(RuntimeSource)')"
+         Text="Runtime source not found: $(RuntimeSource). Did the runtime project copy into its own output? Check the runtime csproj Copy target." />
+
+  <MakeDir Directories="$(TargetRuntimeDir)" />
+
+  <Copy SourceFiles="$(RuntimeSource)"
+        DestinationFiles="$(TargetDest)"
+        SkipUnchangedFiles="true" />
+</Target>
+
 
 </Project>
