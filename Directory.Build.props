@@ -14,7 +14,7 @@
     <Copyright>Copyright © 2025 Thomas Huber</Copyright>
 
     <!-- Deno Host Configuration -->
-    <DevDenoVersion>2.4.3</DevDenoVersion>
+    <DevDenoVersion>2.4.4</DevDenoVersion>
   </PropertyGroup>
 
   <ItemGroup>

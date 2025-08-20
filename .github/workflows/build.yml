@@ -128,6 +128,7 @@ jobs:
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
 
       - name: Check deno.exe exists
+        shell: bash
         run: test -f DenoHost.Tests/bin/Release/net9.0/runtimes/win-x64/native/deno.exe
 
       - name: Run Unit Tests with Coverage
@@ -162,6 +163,7 @@ jobs:
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64
 
       - name: Check deno exists
+        shell: bash
         run: test -f DenoHost.Tests/bin/Release/net9.0/runtimes/linux-x64/native/deno
 
       - name: Run Unit Tests

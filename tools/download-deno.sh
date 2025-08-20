@@ -17,7 +17,7 @@ GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 
 # Fallback-Version, falls kein Tag gefunden wurde
 if [[ -z "$GIT_TAG" ]]; then
-  echo "Could not determine Git tag. Using fallback."
+  echo "Could not determine Git tag. Using fallback ('v$DEV_DENO_VERSION')."
   GIT_TAG="v$DEV_DENO_VERSION" # Fallback
 fi
 
