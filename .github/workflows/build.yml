@@ -129,7 +129,7 @@ jobs:
 
       - name: Check deno.exe exists
         shell: bash
-        run: test -f DenoHost.Tests/bin/Release/net9.0/runtimes/win-x64/native/deno.exe
+        run: test -f DenoHost.Tests/bin/Release/net9.0/win-x64/runtimes/win-x64/native/deno.exe
 
       - name: Run Unit Tests with Coverage
         run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64 --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
@@ -164,7 +164,7 @@ jobs:
 
       - name: Check deno exists
         shell: bash
-        run: test -f DenoHost.Tests/bin/Release/net9.0/runtimes/linux-x64/native/deno
+        run: test -f DenoHost.Tests/bin/Release/net9.0/linux-x64/runtimes/linux-x64/native/deno
 
       - name: Run Unit Tests
         run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64 --no-build
