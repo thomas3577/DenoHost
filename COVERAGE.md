@@ -14,9 +14,9 @@
 **Generate local coverage report:**
 
 ```bash
-chmod +x tools/run-coverage.sh
-./tools/run-coverage.sh                    # With automatic browser opening
-./tools/run-coverage.sh false              # Generate report only
+chmod +x scripts/run-coverage.sh
+./scripts/run-coverage.sh                    # With automatic browser opening
+./scripts/run-coverage.sh false              # Generate report only
 ```
 
 ## Additional Coverage Options
