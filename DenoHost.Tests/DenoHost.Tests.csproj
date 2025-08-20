@@ -59,23 +59,23 @@
   </ItemGroup>
 
 <ItemGroup>
-  <!-- Only ensures build order without linking the runtime project -->
+  <!-- We only need build ordering, not an assembly reference -->
   <ProjectReference Include="..\DenoHost.Runtime.$(RuntimeIdentifier)\DenoHost.Runtime.$(RuntimeIdentifier).csproj"
                     ReferenceOutputAssembly="false" />
 </ItemGroup>
 
 <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
   <PropertyGroup>
-    <!-- File name depending on the builder's OS -->
-    <DenoFile Condition="'$(OS)' == 'Windows_NT'">deno.exe</DenoFile>
-    <DenoFile Condition="'$(OS)' != 'Windows_NT'">deno</DenoFile>
+    <!-- Choose filename based on target RID, not the host OS -->
+    <DenoFile Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))">deno.exe</DenoFile>
+    <DenoFile Condition=" '$(DenoFile)' == '' ">deno</DenoFile>
 
-    <!-- Source: Output of the Runtime project -->
+    <!-- Source: runtime project's own output -->
     <RuntimeProjectDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(RuntimeIdentifier)</RuntimeProjectDir>
     <RuntimeOutputDir>$(RuntimeProjectDir)\bin\$(Configuration)\netstandard2.1\runtimes\$(RuntimeIdentifier)\native</RuntimeOutputDir>
     <RuntimeSource>$(RuntimeOutputDir)\$(DenoFile)</RuntimeSource>
 
-    <!-- Target: absolute, not OutputPath -->
+    <!-- Destination: this test project's output (absolute) -->
     <TargetRuntimeDir>$(TargetDir)runtimes\$(RuntimeIdentifier)\native\</TargetRuntimeDir>
     <TargetDest>$(TargetRuntimeDir)$(DenoFile)</TargetDest>
   </PropertyGroup>
@@ -84,9 +84,9 @@
   <Message Importance="high" Text="               to: $(TargetDest)" />
   <Message Importance="high" Text="Configuration: $(Configuration) | RID=$(RuntimeIdentifier)" />
 
-  <!-- Fails early if source is missing -->
+  <!-- Fail early if source missing -->
   <Error Condition="!Exists('$(RuntimeSource)')"
-         Text="Runtime source not found: $(RuntimeSource). Did the runtime project copy into its own output? Check the runtime csproj Copy target." />
+         Text="Runtime source not found: $(RuntimeSource). Did the runtime project copy into its own output?" />
 
   <MakeDir Directories="$(TargetRuntimeDir)" />
 
