@@ -58,42 +58,53 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-<ItemGroup>
-  <!-- We only need build ordering, not an assembly reference -->
-  <ProjectReference Include="..\DenoHost.Runtime.$(RuntimeIdentifier)\DenoHost.Runtime.$(RuntimeIdentifier).csproj"
-                    ReferenceOutputAssembly="false" />
-</ItemGroup>
+  <ItemGroup>
+    <!-- We only need build ordering, not an assembly reference -->
+    <ProjectReference Include="..\DenoHost.Runtime.$(RuntimeIdentifier)\DenoHost.Runtime.$(RuntimeIdentifier).csproj"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
 
-<Target Name="CopyDenoFromRuntime" AfterTargets="Build">
-  <PropertyGroup>
-    <!-- Choose filename based on target RID, not the host OS -->
-    <DenoFile Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))">deno.exe</DenoFile>
-    <DenoFile Condition=" '$(DenoFile)' == '' ">deno</DenoFile>
+  <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
+    <PropertyGroup>
+      <!-- Filename depends on target RID (not the host OS) -->
+      <DenoFile Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))">deno.exe</DenoFile>
+      <DenoFile Condition="'$(DenoFile)' == ''">deno</DenoFile>
 
-    <!-- Source: runtime project's own output -->
-    <RuntimeProjectDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(RuntimeIdentifier)</RuntimeProjectDir>
-    <RuntimeOutputDir>$(RuntimeProjectDir)\bin\$(Configuration)\netstandard2.1\runtimes\$(RuntimeIdentifier)\native</RuntimeOutputDir>
-    <RuntimeSource>$(RuntimeOutputDir)\$(DenoFile)</RuntimeSource>
+      <!-- Base paths -->
+      <Rid>$(RuntimeIdentifier)</Rid>
+      <RuntimeProjectDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(Rid)</RuntimeProjectDir>
+      <RuntimeOutBase>$(RuntimeProjectDir)\bin\$(Configuration)\netstandard2.1</RuntimeOutBase>
 
-    <!-- Destination: this test project's output (absolute) -->
-    <TargetRuntimeDir>$(TargetDir)runtimes\$(RuntimeIdentifier)\native\</TargetRuntimeDir>
-    <TargetDest>$(TargetRuntimeDir)$(DenoFile)</TargetDest>
-  </PropertyGroup>
+      <!-- Candidates: with and without RID subfolder -->
+      <RuntimeOutWithRid>$(RuntimeOutBase)\$(Rid)\runtimes\$(Rid)\native</RuntimeOutWithRid>
+      <RuntimeOutNoRid>$(RuntimeOutBase)\runtimes\$(Rid)\native</RuntimeOutNoRid>
 
-  <Message Importance="high" Text="Copy deno from: $(RuntimeSource)" />
-  <Message Importance="high" Text="               to: $(TargetDest)" />
-  <Message Importance="high" Text="Configuration: $(Configuration) | RID=$(RuntimeIdentifier)" />
+      <SourceA>$(RuntimeOutWithRid)\$(DenoFile)</SourceA>
+      <SourceB>$(RuntimeOutNoRid)\$(DenoFile)</SourceB>
 
-  <!-- Fail early if source missing -->
-  <Error Condition="!Exists('$(RuntimeSource)')"
-         Text="Runtime source not found: $(RuntimeSource). Did the runtime project copy into its own output?" />
+      <!-- Pick the first existing source -->
+      <ChosenSource Condition="Exists('$(SourceA)')">$(SourceA)</ChosenSource>
+      <ChosenSource Condition="'$(ChosenSource)'=='' and Exists('$(SourceB)')">$(SourceB)</ChosenSource>
 
-  <MakeDir Directories="$(TargetRuntimeDir)" />
+      <!-- Destination in the test project's output -->
+      <TargetRuntimeDir>$(TargetDir)runtimes\$(Rid)\native\</TargetRuntimeDir>
+      <TargetDest>$(TargetRuntimeDir)$(DenoFile)</TargetDest>
+    </PropertyGroup>
 
-  <Copy SourceFiles="$(RuntimeSource)"
-        DestinationFiles="$(TargetDest)"
-        SkipUnchangedFiles="true" />
-</Target>
+    <Message Importance="high" Text="Try A: $(SourceA)" />
+    <Message Importance="high" Text="Try B: $(SourceB)" />
+    <Message Importance="high" Text="Chosen: $(ChosenSource)" />
+    <Message Importance="high" Text="Copy to: $(TargetDest)" />
+    <Message Importance="high" Text="Configuration: $(Configuration) | RID=$(Rid)" />
 
+    <!-- Fail fast if neither source exists -->
+    <Error Condition="'$(ChosenSource)'==''"
+          Text="Runtime source not found (tried both): $(SourceA) and $(SourceB). Check runtime project copy target." />
+
+    <MakeDir Directories="$(TargetRuntimeDir)" />
+    <Copy SourceFiles="$(ChosenSource)"
+          DestinationFiles="$(TargetDest)"
+          SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>
