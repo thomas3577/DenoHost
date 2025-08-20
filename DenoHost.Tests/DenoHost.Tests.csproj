@@ -11,7 +11,7 @@
     <RuntimeIdentifiers>linux-arm64;linux-x64;osx-arm64;osx-x64;win-x64</RuntimeIdentifiers>
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)'==''">win-x64</RuntimeIdentifier>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
@@ -58,52 +58,24 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- We only need build ordering, not an assembly reference -->
-    <ProjectReference Include="..\DenoHost.Runtime.$(RuntimeIdentifier)\DenoHost.Runtime.$(RuntimeIdentifier).csproj"
-                      ReferenceOutputAssembly="false" />
-  </ItemGroup>
-
   <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
     <PropertyGroup>
-      <!-- Filename depends on target RID (not the host OS) -->
-      <DenoFile Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win'))">deno.exe</DenoFile>
-      <DenoFile Condition="'$(DenoFile)' == ''">deno</DenoFile>
+      <DenoFile Condition="'$(OS)' == 'Windows_NT'">deno.exe</DenoFile>
+      <DenoFile Condition="'$(OS)' != 'Windows_NT'">deno</DenoFile>
 
-      <!-- Base paths -->
-      <Rid>$(RuntimeIdentifier)</Rid>
-      <RuntimeProjectDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(Rid)</RuntimeProjectDir>
-      <RuntimeOutBase>$(RuntimeProjectDir)\bin\$(Configuration)\netstandard2.1</RuntimeOutBase>
-
-      <!-- Candidates: with and without RID subfolder -->
-      <RuntimeOutWithRid>$(RuntimeOutBase)\$(Rid)\runtimes\$(Rid)\native</RuntimeOutWithRid>
-      <RuntimeOutNoRid>$(RuntimeOutBase)\runtimes\$(Rid)\native</RuntimeOutNoRid>
-
-      <SourceA>$(RuntimeOutWithRid)\$(DenoFile)</SourceA>
-      <SourceB>$(RuntimeOutNoRid)\$(DenoFile)</SourceB>
-
-      <!-- Pick the first existing source -->
-      <ChosenSource Condition="Exists('$(SourceA)')">$(SourceA)</ChosenSource>
-      <ChosenSource Condition="'$(ChosenSource)'=='' and Exists('$(SourceB)')">$(SourceB)</ChosenSource>
-
-      <!-- Destination in the test project's output -->
-      <TargetRuntimeDir>$(TargetDir)runtimes\$(Rid)\native\</TargetRuntimeDir>
-      <TargetDest>$(TargetRuntimeDir)$(DenoFile)</TargetDest>
+      <RuntimeProjectDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(RuntimeIdentifier)</RuntimeProjectDir>
+      <RuntimeOutputDir>$(RuntimeProjectDir)\bin\$(Configuration)\netstandard2.1\runtimes\$(RuntimeIdentifier)\native</RuntimeOutputDir>
+      <TargetRuntimeDir>$(OutputPath)runtimes\$(RuntimeIdentifier)\native</TargetRuntimeDir>
     </PropertyGroup>
 
-    <Message Importance="high" Text="Try A: $(SourceA)" />
-    <Message Importance="high" Text="Try B: $(SourceB)" />
-    <Message Importance="high" Text="Chosen: $(ChosenSource)" />
-    <Message Importance="high" Text="Copy to: $(TargetDest)" />
-    <Message Importance="high" Text="Configuration: $(Configuration) | RID=$(Rid)" />
-
-    <!-- Fail fast if neither source exists -->
-    <Error Condition="'$(ChosenSource)'==''"
-          Text="Runtime source not found (tried both): $(SourceA) and $(SourceB). Check runtime project copy target." />
+    <Message Text="Copying $(DenoFile) from: $(RuntimeOutputDir) to: $(TargetRuntimeDir)" Importance="High" />
+    <Message Text="Build configuration: $(Configuration)" Importance="High" />
 
     <MakeDir Directories="$(TargetRuntimeDir)" />
-    <Copy SourceFiles="$(ChosenSource)"
-          DestinationFiles="$(TargetDest)"
+
+    <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoFile)')" 
+          SourceFiles="$(RuntimeOutputDir)\$(DenoFile)" 
+          DestinationFiles="$(TargetRuntimeDir)\$(DenoFile)" 
           SkipUnchangedFiles="true" />
   </Target>
 
