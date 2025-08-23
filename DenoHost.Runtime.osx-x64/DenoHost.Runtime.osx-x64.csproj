@@ -19,7 +19,7 @@
   <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
     <PropertyGroup>
       <DenoDownloadScriptPathPwsh>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools\download-deno.ps1'))</DenoDownloadScriptPathPwsh>
-      <DenoDownloadScriptPathBash>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../scripts/download-deno.sh'))</DenoDownloadScriptPathBash>
+      <DenoDownloadScriptPathBash>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools/download-deno.sh'))</DenoDownloadScriptPathBash>
       <DenoExecutable>$(MSBuildThisFileDirectory)$(DenoFileName)</DenoExecutable>
       <DenoDownloadFilename>deno-x86_64-apple-darwin.zip</DenoDownloadFilename>
     </PropertyGroup>

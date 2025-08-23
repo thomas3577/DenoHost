@@ -17,7 +17,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File $filename -ExecutablePath $DenoExe
 **For linux-x64:**
 
 ```shell
-FILENAME="./scripts/download-deno.sh"
+FILENAME="./tools/download-deno.sh"
 DENO_EXECUTABLE_PATH="./DenoHost.Runtime.linux-x64/deno"
 DENO_DOWNLOAD_FILENAME="deno-x86_64-unknown-linux-gnu.zip"
 DENO_VERSION="2.4.1"
