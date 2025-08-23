@@ -6,6 +6,7 @@
     "ms-dotnettools.csdevkit",
     "yzhang.markdown-all-in-one",
     "davidanson.vscode-markdownlint",
-    "denoland.vscode-deno"
+    "denoland.vscode-deno",
+    "editorconfig.editorconfig"
   ]
 }

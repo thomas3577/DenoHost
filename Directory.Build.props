@@ -13,8 +13,8 @@
     <Description>Run JavaScript/TypeScript from .NET using Deno.</Description>
     <Copyright>Copyright © 2025 Thomas Huber</Copyright>
 
-    <!-- Deno Host Configuration -->
-    <DevDenoVersion>2.4.3</DevDenoVersion>
+    <!-- DenoHost Dev Configuration -->
+    <DevDenoVersion>2.4.5</DevDenoVersion>
   </PropertyGroup>
 
   <ItemGroup>

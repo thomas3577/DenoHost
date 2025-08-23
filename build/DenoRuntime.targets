@@ -1,0 +1,26 @@
+<Project>
+  <!-- Copies deno into bin/.../runtimes/<rid>/native and packs it into NuGet the same way -->
+  <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build">
+    <PropertyGroup>
+      <RidOutputDir>$(TargetDir)runtimes/$(RuntimeRid)/native</RidOutputDir>
+      <DenoSrc>$(MSBuildProjectDirectory)/$(DenoFileName)</DenoSrc>
+      <DenoDst>$(RidOutputDir)/$(DenoFileName)</DenoDst>
+    </PropertyGroup>
+
+    <Message Importance="high" Text="Copying $(DenoFileName) from: $(DenoSrc) to: $(DenoDst)" />
+    <MakeDir Directories="$(RidOutputDir)" />
+
+    <Copy Condition="Exists('$(DenoSrc)')" SourceFiles="$(DenoSrc)"
+          DestinationFiles="$(DenoDst)" SkipUnchangedFiles="true" />
+
+    <!-- Ensure executable bit on Unix -->
+    <Exec Condition="$([MSBuild]::IsOsUnixLike()) and Exists('$(DenoDst)')" Command="chmod +x '$(DenoDst)'" />
+  </Target>
+
+  <!-- NuGet packaging layout -->
+  <ItemGroup>
+    <None Include="$(MSBuildProjectDirectory)/$(DenoFileName)"
+          Pack="true"
+          PackagePath="runtimes/$(RuntimeRid)/native" />
+  </ItemGroup>
+</Project>

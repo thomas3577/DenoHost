@@ -1,55 +1,43 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <PackageId>DenoHost.Runtime.linux-x64</PackageId>
     <Description>Deno binary for Linux x64</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- RID-specific settings -->
+    <RuntimeRid>linux-x64</RuntimeRid>
+    <DenoFileName>deno</DenoFileName>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="deno" Pack="true" PackagePath="runtimes/linux-x64/native" />
-  </ItemGroup>
-
+  <!-- Optional: pack README.md into package root -->
   <ItemGroup>
     <None Update="README.md">
-      <Pack>True</Pack>
+      <Pack>true</Pack>
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 
+  <!-- Downloads "deno" next to the .csproj if missing -->
   <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
     <PropertyGroup>
+      <!-- Paths to helper scripts -->
       <DenoDownloadScriptPathPwsh>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools\download-deno.ps1'))</DenoDownloadScriptPathPwsh>
       <DenoDownloadScriptPathBash>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools/download-deno.sh'))</DenoDownloadScriptPathBash>
-      <DenoExecutable>$(MSBuildThisFileDirectory)deno</DenoExecutable>
+      <DenoExecutable>$(MSBuildThisFileDirectory)$(DenoFileName)</DenoExecutable>
       <DenoDownloadFilename>deno-x86_64-unknown-linux-gnu.zip</DenoDownloadFilename>
     </PropertyGroup>
 
     <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
 
     <Exec Condition="'$(OS)' == 'Windows_NT'"
-      Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
-      ContinueOnError="true"
-      IgnoreExitCode="true" />
-
+          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
+          ContinueOnError="true" IgnoreExitCode="true" />
     <Exec Condition="'$(OS)' != 'Windows_NT'"
-      Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DevDenoVersion)"'
-      ContinueOnError="true"
-      IgnoreExitCode="true" />
+          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DevDenoVersion)"'
+          ContinueOnError="true" IgnoreExitCode="true" />
   </Target>
 
-  <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build">
-    <PropertyGroup>
-      <RidOutputDir>$(OutputPath)runtimes/linux-x64/native</RidOutputDir>
-    </PropertyGroup>
-
-    <MakeDir Directories="$(RidOutputDir)" />
-
-    <Copy Condition="Exists('deno')"
-      SourceFiles="deno"
-      DestinationFiles="$(RidOutputDir)/deno"
-      SkipUnchangedFiles="true" />
-  </Target>
-
+  <!-- Common copy/pack logic -->
+  <Import Project="$(MSBuildThisFileDirectory)..\build\DenoRuntime.targets" />
 </Project>

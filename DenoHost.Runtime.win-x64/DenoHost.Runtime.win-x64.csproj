@@ -1,19 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <PackageId>DenoHost.Runtime.win-x64</PackageId>
     <Description>Deno binary for Windows x64</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <RuntimeRid>win-x64</RuntimeRid>
+    <DenoFileName>deno.exe</DenoFileName>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="deno.exe" Pack="true" PackagePath="runtimes/win-x64/native" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="README.md">
-      <Pack>True</Pack>
+      <Pack>true</Pack>
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
@@ -22,33 +20,18 @@
     <PropertyGroup>
       <DenoDownloadScriptPathPwsh>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools\download-deno.ps1'))</DenoDownloadScriptPathPwsh>
       <DenoDownloadScriptPathBash>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools/download-deno.sh'))</DenoDownloadScriptPathBash>
-      <DenoExecutable>$(MSBuildThisFileDirectory)deno.exe</DenoExecutable>
+      <DenoExecutable>$(MSBuildThisFileDirectory)$(DenoFileName)</DenoExecutable>
       <DenoDownloadFilename>deno-x86_64-pc-windows-msvc.zip</DenoDownloadFilename>
     </PropertyGroup>
 
     <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
-
     <Exec Condition="'$(OS)' == 'Windows_NT'"
-      Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
-      ContinueOnError="true"
-      IgnoreExitCode="true" />
+          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
+          ContinueOnError="true" IgnoreExitCode="true" />
     <Exec Condition="'$(OS)' != 'Windows_NT'"
-      Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DevDenoVersion)"'
-      ContinueOnError="true"
-      IgnoreExitCode="true" />
+          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DevDenoVersion)"'
+          ContinueOnError="true" IgnoreExitCode="true" />
   </Target>
 
-  <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build">
-    <PropertyGroup>
-      <RidOutputDir>$(OutputPath)runtimes\win-x64\native</RidOutputDir>
-    </PropertyGroup>
-
-    <MakeDir Directories="$(RidOutputDir)" />
-
-    <Copy Condition="Exists('deno.exe')"
-      SourceFiles="deno.exe"
-      DestinationFiles="$(RidOutputDir)\deno.exe"
-      SkipUnchangedFiles="true" />
-  </Target>
-
+  <Import Project="$(MSBuildThisFileDirectory)..\build\DenoRuntime.targets" />
 </Project>

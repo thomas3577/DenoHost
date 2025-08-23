@@ -7,32 +7,54 @@
     <RootNamespace>DenoHost.Example</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <RuntimeIdentifiers>linux-arm64;linux-x64;osx-arm64;osx-x64;win-x64</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)'==''">win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\DenoHost.Core\DenoHost.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-arm64'">
+    <ProjectReference Include="..\DenoHost.Runtime.linux-arm64\DenoHost.Runtime.linux-arm64.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
     <ProjectReference Include="..\DenoHost.Runtime.linux-x64\DenoHost.Runtime.linux-x64.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-arm64'">
+    <ProjectReference Include="..\DenoHost.Runtime.osx-arm64\DenoHost.Runtime.osx-arm64.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64'">
+    <ProjectReference Include="..\DenoHost.Runtime.osx-x64\DenoHost.Runtime.osx-x64.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
     <ProjectReference Include="..\DenoHost.Runtime.win-x64\DenoHost.Runtime.win-x64.csproj" />
   </ItemGroup>
 
   <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
     <PropertyGroup>
-      <CurrentRID Condition="'$(OS)' == 'Windows_NT'">win-x64</CurrentRID>
-      <CurrentRID Condition="'$(OS)' != 'Windows_NT'">linux-x64</CurrentRID>
-      <CurrentDenoFile Condition="'$(OS)' == 'Windows_NT'">deno.exe</CurrentDenoFile>
-      <CurrentDenoFile Condition="'$(OS)' != 'Windows_NT'">deno</CurrentDenoFile>
+      <DenoFile Condition="'$(OS)' == 'Windows_NT'">deno.exe</DenoFile>
+      <DenoFile Condition="'$(OS)' != 'Windows_NT'">deno</DenoFile>
 
-      <RuntimeOutputDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(CurrentRID)\bin\$(Configuration)\netstandard2.1\runtimes\$(CurrentRID)\native</RuntimeOutputDir>
-      <TargetRuntimeDir>$(OutputPath)runtimes\$(CurrentRID)\native</TargetRuntimeDir>
+      <RuntimeProjectDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(RuntimeIdentifier)</RuntimeProjectDir>
+      <RuntimeOutputDir>$(RuntimeProjectDir)\bin\$(Configuration)\netstandard2.1\runtimes\$(RuntimeIdentifier)\native</RuntimeOutputDir>
+      <TargetRuntimeDir>$(OutputPath)runtimes\$(RuntimeIdentifier)\native</TargetRuntimeDir>
     </PropertyGroup>
 
-    <Message Text="Copying $(CurrentDenoFile) from: $(RuntimeOutputDir) to: $(TargetRuntimeDir)" Importance="High" />
+    <Message Text="Copying $(DenoFile) from: $(RuntimeOutputDir) to: $(TargetRuntimeDir)" Importance="High" />
     <Message Text="Build configuration: $(Configuration)" Importance="High" />
 
     <MakeDir Directories="$(TargetRuntimeDir)" />
 
-    <Copy Condition="Exists('$(RuntimeOutputDir)\$(CurrentDenoFile)')"
-          SourceFiles="$(RuntimeOutputDir)\$(CurrentDenoFile)"
-          DestinationFiles="$(TargetRuntimeDir)\$(CurrentDenoFile)"
-          SkipUnchangedFiles="true" />
+    <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoFile)')"
+      SourceFiles="$(RuntimeOutputDir)\$(DenoFile)"
+      DestinationFiles="$(TargetRuntimeDir)\$(DenoFile)"
+      SkipUnchangedFiles="true" />
   </Target>
-  
+
 </Project>

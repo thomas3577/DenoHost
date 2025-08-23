@@ -515,7 +515,7 @@ public class DenoProcessTests
                     console.log('Process ending');
                     running = false;
                 }, 1000);
-                
+
                 // Simple busy wait
                 while (running) {
                     await new Promise(resolve => setTimeout(resolve, 50));
@@ -1106,9 +1106,10 @@ public class DenoProcessTests
             }),
             Task.Run(async () =>
             {
-                await Task.Delay(200);
-                var pid = denoProcess.ProcessId; // Just access property
-                var isRunning = denoProcess.IsRunning;
+                await Task.Delay(500);
+
+                Assert.True(denoProcess.ProcessId > 0, "ProcessId should be greater than 0");
+                Assert.False(denoProcess.IsRunning, "Process should not be running");
             })
         };
 

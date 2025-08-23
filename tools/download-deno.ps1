@@ -17,7 +17,7 @@ $gitTag = git describe --tags --abbrev=0 2>$null
 Pop-Location
 
 if (-not $gitTag) {
-  Write-Error "Could not determine Git tag. Using fallback."
+  Write-Error "Could not determine Git tag. Using fallback ('v$DevDenoVersion')."
   $gitTag = "v$DevDenoVersion" # Fallback
 }
 
