@@ -74,8 +74,8 @@ internal static class Helper
 
     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
       return RuntimeInformation.OSArchitecture == Architecture.Arm64
-          ? "osx-arm64"
-          : "osx-x64";
+        ? "osx-arm64"
+        : "osx-x64";
 
     throw new PlatformNotSupportedException("Unsupported OS platform.");
   }
