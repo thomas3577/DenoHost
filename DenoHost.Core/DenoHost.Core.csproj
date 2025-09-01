@@ -5,7 +5,6 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>DenoHost.Core</PackageId>
     <Description>Deno as a NuGet Package</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <PackageReadmeFile>README.md</PackageReadmeFile>
