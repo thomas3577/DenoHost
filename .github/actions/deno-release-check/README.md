@@ -2,11 +2,22 @@
 
 This action checks for new Deno releases and creates appropriate tags in the DenoHost repository.
 
+## Features
+
+- **Rate limit handling**: Uses GitHub token authentication to avoid API rate limits
+- **Fallback mechanism**: Falls back to installed Deno version if GitHub API fails
+- **Robust error handling**: Multiple methods to ensure version detection works
+- **Pre-release tag creation**: Automatically creates alpha/beta/rc tags for new Deno versions
+
 ## Scripts
 
-- `fetch-deno-release.ts` - Fetches the latest Deno release from GitHub API
+- `fetch-deno-release.ts` - Fetches the latest Deno release from GitHub API with fallback support
 - `check-existing-tags.ts` - Checks if a tag for the Deno version already exists
 - `create-tag.ts` - Creates and pushes a new pre-release tag
+
+## Authentication
+
+The action requires a GitHub token to avoid rate limiting issues. The token is automatically provided by GitHub Actions via `secrets.GITHUB_TOKEN`.
 
 ## Testing
 

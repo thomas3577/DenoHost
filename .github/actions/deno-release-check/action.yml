@@ -24,7 +24,9 @@ runs:
     - name: Fetch latest Deno release
       id: deno
       shell: bash
-      run: deno run --allow-net --allow-env --allow-write ${{ github.action_path }}/scripts/fetch-deno-release.ts
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: deno run --allow-net --allow-env --allow-write --allow-run ${{ github.action_path }}/scripts/fetch-deno-release.ts
 
     - name: Check existing tags
       id: check
