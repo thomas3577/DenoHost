@@ -75,10 +75,10 @@ You can also test the scripts manually:
 deno run --allow-net scripts/fetch-deno-release.ts
 
 # Test check existing tags (requires TAG_CORE env var)
-TAG_CORE=2.4.3 deno run --allow-net scripts/check-existing-tags.ts
+TAG_CORE=2.5.0 deno run --allow-net scripts/check-existing-tags.ts
 
 # Test create tag (requires multiple env vars - be careful with this one!)
-TAG_CORE=2.4.3 PRERELEASE_TYPE=alpha GH_TOKEN=your_token deno run --allow-net --allow-env --allow-run scripts/create-tag.ts
+TAG_CORE=2.5.0 PRERELEASE_TYPE=alpha GH_TOKEN=your_token deno run --allow-net --allow-env --allow-run scripts/create-tag.ts
 ```
 
 **Note**: Be very careful with the `create-tag.ts` script as it will actually create and push tags to the repository!
