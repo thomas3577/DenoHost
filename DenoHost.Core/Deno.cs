@@ -100,20 +100,6 @@ public static class Deno
   }
 
   /// <summary>
-  /// Executes a Deno command with base options and cancellation support.
-  /// </summary>
-  /// <param name="command">The Deno command.</param>
-  /// <param name="baseOptions">Base execution options (working directory, serializer, logger).</param>
-  /// <param name="cancellationToken">Token to cancel the operation.</param>
-  /// <code>
-  /// using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-  /// var baseOpts = new DenoExecuteBaseOptions { WorkingDirectory = "/src" };
-  /// await Deno.Execute("run script.ts", baseOpts, cts.Token);
-  /// </code>
-  /// <returns>A task representing the asynchronous command execution.</returns>
-  // Dedicated cancellation overload removed (unified optional token).
-
-  /// <summary>
   /// Executes a Deno command with additional arguments.
   /// </summary>
   /// <param name="command">The Deno command (e.g. <c>run</c>).</param>
@@ -133,19 +119,6 @@ public static class Deno
   /// <returns>A task producing the deserialized result.</returns>
   public static Task<T> Execute<T>(string command, string[] args, CancellationToken cancellationToken = default)
     => ExecuteCore<T>(command, args, null, null, null, cancellationToken);
-
-  /// <summary>
-  /// Executes a Deno command with additional arguments and cancellation support.
-  /// </summary>
-  /// <param name="command">The base Deno command (e.g. <c>"run"</c>).</param>
-  /// <param name="args">Additional arguments appended after the command.</param>
-  /// <param name="cancellationToken">Token to cancel the operation.</param>
-  /// <code>
-  /// using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-  /// await Deno.Execute("run", new[]{"--allow-read","script.ts"}, cts.Token);
-  /// </code>
-  /// <returns>A task representing the asynchronous command execution.</returns>
-  // Dedicated cancellation overloads removed.
 
   /// <summary>
   /// Executes a Deno command with base options and additional arguments.
@@ -174,21 +147,6 @@ public static class Deno
   }
 
   /// <summary>
-  /// Executes a Deno command with base options and additional arguments with cancellation support.
-  /// </summary>
-  /// <param name="command">The Deno command.</param>
-  /// <param name="baseOptions">Base options such as working directory.</param>
-  /// <param name="args">Additional arguments for Deno.</param>
-  /// <param name="cancellationToken">Token to cancel the operation.</param>
-  /// <code>
-  /// using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-  /// var baseOpts = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
-  /// await Deno.Execute("run", baseOpts, new[]{"script.ts"}, cts.Token);
-  /// </code>
-  /// <returns>A task representing the asynchronous command execution.</returns>
-  // Dedicated cancellation overload removed (unified optional token).
-
-  /// <summary>
   /// Executes Deno with the specified full argument array.
   /// </summary>
   /// <param name="args">Full Deno argument list (e.g. <c>["run", "script.ts"]</c>).</param>
@@ -206,18 +164,6 @@ public static class Deno
   /// <returns>A task producing the deserialized result.</returns>
   public static Task<T> Execute<T>(string[] args, CancellationToken cancellationToken = default)
     => ExecuteCore<T>(null!, args, null, null, null, cancellationToken);
-
-  /// <summary>
-  /// Executes Deno with arguments and cancellation support.
-  /// </summary>
-  /// <param name="args">Full Deno arguments array (first element typically the sub-command like <c>run</c>).</param>
-  /// <param name="cancellationToken">Token to cancel the operation.</param>
-  /// <code>
-  /// using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-  /// await Deno.Execute(new[]{"run","script.ts"}, cts.Token);
-  /// </code>
-  /// <returns>A task representing the asynchronous command execution.</returns>
-  // Dedicated cancellation overloads removed.
 
   /// <summary>
   /// Executes Deno with base options and arguments.
@@ -242,20 +188,6 @@ public static class Deno
     ArgumentNullException.ThrowIfNull(baseOptions);
     return ExecuteCore<T>(null!, args, baseOptions, null, null, cancellationToken);
   }
-
-  /// <summary>
-  /// Executes Deno with base options, arguments and cancellation support.
-  /// </summary>
-  /// <param name="baseOptions">Base options such as working directory.</param>
-  /// <param name="args">Full Deno arguments array.</param>
-  /// <param name="cancellationToken">Token to cancel the operation.</param>
-  /// <code>
-  /// using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-  /// var baseOpts = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
-  /// await Deno.Execute(baseOpts, new[]{"run","script.ts"}, cts.Token);
-  /// </code>
-  /// <returns>A task representing the asynchronous command execution.</returns>
-  // Dedicated cancellation overloads removed.
 
   /// <summary>
   /// Executes a Deno command with a configuration file or path and additional arguments.
@@ -305,21 +237,6 @@ public static class Deno
     => ExecuteCore<T>(command, args, null, null, configOrPath, cancellationToken);
 
   /// <summary>
-  /// Executes a Deno command with a configuration file or path, additional arguments and cancellation support.
-  /// </summary>
-  /// <typeparam name="T">The expected return type.</typeparam>
-  /// <param name="command">The Deno command (e.g. <c>"run"</c>).</param>
-  /// <param name="configOrPath">JSON configuration string or path to a <c>deno.json</c> file.</param>
-  /// <param name="args">Additional Deno arguments (e.g. permissions, script file).</param>
-  /// <param name="cancellationToken">Token to cancel the operation.</param>
-  /// <code>
-  /// using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-  /// var dto = await Deno.Execute<MyDto>("run", "./deno.json", new[]{"script.ts"}, cts.Token);
-  /// </code>
-  /// <returns>The deserialized result of the Deno process.</returns>
-  // Specific cancellation overload removed (unified optional token above).
-
-  /// <summary>
   /// Executes a Deno command with a configuration object and additional arguments.
   /// </summary>
   /// <param name="command">The Deno command.</param>
@@ -339,22 +256,6 @@ public static class Deno
   /// <returns>The deserialized result of the Deno process.</returns>
   public static Task<T> Execute<T>(string command, DenoConfig config, string[] args, CancellationToken cancellationToken = default)
     => ExecuteCore<T>(command, args, null, config, null, cancellationToken);
-
-  /// <summary>
-  /// Executes a Deno command with a configuration object, additional arguments and cancellation support.
-  /// </summary>
-  /// <typeparam name="T">The expected return type.</typeparam>
-  /// <param name="command">The Deno command (e.g. <c>"run"</c>).</param>
-  /// <param name="config">The strongly typed Deno configuration object that will be written to a temp file.</param>
-  /// <param name="args">Additional Deno arguments.</param>
-  /// <param name="cancellationToken">Token to cancel the operation.</param>
-  /// <code>
-  /// using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-  /// var cfg = new DenoConfig();
-  /// var dto = await Deno.Execute<MyDto>("run", cfg, new[]{"script.ts"}, cts.Token);
-  /// </code>
-  /// <returns>The deserialized result of the Deno process.</returns>
-  // Dedicated cancellation overload removed.
 
   /// <summary>
   /// Core unified execution helper handling all combinations of command/args/baseOptions/config.

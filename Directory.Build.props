@@ -5,8 +5,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/thomas3577/DenoHost</PackageProjectUrl>
     <PackageIcon>assets/images/icon.png</PackageIcon>
-    <PackageIconUrl>
-      https://raw.githubusercontent.com/thomas3577/DenoHost/main/assets/images/icon.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/thomas3577/DenoHost/main/assets/images/icon.png</PackageIconUrl>
     <PackageTags>deno;runtime;dotnet;javascript;typescript</PackageTags>
     <RepositoryUrl>https://github.com/thomas3577/DenoHost.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -14,7 +13,7 @@
     <Copyright>Copyright © 2025 Thomas Huber</Copyright>
 
     <!-- DenoHost Dev Configuration -->
-    <DevDenoVersion>2.4.5</DevDenoVersion>
+    <DevDenoVersion>2.5.0</DevDenoVersion>
   </PropertyGroup>
 
   <ItemGroup>

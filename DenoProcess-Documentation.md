@@ -1,84 +1,91 @@
-# DenoProcess Klasse
+# DenoProcess Class
 
-Die `DenoProcess` Klasse erweitert die bestehende "fire and forget" Funktionalität des DenoHost-Projekts um die Möglichkeit, langlebige Deno-Prozesse zu starten, zu kontrollieren und zu beenden.
+The `DenoProcess` class extends the existing "fire and forget" functionality of
+the DenoHost project with the ability to start, control, and terminate
+long-lived Deno processes.
 
-## Übersicht
+## Overview
 
-Im Gegensatz zur statischen `Deno` Klasse, die Deno-Befehle ausführt und auf deren Beendigung wartet, ermöglicht die `DenoProcess` Klasse:
+Unlike the static `Deno` class, which executes Deno commands and waits for their
+completion, the `DenoProcess` class enables:
 
-- **Langlebige Prozesse**: Starten und Verwalten von Deno-Prozessen, die über längere Zeit laufen
-- **Bidirektionale Kommunikation**: Senden von Eingaben an den Prozess und Empfangen von Ausgaben
-- **Prozess-Management**: Überwachung des Prozessstatus, Neustart und kontrollierten Stopp
-- **Event-basierte Architektur**: Reagieren auf Prozess-Events wie Ausgaben oder Beendigung
+- **Long-lived Processes**: Starting and managing Deno processes that run for
+  extended periods
+- **Bidirectional Communication**: Sending inputs to the process and receiving
+  outputs
+- **Process Management**: Monitoring process status, restart, and controlled
+  shutdown
+- **Event-based Architecture**: Responding to process events such as output or
+  termination
 
-## Hauptfunktionen
+## Core Features
 
-### Prozess-Lebenszyklus
+### Process Lifecycle
 
-- `StartAsync()`: Startet den Deno-Prozess
-- `StopAsync()`: Stoppt den Prozess (graceful shutdown mit Timeout)
-- `RestartAsync()`: Neustart des Prozesses
-- `WaitForExitAsync()`: Wartet auf die natürliche Beendigung des Prozesses
+- `StartAsync()`: Starts the Deno process
+- `StopAsync()`: Stops the process (graceful shutdown with timeout)
+- `RestartAsync()`: Restarts the process
+- `WaitForExitAsync()`: Waits for the natural termination of the process
 
-### Kommunikation
+### Communication
 
-- `SendInputAsync()`: Sendet Eingaben an den Prozess über stdin
-- `OutputDataReceived` Event: Erhält Ausgaben von stdout
-- `ErrorDataReceived` Event: Erhält Fehlermeldungen von stderr
+- `SendInputAsync()`: Sends input to the process via stdin
+- `OutputDataReceived` Event: Receives output from stdout
+- `ErrorDataReceived` Event: Receives error messages from stderr
 
-### Überwachung
+### Monitoring
 
-- `IsRunning`: Property zur Überprüfung des Prozessstatus
-- `ProcessId`: Prozess-ID des laufenden Prozesses
-- `ExitCode`: Exit-Code nach Beendigung
-- `ProcessExited` Event: Benachrichtigung bei Prozessbeendigung
+- `IsRunning`: Property to check process status
+- `ProcessId`: Process ID of the running process
+- `ExitCode`: Exit code after termination
+- `ProcessExited` Event: Notification when process terminates
 
-## Verwendungsbeispiele
+## Usage Examples
 
-### Einfache Verwendung
+### Simple Usage
 
 ```csharp
 using var denoProcess = new DenoProcess(
-    command: "run",
-    args: new[] { "--allow-read", "my-script.ts" },
-    workingDirectory: "/path/to/scripts",
-    logger: logger
+  command: "run",
+  args: new[] { "--allow-read", "my-script.ts" },
+  workingDirectory: "/path/to/scripts",
+  logger: logger
 );
 
-// Events abonnieren
+// Subscribe to events
 denoProcess.OutputDataReceived += (sender, e) => {
-    Console.WriteLine($"Output: {e.Data}");
+  Console.WriteLine($"Output: {e.Data}");
 };
 
 denoProcess.ErrorDataReceived += (sender, e) => {
-    Console.WriteLine($"Error: {e.Data}");
+  Console.WriteLine($"Error: {e.Data}");
 };
 
-// Prozess starten
+// Start process
 await denoProcess.StartAsync();
 
-// Eingaben senden (optional)
+// Send inputs (optional)
 await denoProcess.SendInputAsync("some command");
 
-// Warten oder später beenden
+// Wait or stop later
 await Task.Delay(5000);
 await denoProcess.StopAsync();
 ```
 
-### Interaktive Kommunikation
+### Interactive Communication
 
 ```csharp
 using var denoProcess = new DenoProcess("run", new[] { "interactive-script.ts" });
 
 var responses = new List<string>();
 denoProcess.OutputDataReceived += (sender, e) => {
-    if (!string.IsNullOrEmpty(e.Data))
-        responses.Add(e.Data);
+  if (!string.IsNullOrEmpty(e.Data))
+    responses.Add(e.Data);
 };
 
 await denoProcess.StartAsync();
 
-// Befehle senden
+// Send commands
 await denoProcess.SendInputAsync("command1");
 await Task.Delay(1000);
 await denoProcess.SendInputAsync("command2");
@@ -88,98 +95,102 @@ await denoProcess.SendInputAsync("exit");
 await denoProcess.WaitForExitAsync();
 ```
 
-### Prozess-Überwachung
+### Process Monitoring
 
 ```csharp
 using var denoProcess = new DenoProcess("run", new[] { "long-running-service.ts" });
 
 denoProcess.ProcessExited += (sender, e) => {
-    Console.WriteLine($"Process exited with code: {e.ExitCode}");
-    
-    if (e.ExitCode != 0) {
-        // Prozess ist unerwartet beendet, Neustart?
-    }
+  Console.WriteLine($"Process exited with code: {e.ExitCode}");
+
+  if (e.ExitCode != 0) {
+    // Process terminated unexpectedly, restart?
+  }
 };
 
 await denoProcess.StartAsync();
 
-// Überwachung in separatem Task
+// Monitoring in separate task
 _ = Task.Run(async () => {
-    while (denoProcess.IsRunning) {
-        Console.WriteLine($"Process {denoProcess.ProcessId} is still running");
-        await Task.Delay(5000);
-    }
+  while (denoProcess.IsRunning) {
+    Console.WriteLine($"Process {denoProcess.ProcessId} is still running");
+    await Task.Delay(5000);
+  }
 });
 
-// Hauptanwendung läuft weiter...
+// Main application continues...
 ```
 
-## Konstruktoren
+## Constructors
 
 ### DenoProcess(string[] args, ...)
 
-Erstellt eine neue Instanz mit direkten Deno-Argumenten.
+Creates a new instance with direct Deno arguments.
 
 ```csharp
 var process = new DenoProcess(
-    args: new[] { "run", "--allow-read", "script.ts" },
-    workingDirectory: "/path/to/scripts",
-    logger: logger
+  args: new[] { "run", "--allow-read", "script.ts" },
+  workingDirectory: "/path/to/scripts",
+  logger: logger
 );
 ```
 
 ### DenoProcess(string command, string[] args, ...)
 
-Erstellt eine neue Instanz mit einem Deno-Befehl und zusätzlichen Argumenten.
+Creates a new instance with a Deno command and additional arguments.
 
 ```csharp
 var process = new DenoProcess(
-    command: "run",
-    args: new[] { "--allow-read", "script.ts" },
-    workingDirectory: "/path/to/scripts",
-    logger: logger
+  command: "run",
+  args: new[] { "--allow-read", "script.ts" },
+  workingDirectory: "/path/to/scripts",
+  logger: logger
 );
 ```
 
 ## Error Handling
 
-Die `DenoProcess` Klasse bietet robuste Fehlerbehandlung:
+The `DenoProcess` class provides robust error handling:
 
-- **Startfehler**: `InvalidOperationException` wenn der Prozess nicht gestartet werden kann
-- **Kommunikationsfehler**: Exceptions beim Senden von Eingaben an gestoppte Prozesse
-- **Timeout-Behandlung**: Graceful shutdown mit konfigurierbarem Timeout, danach forciertes Beenden
+- **Start Errors**: `InvalidOperationException` when the process cannot be
+  started
+- **Communication Errors**: Exceptions when sending inputs to stopped processes
+- **Timeout Handling**: Graceful shutdown with configurable timeout, followed by
+  forced termination
 
 ```csharp
 try {
-    await denoProcess.StartAsync();
+  await denoProcess.StartAsync();
 } catch (InvalidOperationException ex) {
-    logger.LogError("Failed to start Deno process: {Message}", ex.Message);
+  logger.LogError("Failed to start Deno process: {Message}", ex.Message);
 }
 
 try {
-    await denoProcess.StopAsync(timeout: TimeSpan.FromSeconds(30));
+  await denoProcess.StopAsync(timeout: TimeSpan.FromSeconds(30));
 } catch (Exception ex) {
-    logger.LogError("Error during process shutdown: {Message}", ex.Message);
+  logger.LogError("Error during process shutdown: {Message}", ex.Message);
 }
 ```
 
-## Vergleich: Deno vs. DenoProcess
+## Comparison: Deno vs. DenoProcess
 
-| Feature | Deno (statisch) | DenoProcess |
-|---------|----------------|-------------|
-| Ausführungsmodell | Fire-and-forget | Langlebiger Prozess |
-| Kommunikation | Einweg (Eingabe → Ausgabe) | Bidirektional |
-| Prozess-Kontrolle | Keine | Vollständig |
-| Events | Keine | OutputReceived, ErrorReceived, ProcessExited |
-| Lebensdauer | Bis Beendigung | Benutzer-kontrolliert |
-| Verwendung | Einfache Skript-Ausführung | Interaktive/Service-artige Anwendungen |
+| Feature         | Deno (static)            | DenoProcess                                  |
+| --------------- | ------------------------ | -------------------------------------------- |
+| Execution Model | Fire-and-forget          | Long-lived process                           |
+| Communication   | One-way (Input → Output) | Bidirectional                                |
+| Process Control | None                     | Full control                                 |
+| Events          | None                     | OutputReceived, ErrorReceived, ProcessExited |
+| Lifetime        | Until completion         | User-controlled                              |
+| Usage           | Simple script execution  | Interactive/Service-like applications        |
 
-## Anwendungsfälle
+## Use Cases
 
-- **Entwicklungsserver**: Deno-basierte Entwicklungsserver mit Hot-Reload
-- **Interaktive Tools**: REPLs oder interaktive Kommandozeilen-Tools
-- **Langlebige Services**: Background-Services oder Daemons
-- **Streaming-Verarbeitung**: Kontinuierliche Datenverarbeitung
-- **Entwicklungstools**: Build-Watchers oder Test-Runner
+- **Development Servers**: Deno-based development servers with hot-reload
+- **Interactive Tools**: REPLs or interactive command-line tools
+- **Long-lived Services**: Background services or daemons
+- **Stream Processing**: Continuous data processing
+- **Development Tools**: Build watchers or test runners
 
-Die `DenoProcess` Klasse erweitert das DenoHost-Projekt um mächtige Prozess-Management-Funktionen und macht es möglich, Deno nicht nur für einfache Skript-Ausführungen zu verwenden, sondern auch für komplexere, interaktive Anwendungen.
+The `DenoProcess` class extends the DenoHost project with powerful process
+management functionality, making it possible to use Deno not only for simple
+script execution but also for complex, interactive applications.

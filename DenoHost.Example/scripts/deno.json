@@ -9,9 +9,7 @@
     "singleQuote": true,
     "proseWrap": "preserve",
     "exclude": [
-      ".vscode/**",
-      "coverage",
-      "cspell.json"
+      ".vscode/**"
     ]
   }
 }
