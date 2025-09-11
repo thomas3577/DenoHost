@@ -89,6 +89,9 @@ public class DenoConfig
   [JsonPropertyName("workspace")]
   public object? Workspace { get; set; }
 
+  [JsonPropertyName("compile")]
+  public object? Compile { get; set; }
+
   /// <summary>
   /// Captures any additional properties not explicitly defined.
   /// This ensures forward compatibility when Deno adds new configuration options.
