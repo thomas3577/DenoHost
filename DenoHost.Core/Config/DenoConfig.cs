@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using DenoHost.Core.Config;
 
 namespace DenoHost.Core.Config;
 
@@ -91,7 +90,7 @@ public class DenoConfig
   public object? Workspace { get; set; }
 
   [JsonPropertyName("compile")]
-  public object? Compile { get; set; }
+  public CompileConfig? Compile { get; set; }
 
   /// <summary>
   /// Captures any additional properties not explicitly defined.

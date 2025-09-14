@@ -24,5 +24,5 @@ public class TestConfig
   /// Gets or sets the permissions configuration for test execution.
   /// </summary>
   [JsonPropertyName("permissions")]
-  public DenoHost.Core.Config.PermissionNameOrSet? Permissions { get; set; }
+  public PermissionNameOrSet? Permissions { get; set; }
 }
