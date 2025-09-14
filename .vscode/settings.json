@@ -4,7 +4,6 @@
     "**/bin": true,
     "**/obj": true
   },
-  "xml.format.enabled": false,
   "[xml]": {
     "editor.formatOnSave": false,
     "editor.formatOnPaste": false,
