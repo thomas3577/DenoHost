@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DenoHost.Core.Config;
 
-namespace DenoHost.Core;
+namespace DenoHost.Core.Config;
 
 public static class JsonOptions
 {
@@ -53,13 +54,13 @@ public class DenoConfig
   public Dictionary<string, object>? Tasks { get; set; }
 
   [JsonPropertyName("test")]
-  public object? Test { get; set; }
+  public TestConfig? Test { get; set; }
 
   [JsonPropertyName("publish")]
   public object? Publish { get; set; }
 
   [JsonPropertyName("bench")]
-  public object? Bench { get; set; }
+  public BenchConfig? Bench { get; set; }
 
   [JsonPropertyName("license")]
   public string? License { get; set; }
@@ -90,7 +91,7 @@ public class DenoConfig
   public object? Workspace { get; set; }
 
   [JsonPropertyName("compile")]
-  public object? Compile { get; set; }
+  public CompileConfig? Compile { get; set; }
 
   /// <summary>
   /// Captures any additional properties not explicitly defined.

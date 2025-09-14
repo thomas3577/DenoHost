@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using DenoHost.Core;
+using DenoHost.Core.Config;
 
 namespace DenoHost.Tests;
 

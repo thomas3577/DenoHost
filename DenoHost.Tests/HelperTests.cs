@@ -1,4 +1,5 @@
 using DenoHost.Core;
+using DenoHost.Core.Config;
 using System.Reflection;
 
 namespace DenoHost.Tests;

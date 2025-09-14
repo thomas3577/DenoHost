@@ -1,4 +1,5 @@
 using DenoHost.Core;
+using DenoHost.Core.Config;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -15,7 +16,7 @@ class TestResult
 
 public class TempFileFixture : IDisposable
 {
-  private readonly List<string> _tempFiles = new();
+  private readonly List<string> _tempFiles = [];
   private readonly string _tempDirectory;
 
   public TempFileFixture()
