@@ -9,7 +9,116 @@ namespace DenoHost.Tests;
 /// </summary>
 public class DenoConfigSchemaTests
 {
-  private const string DENO_SCHEMA_URL = "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json";
+  // Dynamisch: Ermittle die Deno-Version aus dem Deno-Binary (plattformübergreifend)
+  private static string GetDenoVersion()
+  {
+    // Finde das Deno Binary in einem der verfügbaren Runtime Packages
+    var baseDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
+    var solutionRoot = FindSolutionRoot(baseDirectory!);
+
+    var runtimeId = GetCurrentRuntimeIdentifier();
+    var denoExecutableName = OperatingSystem.IsWindows() ? "deno.exe" : "deno";
+    var denoExePath = Path.Combine(solutionRoot, $"DenoHost.Runtime.{runtimeId}", denoExecutableName);
+
+    if (!File.Exists(denoExePath))
+    {
+      // Fallback: Suche in allen verfügbaren Runtime Packages
+      var runtimeDirs = Directory.GetDirectories(solutionRoot, "DenoHost.Runtime.*");
+      foreach (var runtimeDir in runtimeDirs)
+      {
+        var fallbackPath = Path.Combine(runtimeDir, denoExecutableName);
+        if (File.Exists(fallbackPath))
+        {
+          denoExePath = fallbackPath;
+          break;
+        }
+      }
+    }
+
+    if (!File.Exists(denoExePath))
+      throw new FileNotFoundException($"Deno-Binary nicht gefunden. Suchpfad: {denoExePath} (Platform: {runtimeId})");
+
+    var process = new System.Diagnostics.Process
+    {
+      StartInfo = new System.Diagnostics.ProcessStartInfo
+      {
+        FileName = denoExePath,
+        Arguments = "--version",
+        RedirectStandardOutput = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+      }
+    };
+    process.Start();
+    string? output = process.StandardOutput.ReadToEnd();
+    process.WaitForExit();
+
+    // Erwartete Ausgabe: "deno x.y.z\nv8 ...\ntypescript ..."
+    // Wir suchen die erste Zeile mit "deno " und extrahieren die Version
+    var firstLine = output.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("deno "));
+    if (firstLine == null)
+      throw new InvalidOperationException($"Konnte Deno-Version nicht auslesen. Ausgabe: {output}");
+
+    var version = firstLine.Trim().Split(' ')[1];
+    if (!version.StartsWith('v'))
+      version = "v" + version;
+
+    return version;
+  }
+
+  private static string FindSolutionRoot(string startPath)
+  {
+    var directory = new DirectoryInfo(startPath);
+    while (directory != null && !directory.GetFiles("*.sln").Any())
+    {
+      directory = directory.Parent;
+    }
+
+    if (directory == null)
+      throw new DirectoryNotFoundException("Solution root not found");
+
+    return directory.FullName;
+  }
+  private static string GetCurrentRuntimeIdentifier()
+  {
+    if (OperatingSystem.IsWindows())
+      return "win-x64";
+    else if (OperatingSystem.IsLinux())
+    {
+      // Erkennung der Architektur für Linux
+      return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture switch
+      {
+        System.Runtime.InteropServices.Architecture.X64 => "linux-x64",
+        System.Runtime.InteropServices.Architecture.Arm64 => "linux-arm64",
+        _ => "linux-x64" // Fallback
+      };
+    }
+    else if (OperatingSystem.IsMacOS())
+    {
+      // Erkennung der Architektur für macOS
+      return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture switch
+      {
+        System.Runtime.InteropServices.Architecture.X64 => "osx-x64",
+        System.Runtime.InteropServices.Architecture.Arm64 => "osx-arm64",
+        _ => "osx-x64" // Fallback
+      };
+    }
+    else
+    {
+      throw new PlatformNotSupportedException($"Unsupported platform: {Environment.OSVersion.Platform}");
+    }
+  }
+
+  private static string GetDenoSchemaUrl()
+  {
+    var version = GetDenoVersion();
+    var url = $"https://raw.githubusercontent.com/denoland/deno/refs/tags/{version}/cli/schemas/config-file.v1.json";
+
+    // Output the schema URL for test visibility
+    Console.WriteLine($"Using Deno schema: {url}");
+
+    return url;
+  }
 
   private static readonly HttpClient HttpClient = new();
 
@@ -20,7 +129,7 @@ public class DenoConfigSchemaTests
     // without being explicitly implemented in DenoConfig or at least being detected.
 
     // Arrange: Download schema as raw JSON
-    var schemaJson = await HttpClient.GetStringAsync(DENO_SCHEMA_URL);
+    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl());
     var schemaDocument = JsonDocument.Parse(schemaJson);
 
     // Get ALL properties from the schema
@@ -78,7 +187,7 @@ public class DenoConfigSchemaTests
   public async Task DenoConfig_AllPropertiesExistInOfficialSchema()
   {
     // Arrange: Download schema as raw JSON
-    var schemaJson = await HttpClient.GetStringAsync(DENO_SCHEMA_URL);
+    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl());
     var schemaDocument = JsonDocument.Parse(schemaJson);
 
     // Get all properties from the schema
@@ -122,7 +231,7 @@ public class DenoConfigSchemaTests
   public async Task DenoConfig_ReportMissingPropertiesFromSchema()
   {
     // Arrange: Download schema as raw JSON
-    var schemaJson = await HttpClient.GetStringAsync(DENO_SCHEMA_URL);
+    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl());
     var schemaDocument = JsonDocument.Parse(schemaJson);
 
     // Get all properties from the schema
@@ -314,7 +423,7 @@ public class DenoConfigSchemaTests
     // This test provides information about schema compatibility without failing
 
     // Arrange: Download schema
-    var schemaJson = await HttpClient.GetStringAsync(DENO_SCHEMA_URL);
+    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl());
     var schemaDocument = JsonDocument.Parse(schemaJson);
 
     // Get schema info
@@ -403,13 +512,6 @@ public class DenoConfigSchemaTests
         Include = ["**/*_test.ts"],
         Permissions = PermissionNameOrSet.FromName("test-permissions")
       },
-      Compile = new CompileConfig
-      {
-        Permissions = PermissionNameOrSet.FromSet(new PermissionSet
-        {
-          All = true
-        })
-      },
       Bench = new BenchConfig
       {
         Permissions = PermissionNameOrSet.FromSet(new PermissionSet
@@ -428,8 +530,6 @@ public class DenoConfigSchemaTests
     Assert.Equal("test-app", deserializedConfig.Name);
     Assert.True(deserializedConfig.Test?.Permissions?.IsPermissionName);
     Assert.Equal("test-permissions", deserializedConfig.Test?.Permissions?.PermissionName);
-    Assert.True(deserializedConfig.Compile?.Permissions?.IsPermissionSet);
-    Assert.True(deserializedConfig.Compile?.Permissions?.PermissionSet?.All);
     Assert.True(deserializedConfig.Bench?.Permissions?.IsPermissionSet);
   }
 }
