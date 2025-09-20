@@ -4,12 +4,6 @@ param (
   [string]$DevDenoVersion
 )
 
-if (Test-Path $ExecutablePath) {
-  Write-Host "Deno already exists at $ExecutablePath"
-  Write-Host "Deno setup complete at $ExecutablePath"
-  exit 0
-}
-
 # Get last Git-Tag (e.g. "v2.4.1-alpha.1")
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $repoRoot
@@ -27,6 +21,38 @@ if ($gitTag -match '^v?(\d+\.\d+\.\d+)') {
 } else {
   Write-Error "Could not parse Deno version from Git tag: $gitTag"
   exit 1
+}
+
+# Check if Deno exists and version matches
+$needsDownload = $true
+if (Test-Path $ExecutablePath) {
+  Write-Host "Deno binary found at $ExecutablePath, checking version..."
+
+  try {
+    # Get current version from existing binary
+    $versionOutput = & $ExecutablePath --version 2>$null
+    if ($versionOutput -match 'deno (\d+\.\d+\.\d+)') {
+      $currentVersion = $matches[1]
+      Write-Host "Current Deno version: $currentVersion"
+      Write-Host "Required Deno version: $denoVersion"
+
+      if ($currentVersion -eq $denoVersion) {
+        Write-Host "Version matches! No download needed."
+        $needsDownload = $false
+      } else {
+        Write-Host "Version mismatch! Will download correct version."
+      }
+    } else {
+      Write-Warning "Could not determine current Deno version. Will re-download."
+    }
+  } catch {
+    Write-Warning "Error checking Deno version: $($_.Exception.Message). Will re-download."
+  }
+}
+
+if (-not $needsDownload) {
+  Write-Host "Deno setup complete at $ExecutablePath"
+  exit 0
 }
 
 $downloadUrl = "https://github.com/denoland/deno/releases/download/v$($denoVersion)/$($DownloadFilename)"

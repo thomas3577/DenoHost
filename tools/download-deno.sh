@@ -7,9 +7,28 @@ DOWNLOAD_FILENAME="$2"
 DEV_DENO_VERSION="$3"
 
 if [ -f "$EXECUTABLE_PATH" ]; then
-  echo "Deno already exists at $EXECUTABLE_PATH"
-  echo "Deno setup complete at $EXECUTABLE_PATH"
-  exit 0
+  echo "Deno binary found at $EXECUTABLE_PATH, checking version..."
+
+  # Get current version from existing binary
+  if CURRENT_VERSION_OUTPUT=$("$EXECUTABLE_PATH" --version 2>/dev/null); then
+    if [[ "$CURRENT_VERSION_OUTPUT" =~ deno\ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+      CURRENT_VERSION="${BASH_REMATCH[1]}"
+      echo "Current Deno version: $CURRENT_VERSION"
+      echo "Required Deno version: $DENO_VERSION"
+
+      if [ "$CURRENT_VERSION" = "$DENO_VERSION" ]; then
+        echo "Version matches! No download needed."
+        echo "Deno setup complete at $EXECUTABLE_PATH"
+        exit 0
+      else
+        echo "Version mismatch! Will download correct version."
+      fi
+    else
+      echo "Warning: Could not determine current Deno version. Will re-download."
+    fi
+  else
+    echo "Warning: Error checking Deno version. Will re-download."
+  fi
 fi
 
 # Get last Git-Tag (e.g. "v2.4.1-alpha.1")
