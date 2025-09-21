@@ -142,11 +142,11 @@ async function triggerBuildWorkflow(tag: string): Promise<void> {
     throw new Error("GH_TOKEN environment variable not set");
   }
 
-  console.log(`🚀 Triggering build workflow for tag: ${tag}`);
+  console.log(`🚀 Triggering build workflow via repository dispatch for tag: ${tag}`);
 
   try {
     const response = await fetch(
-      "https://api.github.com/repos/thomas3577/DenoHost/actions/workflows/build.yml/dispatches",
+      "https://api.github.com/repos/thomas3577/DenoHost/dispatches",
       {
         method: "POST",
         headers: {
@@ -156,18 +156,24 @@ async function triggerBuildWorkflow(tag: string): Promise<void> {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ref: tag,
+          event_type: "tag-created",
+          client_payload: {
+            tag: tag,
+          },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to trigger workflow: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(
+        `Failed to trigger workflow: ${response.status} ${response.statusText} - ${errorText}`,
+      );
     }
 
-    console.log(`✅ Successfully triggered build workflow for tag: ${tag}`);
+    console.log(`✅ Successfully triggered repository dispatch for tag: ${tag}`);
   } catch (error) {
-    console.error(`⚠️ Failed to trigger build workflow: ${error}`);
+    console.error(`⚠️ Failed to trigger repository dispatch: ${error}`);
     // Don't fail the entire action if workflow trigger fails
   }
 }

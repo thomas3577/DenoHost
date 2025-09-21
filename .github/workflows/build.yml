@@ -9,6 +9,13 @@ on:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g., v1.45.5-alpha.1)'
+        required: false
+        type: string
+  repository_dispatch:
+    types: [tag-created]
 
 jobs:
   get-version:
@@ -24,7 +31,18 @@ jobs:
       - name: Extract Version
         id: extract
         run: |
-          REF="${GITHUB_REF#refs/tags/}"
+          # Check different trigger sources for tag information
+          if [[ "${{ github.event_name }}" == "repository_dispatch" ]] && [[ -n "${{ github.event.client_payload.tag }}" ]]; then
+            REF="${{ github.event.client_payload.tag }}"
+            echo "Using tag from repository dispatch: $REF"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${{ github.event.inputs.tag }}" ]]; then
+            REF="${{ github.event.inputs.tag }}"
+            echo "Using tag from manual input: $REF"
+          else
+            REF="${GITHUB_REF#refs/tags/}"
+            echo "Using tag from git ref: $REF"
+          fi
+
           if [[ "$REF" =~ ^v[0-9] ]]; then
             PACKAGE_VERSION="${REF#v}"
             DENO_VERSION=$(echo "$PACKAGE_VERSION" | cut -d '-' -f 1)
