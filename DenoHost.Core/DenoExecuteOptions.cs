@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using DenoHost.Core.Config;
 
 namespace DenoHost.Core;
 
