@@ -190,7 +190,10 @@ jobs:
   publish-runtime:
     name: Publish Runtime NuGet
     needs: [get-version, build-runtime, test-on-linux, test-on-windows]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'repository_dispatch' && startsWith(github.event.client_payload.tag, 'v')) ||
+      (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
     strategy:
       matrix:
         rid: [win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64]
@@ -217,7 +220,10 @@ jobs:
   publish-core:
     name: Publish Core NuGet
     needs: [get-version, build-core, test-on-linux, test-on-windows]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'repository_dispatch' && startsWith(github.event.client_payload.tag, 'v')) ||
+      (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
