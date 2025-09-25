@@ -5,11 +5,11 @@ interface GitTag {
 }
 
 async function fetchGitTags(): Promise<string[]> {
-  console.log("🔍 Fetching DenoHost tags...");
+  console.log('🔍 Fetching DenoHost tags...');
 
   try {
     const response = await fetch(
-      "https://api.github.com/repos/thomas3577/DenoHost/tags",
+      'https://api.github.com/repos/thomas3577/DenoHost/tags',
     );
 
     if (!response.ok) {
@@ -25,9 +25,9 @@ async function fetchGitTags(): Promise<string[]> {
 }
 
 async function main() {
-  const tagCore = Deno.env.get("TAG_CORE");
+  const tagCore = Deno.env.get('TAG_CORE');
   if (!tagCore) {
-    console.error("❌ TAG_CORE environment variable not set");
+    console.error('❌ TAG_CORE environment variable not set');
     Deno.exit(1);
   }
 
@@ -35,19 +35,19 @@ async function main() {
 
   const gitTags = await fetchGitTags();
 
-  console.log("Existing tags in DenoHost:");
-  console.log(gitTags.join("\n"));
+  console.log('Existing tags in DenoHost:');
+  console.log(gitTags.join('\n'));
 
   // Check if any tag exists for this Deno version
   const pattern = new RegExp(
-    `^v${tagCore.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(-|$)`,
+    `^v${tagCore.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(-|$)`,
   );
   const found = gitTags.find((tag) => pattern.test(tag));
 
-  const alreadyExists = found ? "true" : "false";
+  const alreadyExists = found ? 'true' : 'false';
 
   // Set GitHub Actions outputs
-  const outputFile = Deno.env.get("GITHUB_OUTPUT");
+  const outputFile = Deno.env.get('GITHUB_OUTPUT');
   if (outputFile) {
     await Deno.writeTextFile(
       outputFile,

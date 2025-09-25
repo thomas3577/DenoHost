@@ -10,11 +10,11 @@ interface PreReleaseInfo {
 }
 
 async function fetchGitTags(): Promise<string[]> {
-  console.log("🔍 Fetching DenoHost tags for pre-release analysis...");
+  console.log('🔍 Fetching DenoHost tags for pre-release analysis...');
 
   try {
     const response = await fetch(
-      "https://api.github.com/repos/thomas3577/DenoHost/tags",
+      'https://api.github.com/repos/thomas3577/DenoHost/tags',
     );
 
     if (!response.ok) {
@@ -32,22 +32,22 @@ async function fetchGitTags(): Promise<string[]> {
 async function runCommand(cmd: string[]): Promise<string> {
   const process = new Deno.Command(cmd[0], {
     args: cmd.slice(1),
-    stdout: "piped",
-    stderr: "piped",
+    stdout: 'piped',
+    stderr: 'piped',
   });
 
   const { code, stdout, stderr } = await process.output();
 
   if (code !== 0) {
     const errorText = new TextDecoder().decode(stderr);
-    throw new Error(`Command failed: ${cmd.join(" ")}\n${errorText}`);
+    throw new Error(`Command failed: ${cmd.join(' ')}\n${errorText}`);
   }
 
   return new TextDecoder().decode(stdout).trim();
 }
 
 function parsePreReleaseTypes(tags: string[]): PreReleaseInfo[] {
-  const preReleaseTypes = ["alpha", "beta", "rc", "preview"];
+  const preReleaseTypes = ['alpha', 'beta', 'rc', 'preview'];
   const preReleases: PreReleaseInfo[] = [];
 
   for (const tag of tags) {
@@ -67,96 +67,96 @@ function parsePreReleaseTypes(tags: string[]): PreReleaseInfo[] {
 }
 
 async function setupGit(): Promise<void> {
-  console.log("🔧 Setting up Git configuration...");
+  console.log('🔧 Setting up Git configuration...');
 
   await runCommand([
-    "git",
-    "config",
-    "--global",
-    "user.email",
-    "github-actions[bot]@users.noreply.github.com",
+    'git',
+    'config',
+    '--global',
+    'user.email',
+    'github-actions[bot]@users.noreply.github.com',
   ]);
   await runCommand([
-    "git",
-    "config",
-    "--global",
-    "user.name",
-    "github-actions[bot]",
+    'git',
+    'config',
+    '--global',
+    'user.name',
+    'github-actions[bot]',
   ]);
 }
 
 async function initializeRepo(): Promise<void> {
-  const ghToken = Deno.env.get("GH_TOKEN");
+  const ghToken = Deno.env.get('GH_TOKEN');
   if (!ghToken) {
-    throw new Error("GH_TOKEN environment variable not set");
+    throw new Error('GH_TOKEN environment variable not set');
   }
 
-  console.log("📦 Initializing repository...");
+  console.log('📦 Initializing repository...');
 
   // Check if we're already in a git repository
   try {
-    await runCommand(["git", "rev-parse", "--git-dir"]);
-    console.log("🔍 Already in a git repository");
+    await runCommand(['git', 'rev-parse', '--git-dir']);
+    console.log('🔍 Already in a git repository');
   } catch {
-    console.log("🆕 Initializing new git repository");
-    await runCommand(["git", "init"]);
+    console.log('🆕 Initializing new git repository');
+    await runCommand(['git', 'init']);
   }
 
   // Check if origin remote already exists
   try {
-    await runCommand(["git", "remote", "get-url", "origin"]);
-    console.log("🔗 Origin remote already exists");
+    await runCommand(['git', 'remote', 'get-url', 'origin']);
+    console.log('🔗 Origin remote already exists');
 
     // Update the remote URL with token for authentication
     await runCommand([
-      "git",
-      "remote",
-      "set-url",
-      "origin",
+      'git',
+      'remote',
+      'set-url',
+      'origin',
       `https://x-access-token:${ghToken}@github.com/thomas3577/DenoHost.git`,
     ]);
   } catch {
-    console.log("➕ Adding origin remote");
+    console.log('➕ Adding origin remote');
     await runCommand([
-      "git",
-      "remote",
-      "add",
-      "origin",
+      'git',
+      'remote',
+      'add',
+      'origin',
       `https://x-access-token:${ghToken}@github.com/thomas3577/DenoHost.git`,
     ]);
   }
 
-  await runCommand(["git", "fetch", "origin", "main"]);
+  await runCommand(['git', 'fetch', 'origin', 'main']);
 }
 
 async function createAndPushTag(tag: string): Promise<void> {
   console.log(`🏷️ Creating and pushing tag: ${tag}`);
 
-  await runCommand(["git", "tag", tag, "origin/main"]);
-  await runCommand(["git", "push", "origin", tag]);
+  await runCommand(['git', 'tag', tag, 'origin/main']);
+  await runCommand(['git', 'push', 'origin', tag]);
 }
 
 async function triggerBuildWorkflow(tag: string): Promise<void> {
-  const ghToken = Deno.env.get("GH_TOKEN");
+  const ghToken = Deno.env.get('GH_TOKEN');
   if (!ghToken) {
-    throw new Error("GH_TOKEN environment variable not set");
+    throw new Error('GH_TOKEN environment variable not set');
   }
 
   console.log(`🚀 Triggering build workflow via repository dispatch for tag: ${tag}`);
 
   try {
     const response = await fetch(
-      "https://api.github.com/repos/thomas3577/DenoHost/dispatches",
+      'https://api.github.com/repos/thomas3577/DenoHost/dispatches',
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Authorization": `Bearer ${ghToken}`,
-          "Accept": "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-          "Content-Type": "application/json",
+          'Authorization': `Bearer ${ghToken}`,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          event_type: "tag-created",
+          event_type: 'build-and-publish',
           client_payload: {
             tag: tag,
           },
@@ -179,15 +179,15 @@ async function triggerBuildWorkflow(tag: string): Promise<void> {
 }
 
 async function main() {
-  const tagCore = Deno.env.get("TAG_CORE");
-  const preReleaseType = Deno.env.get("PRERELEASE_TYPE") || "alpha";
+  const tagCore = Deno.env.get('TAG_CORE');
+  const preReleaseType = Deno.env.get('PRERELEASE_TYPE') || 'alpha';
 
   if (!tagCore) {
-    console.error("❌ TAG_CORE environment variable not set");
+    console.error('❌ TAG_CORE environment variable not set');
     Deno.exit(1);
   }
 
-  if (tagCore === "null" || tagCore === "undefined" || tagCore.trim() === "") {
+  if (tagCore === 'null' || tagCore === 'undefined' || tagCore.trim() === '') {
     console.error(`❌ Invalid TAG_CORE value: '${tagCore}'`);
     Deno.exit(1);
   }
@@ -204,7 +204,7 @@ async function main() {
     let nextNumber = 1;
     let finalPreReleaseType = preReleaseType;
 
-    if (preReleaseType && preReleaseType !== "auto") {
+    if (preReleaseType && preReleaseType !== 'auto') {
       // Use specified pre-release type
       const existingOfType = preReleases
         .filter((pr) => pr.type === preReleaseType)
@@ -234,7 +234,7 @@ async function main() {
       );
     } else {
       console.log(
-        "No existing pre-release versions found, starting with alpha.1",
+        'No existing pre-release versions found, starting with alpha.1',
       );
     }
 
@@ -249,7 +249,7 @@ async function main() {
     await triggerBuildWorkflow(newTag);
 
     // Set GitHub Actions outputs
-    const outputFile = Deno.env.get("GITHUB_OUTPUT");
+    const outputFile = Deno.env.get('GITHUB_OUTPUT');
     if (outputFile) {
       await Deno.writeTextFile(outputFile, `new_tag=${newTag}\n`, {
         append: true,

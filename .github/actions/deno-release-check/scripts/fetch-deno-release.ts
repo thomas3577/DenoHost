@@ -5,22 +5,22 @@ interface DenoRelease {
 }
 
 async function fetchLatestDenoReleaseFromGitHub(): Promise<string | null> {
-  console.log("🔍 Fetching latest Deno release from GitHub API...");
+  console.log('🔍 Fetching latest Deno release from GitHub API...');
 
   try {
     const headers: Record<string, string> = {
-      "Accept": "application/vnd.github.v3+json",
-      "User-Agent": "DenoHost-Release-Check",
+      'Accept': 'application/vnd.github.v3+json',
+      'User-Agent': 'DenoHost-Release-Check',
     };
 
     // Add GitHub token if available to avoid rate limiting
-    const githubToken = Deno.env.get("GH_TOKEN") || Deno.env.get("GITHUB_TOKEN");
+    const githubToken = Deno.env.get('GH_TOKEN') || Deno.env.get('GITHUB_TOKEN');
     if (githubToken) {
-      headers["Authorization"] = `token ${githubToken}`;
+      headers['Authorization'] = `token ${githubToken}`;
     }
 
     const response = await fetch(
-      "https://api.github.com/repos/denoland/deno/releases/latest",
+      'https://api.github.com/repos/denoland/deno/releases/latest',
       { headers },
     );
 
@@ -32,7 +32,7 @@ async function fetchLatestDenoReleaseFromGitHub(): Promise<string | null> {
     const data: DenoRelease = await response.json();
 
     if (!data.tag_name) {
-      throw new Error("No tag_name found in release data");
+      throw new Error('No tag_name found in release data');
     }
 
     return data.tag_name;
@@ -44,11 +44,11 @@ async function fetchLatestDenoReleaseFromGitHub(): Promise<string | null> {
 
 async function fetchLatestDenoReleaseFromDeno(): Promise<string | null> {
   try {
-    console.log("🔄 Trying to get version from installed Deno...");
-    const versionOutput = await new Deno.Command("deno", {
-      args: ["--version"],
-      stdout: "piped",
-      stderr: "piped",
+    console.log('🔄 Trying to get version from installed Deno...');
+    const versionOutput = await new Deno.Command('deno', {
+      args: ['--version'],
+      stdout: 'piped',
+      stderr: 'piped',
     }).output();
 
     if (versionOutput.success) {
@@ -75,7 +75,7 @@ async function fetchLatestDenoRelease(): Promise<string> {
   }
 
   if (!version) {
-    console.error("❌ All methods to fetch Deno version failed");
+    console.error('❌ All methods to fetch Deno version failed');
     Deno.exit(1);
   }
 
@@ -87,15 +87,15 @@ async function main() {
   console.log(`Latest Deno release: ${fullTag}`);
 
   // Remove leading 'v' if present
-  const tagCore = fullTag.replace(/^v/, "");
+  const tagCore = fullTag.replace(/^v/, '');
 
-  if (!tagCore || tagCore === "null" || tagCore === "undefined") {
+  if (!tagCore || tagCore === 'null' || tagCore === 'undefined') {
     console.error(`❌ Invalid tag core extracted: '${tagCore}' from '${fullTag}'`);
     Deno.exit(1);
   }
 
   // Set GitHub Actions outputs
-  const outputFile = Deno.env.get("GITHUB_OUTPUT");
+  const outputFile = Deno.env.get('GITHUB_OUTPUT');
   if (outputFile) {
     await Deno.writeTextFile(
       outputFile,
