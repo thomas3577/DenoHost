@@ -17,10 +17,10 @@
   },
   "fmt": {
     "useTabs": false,
-    "lineWidth": 100,
+    "lineWidth": 360,
     "indentWidth": 2,
     "semiColons": true,
-    "singleQuote": false,
+    "singleQuote": true,
     "proseWrap": "preserve"
   }
 }
