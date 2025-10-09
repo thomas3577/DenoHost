@@ -26,7 +26,7 @@ jobs:
       deno_version: ${{ steps.extract.outputs.deno_version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract Version
         id: extract
@@ -81,7 +81,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -109,7 +109,7 @@ jobs:
     needs: [get-version, build-runtime]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
@@ -136,7 +136,7 @@ jobs:
     needs: [build-core, build-runtime]
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -171,7 +171,7 @@ jobs:
     needs: [build-core, build-runtime]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-dotnet@v4
         with:
