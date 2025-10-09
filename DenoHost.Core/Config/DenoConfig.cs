@@ -92,6 +92,9 @@ public class DenoConfig
   [JsonPropertyName("compile")]
   public CompileConfig? Compile { get; set; }
 
+  [JsonPropertyName("permissions")]
+  public Dictionary<string, PermissionSet>? Permissions { get; set; }
+
   /// <summary>
   /// Captures any additional properties not explicitly defined.
   /// This ensures forward compatibility when Deno adds new configuration options.
