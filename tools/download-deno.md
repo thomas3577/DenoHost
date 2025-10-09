@@ -8,7 +8,7 @@
 $filename = ".\\tools\\download-deno.ps1"
 $denoExecutable = ".\\DenoHost.Runtime.win-x64\\deno.exe"
 $denoDownloadFilename = "deno-x86_64-pc-windows-msvc.zip"
-$denoVersion = "2.5.3"
+$denoVersion = "2.5.4"
 pwsh -NoProfile -ExecutionPolicy Bypass -File $filename -ExecutablePath $DenoExecutable -DownloadFilename $denoDownloadFilename -DevDenoVersion $denoVersion
 ```
 
@@ -20,6 +20,6 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File $filename -ExecutablePath $DenoExe
 FILENAME="./tools/download-deno.sh"
 DENO_EXECUTABLE_PATH="./DenoHost.Runtime.linux-x64/deno"
 DENO_DOWNLOAD_FILENAME="deno-x86_64-unknown-linux-gnu.zip"
-DENO_VERSION="2.5.3"
+DENO_VERSION="2.5.4"
 bash $FILENAME $DENO_EXECUTABLE_PATH $DENO_DOWNLOAD_FILENAME $DENO_VERSION
 ```
