@@ -26,7 +26,7 @@ jobs:
       deno_version: ${{ steps.extract.outputs.deno_version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract Version
         id: extract
@@ -81,9 +81,9 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
 
@@ -109,10 +109,10 @@ jobs:
     needs: [get-version, build-runtime]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
 
@@ -136,9 +136,9 @@ jobs:
     needs: [build-core, build-runtime]
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
 
@@ -159,7 +159,7 @@ jobs:
         run: reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Cobertura;Badges"
 
       - name: Upload Coverage Reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage-report/Cobertura.xml
           flags: unittests
@@ -171,9 +171,9 @@ jobs:
     needs: [build-core, build-runtime]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
 
@@ -201,7 +201,7 @@ jobs:
 
     steps:
       - name: Download Runtime Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime/${{ matrix.rid }}
@@ -228,7 +228,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core
