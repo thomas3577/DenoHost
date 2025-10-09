@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to build (e.g., v1.45.5-alpha.1)'
+        description: 'Tag to build (e.g., v2.5.4-alpha.18)'
         required: false
         type: string
   repository_dispatch:
@@ -24,6 +24,8 @@ jobs:
     outputs:
       package_version: ${{ steps.extract.outputs.package_version }}
       deno_version: ${{ steps.extract.outputs.deno_version }}
+      tag_name: ${{ steps.extract.outputs.tag_name }}
+      is_prerelease: ${{ steps.extract.outputs.is_prerelease }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -43,6 +45,13 @@ jobs:
             echo "Using tag from git ref: $REF"
           fi
 
+          # Check if this is a prerelease based on tag name
+          IS_PRERELEASE="false"
+          if [[ "$REF" =~ -(alpha|beta|rc|preview)\. ]]; then
+            IS_PRERELEASE="true"
+            echo "Detected prerelease tag: $REF"
+          fi
+
           if [[ "$REF" =~ ^v[0-9] ]]; then
             PACKAGE_VERSION="${REF#v}"
             DENO_VERSION=$(echo "$PACKAGE_VERSION" | cut -d '-' -f 1)
@@ -53,8 +62,12 @@ jobs:
 
           echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
           echo "deno_version=$DENO_VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=$REF" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
           echo "##[notice]NuGet version: $PACKAGE_VERSION"
           echo "##[notice]Deno version: $DENO_VERSION"
+          echo "##[notice]Tag name: $REF"
+          echo "##[notice]Is prerelease: $IS_PRERELEASE"
 
   build-runtime:
     name: Build Runtime Packages
@@ -161,7 +174,7 @@ jobs:
       - name: Upload Coverage Reports to Codecov
         uses: codecov/codecov-action@v5
         with:
-          file: ./coverage-report/Cobertura.xml
+          files: ./coverage-report/Cobertura.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -212,13 +225,6 @@ jobs:
       - name: Push Runtime Package to GitHub Packages
         run: dotnet nuget push ./nupkg/runtime/${{ matrix.rid }}/*.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Runtime Package to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./nupkg/runtime/${{ matrix.rid }}/*.nupkg
-          tag_name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag || github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
-          overwrite_files: true
-
   publish-core:
     name: Publish Core NuGet
     needs: [get-version, build-core, test-on-linux, test-on-windows]
@@ -239,9 +245,36 @@ jobs:
       - name: Push Core Package to GitHub Packages
         run: dotnet nuget push ./nupkg/core/*.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Core Package to GitHub Release
+  create-release:
+    name: Create GitHub Release
+    needs: [get-version, publish-runtime, publish-core]
+    if: |
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'repository_dispatch' && startsWith(github.event.client_payload.tag, 'v')) ||
+      (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
+    runs-on: ubuntu-latest
+    steps:
+      # Download all artifacts to attach to release
+      - name: Download Core Package
+        uses: actions/download-artifact@v5
+        with:
+          name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
+          path: ./nupkg/core
+
+      - name: Download Runtime Packages
+        uses: actions/download-artifact@v5
+        with:
+          pattern: DenoHost.Runtime.*.${{ needs.get-version.outputs.package_version }}
+          path: ./nupkg/runtime
+          merge-multiple: true
+
+      - name: Create GitHub Release with Auto-Generated Notes
         uses: softprops/action-gh-release@v2
         with:
-          files: ./nupkg/core/*.nupkg
-          tag_name: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag || github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
-          overwrite_files: true
+          tag_name: ${{ needs.get-version.outputs.tag_name }}
+          name: ${{ needs.get-version.outputs.tag_name }}
+          prerelease: ${{ needs.get-version.outputs.is_prerelease == 'true' }}
+          generate_release_notes: true
+          files: |
+            ./nupkg/core/*.nupkg
+            ./nupkg/runtime/**/*.nupkg
