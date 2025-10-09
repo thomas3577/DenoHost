@@ -201,7 +201,7 @@ jobs:
 
     steps:
       - name: Download Runtime Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime/${{ matrix.rid }}
@@ -228,7 +228,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core
