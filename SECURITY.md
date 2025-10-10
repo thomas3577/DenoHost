@@ -1,16 +1,16 @@
-# 🔒 Security Policy
+# Security Policy
 
-## 🛠 Supported Versions
+## Supported Versions
 
 Use this section to tell people about which versions of your project are
 currently being supported with security updates.
 
 | Version           | Supported          |
 | ----------------- | ------------------ |
-| v2.5.4-alpha.18   | :white_check_mark: |
-| < v2.5.4-alpha.18 | :x:                |
+| v2.5.4            | :white_check_mark: |
+| < v2.5.4          | :x:                |
 
-## 📢 Reporting a Vulnerability
+## Reporting a Vulnerability
 
 Use this section to tell people how to report a vulnerability.
 
