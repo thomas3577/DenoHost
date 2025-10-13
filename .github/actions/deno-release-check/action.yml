@@ -1,19 +1,18 @@
 name: 'Deno Release Check'
-description: 'Check for new Deno releases and create appropriate tags'
+description: 'Check for new Deno releases and create pull request for update'
 inputs:
   github-token:
     description: 'GitHub token'
     required: true
-  prerelease-type:
-    description: 'Pre-release type (alpha, beta, rc, preview)'
-    required: false
-    default: 'alpha'
 outputs:
-  created-tag:
-    description: 'The created tag name (if any)'
-    value: ${{ steps.create-tag.outputs.new_tag }}
+  pr-number:
+    description: 'The created pull request number (if any)'
+    value: ${{ steps.create-pr.outputs.pr_number }}
+  branch-name:
+    description: 'The created branch name (if any)'
+    value: ${{ steps.create-pr.outputs.branch_name }}
   already-exists:
-    description: 'Whether tag already exists'
+    description: 'Whether update already exists'
     value: ${{ steps.check.outputs.already_exists }}
 runs:
   using: 'composite'
@@ -28,19 +27,19 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
       run: deno run --allow-net --allow-env --allow-write --allow-run ${{ github.action_path }}/scripts/fetch-deno-release.ts
 
-    - name: Check existing tags
+    - name: Check existing branches/PRs
       id: check
       shell: bash
       env:
-        TAG_CORE: ${{ steps.deno.outputs.tag_core }}
-      run: deno run --allow-net --allow-env --allow-write ${{ github.action_path }}/scripts/check-existing-tags.ts
+        DENO_VERSION: ${{ steps.deno.outputs.tag_core }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: deno run --allow-net --allow-env --allow-write ${{ github.action_path }}/scripts/check-existing-pr.ts
 
-    - name: Create new tag
-      id: create-tag
+    - name: Create branch and pull request
+      id: create-pr
       if: steps.check.outputs.already_exists == 'false'
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github-token }}
-        TAG_CORE: ${{ steps.deno.outputs.tag_core }}
-        PRERELEASE_TYPE: ${{ inputs.prerelease-type }}
-      run: deno run --allow-net --allow-env --allow-run --allow-write ${{ github.action_path }}/scripts/create-tag.ts
+        DENO_VERSION: ${{ steps.deno.outputs.tag_core }}
+      run: deno run --allow-net --allow-env --allow-run --allow-write ${{ github.action_path }}/scripts/create-pr.ts
