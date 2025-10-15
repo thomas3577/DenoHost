@@ -22,4 +22,5 @@ coverage-report/
 deno
 deno.exe
 *.zip
+
 .env
