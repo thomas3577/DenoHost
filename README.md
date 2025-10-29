@@ -5,16 +5,9 @@
 ![NuGet](https://img.shields.io/nuget/v/DenoHost.Core.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
-> ⚠️ **EXPERIMENTAL ALPHA** ⚠️\
-> This library is in active development. APIs and features may change
-> significantly between releases.\
-> Not recommended for production use. Use for testing and experimentation only.
-> 🦕 Use Deno from within your .NET applications – cross-platform, cleanly
-> packaged, and NuGet-ready.
-
 ---
 
-## 💡 About
+## About
 
 **DenoHost** allows you to seamlessly run [Deno](https://deno.com/) scripts or
 inline JavaScript/TypeScript code within your .NET applications.\
@@ -23,17 +16,17 @@ provides a simple, consistent API for execution.
 
 ---
 
-## ✨ Features
+## Features
 
-- 🧩 Modular runtime packages (per RID)
-- 🛠️ Clean .NET API with async execution
-- 🧪 Testable with xUnit
-- 📦 Packaged for NuGet (multi-target)
-- 🐧 Linux, 🪟 Windows, 🍎 macOS support
+- Modular runtime packages (per RID)
+- Clean .NET API with async execution
+- Testable with xUnit
+- Packaged for NuGet (multi-target)
+- Linux, Windows, macOS support
 
 ---
 
-## 📦 NuGet Packages
+## NuGet Packages
 
 ```bash
 dotnet add package DenoHost.Core
@@ -87,21 +80,21 @@ await denoProcess.SendInputAsync("hello");
 await denoProcess.StopAsync();
 ```
 
-## 🛠️ Requirements
+## Requirements
 
 - .NET 9.0+
 - Deno version is bundled per RID via GitHub Releases
 - No need to install Deno globally
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](./LICENSE).
 
-## 🛡️ Security Policy
+## Security Policy
 
 See [SECURITY.md](./SECURITY.md) for how to report vulnerabilities.
 
-## 🌐 Links
+## Links
 
 - [deno.com](https://deno.com/)
 - [NuGet Gallery](https://www.nuget.org/packages?q=DenoHost)

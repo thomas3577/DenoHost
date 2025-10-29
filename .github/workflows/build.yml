@@ -7,11 +7,11 @@ permissions:
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to build (e.g., v2.5.4-alpha.18)'
+        description: "Tag to build (e.g., v2.5.4-alpha.18)"
         required: false
         type: string
   repository_dispatch:
@@ -98,7 +98,9 @@ jobs:
 
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: |
+            8.0.x
+            9.0.x
 
       - name: Make shell script executable
         shell: bash
@@ -127,7 +129,15 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Display .NET Info
+        run: dotnet --info
+
+      - name: Check for Vulnerable Packages
+        run: dotnet list package --vulnerable || true
 
       - name: Build Solution
         run: dotnet build DenoHost.sln -c Release
@@ -153,7 +163,9 @@ jobs:
 
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: |
+            8.0.x
+            9.0.x
 
       - name: Build Test Project (Release, win-x64)
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
@@ -188,7 +200,9 @@ jobs:
 
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: |
+            8.0.x
+            9.0.x
 
       - name: Build Test Project (Release, linux-x64)
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64
