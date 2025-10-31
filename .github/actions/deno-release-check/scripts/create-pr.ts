@@ -174,7 +174,7 @@ async function main() {
     await initializeRepo();
 
     const expectedTag = `v${denoVersion}`;
-    const branchName = `update-deno-v${denoVersion}`;
+    const branchName = `release/v${denoVersion}`;
 
     console.log(`Expected new tag after merge: ${expectedTag}`);
 
