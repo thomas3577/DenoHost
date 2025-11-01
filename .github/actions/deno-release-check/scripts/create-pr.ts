@@ -88,6 +88,60 @@ async function createBranch(branchName: string): Promise<void> {
   await runCommand(['git', 'checkout', '-b', branchName, 'origin/main']);
 }
 
+async function updateDenoVersion(newVersion: string): Promise<void> {
+  console.log(`Updating Directory.Build.props to Deno version ${newVersion}`);
+
+  // Find the repo root - go up until we find Directory.Build.props
+  let filePath = 'Directory.Build.props';
+  const possiblePaths = [
+    'Directory.Build.props',
+    '../Directory.Build.props',
+    '../../Directory.Build.props',
+    '../../../Directory.Build.props',
+    '../../../../Directory.Build.props',
+  ];
+
+  let foundPath = '';
+  for (const path of possiblePaths) {
+    try {
+      await Deno.stat(path);
+      foundPath = path;
+      filePath = path;
+      break;
+    } catch {
+      // File doesn't exist, try next path
+    }
+  }
+
+  if (!foundPath) {
+    throw new Error('Could not find Directory.Build.props file');
+  }
+
+  console.log(`Found Directory.Build.props at: ${filePath}`);
+
+  try {
+    // Read the current file
+    const content = await Deno.readTextFile(filePath);
+
+    // Replace the DenoVersion
+    const updatedContent = content.replace(
+      /<DenoVersion>[\d.]+<\/DenoVersion>/,
+      `<DenoVersion>${newVersion}</DenoVersion>`
+    );
+
+    // Write back to file
+    await Deno.writeTextFile(filePath, updatedContent);
+
+    console.log(`Successfully updated DenoVersion to ${newVersion} in ${filePath}`);
+
+    // Stage the file for commit
+    await runCommand(['git', 'add', filePath]);
+  } catch (error) {
+    console.error(`Failed to update ${filePath}: ${error}`);
+    throw error;
+  }
+}
+
 async function createPullRequest(branchName: string, denoVersion: string): Promise<number> {
   const ghToken = Deno.env.get('GH_TOKEN');
   if (!ghToken) {
@@ -146,11 +200,11 @@ This pull request updates DenoHost to use Deno v${denoVersion}.
   }
 }
 
-async function pushBranch(branchName: string): Promise<void> {
+async function pushBranch(branchName: string, denoVersion: string): Promise<void> {
   console.log(`Pushing branch: ${branchName}`);
 
-  // Create an empty commit to have something to push
-  await runCommand(['git', 'commit', '--allow-empty', '-m', `Prepare for Deno update`]);
+  // Commit the changes
+  await runCommand(['git', 'commit', '-m', `chore: update Deno to v${denoVersion}`]);
   await runCommand(['git', 'push', 'origin', branchName]);
 }
 
@@ -179,7 +233,8 @@ async function main() {
     console.log(`Expected new tag after merge: ${expectedTag}`);
 
     await createBranch(branchName);
-    await pushBranch(branchName);
+    await updateDenoVersion(denoVersion);
+    await pushBranch(branchName, denoVersion);
 
     const prNumber = await createPullRequest(branchName, denoVersion);
 
