@@ -95,6 +95,9 @@ public class DenoConfig
   [JsonPropertyName("permissions")]
   public Dictionary<string, PermissionSet>? Permissions { get; set; }
 
+  [JsonPropertyName("minimumDependencyAge")]
+  public object? MinimumDependencyAge { get; set; }
+
   /// <summary>
   /// Captures any additional properties not explicitly defined.
   /// This ensures forward compatibility when Deno adds new configuration options.
