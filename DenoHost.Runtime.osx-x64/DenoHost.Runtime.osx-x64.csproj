@@ -26,10 +26,10 @@
 
     <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
     <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DevDenoVersion "$(DevDenoVersion)"'
+          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DenoVersion "$(DenoVersion)"'
           ContinueOnError="true" IgnoreExitCode="true" />
     <Exec Condition="'$(OS)' != 'Windows_NT'"
-          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DevDenoVersion)"'
+          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DenoVersion)"'
           ContinueOnError="true" IgnoreExitCode="true" />
   </Target>
 

@@ -6,16 +6,8 @@ permissions:
 
 on:
   push:
-    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to build (e.g., v2.5.4-alpha.18)"
-        required: false
-        type: string
-  repository_dispatch:
-    types: [build-and-publish]
 
 jobs:
   get-version:
@@ -33,40 +25,27 @@ jobs:
       - name: Extract Version
         id: extract
         run: |
-          # Check different trigger sources for tag information
-          if [[ "${{ github.event_name }}" == "repository_dispatch" ]] && [[ -n "${{ github.event.client_payload.tag }}" ]]; then
-            REF="${{ github.event.client_payload.tag }}"
-            echo "Using tag from repository dispatch: $REF"
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${{ github.event.inputs.tag }}" ]]; then
-            REF="${{ github.event.inputs.tag }}"
-            echo "Using tag from manual input: $REF"
-          else
-            REF="${GITHUB_REF#refs/tags/}"
-            echo "Using tag from git ref: $REF"
-          fi
+          # Single source of truth: Directory.Build.props
+          DENO_VERSION=$(grep '<DenoVersion>' Directory.Build.props | sed -E 's:.*<DenoVersion>(.*)</DenoVersion>.*:\1:')
+
+          # Extract version from tag
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          PACKAGE_VERSION="${TAG_NAME#v}"
 
           # Check if this is a prerelease based on tag name
           IS_PRERELEASE="false"
-          if [[ "$REF" =~ -(alpha|beta|rc|preview)\. ]]; then
+          if [[ "$TAG_NAME" =~ -(alpha|beta|rc|preview)\. ]]; then
             IS_PRERELEASE="true"
-            echo "Detected prerelease tag: $REF"
-          fi
-
-          if [[ "$REF" =~ ^v[0-9] ]]; then
-            PACKAGE_VERSION="${REF#v}"
-            DENO_VERSION=$(echo "$PACKAGE_VERSION" | cut -d '-' -f 1)
-          else
-            DENO_VERSION=$(grep '<DevDenoVersion>' Directory.Build.props | sed -E 's:.*<DevDenoVersion>(.*)</DevDenoVersion>.*:\1:')
-            PACKAGE_VERSION="${DENO_VERSION}-dev"
+            echo "Detected prerelease tag: $TAG_NAME"
           fi
 
           echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
           echo "deno_version=$DENO_VERSION" >> $GITHUB_OUTPUT
-          echo "tag_name=$REF" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
           echo "##[notice]NuGet version: $PACKAGE_VERSION"
           echo "##[notice]Deno version: $DENO_VERSION"
-          echo "##[notice]Tag name: $REF"
+          echo "##[notice]Tag name: $TAG_NAME"
           echo "##[notice]Is prerelease: $IS_PRERELEASE"
 
   build-runtime:
@@ -217,10 +196,7 @@ jobs:
   publish-runtime:
     name: Publish Runtime NuGet
     needs: [get-version, build-runtime, test-on-linux, test-on-windows]
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      (github.event_name == 'repository_dispatch' && startsWith(github.event.client_payload.tag, 'v')) ||
-      (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
+    if: startsWith(github.ref, 'refs/tags/v')
     strategy:
       matrix:
         rid: [win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64]
@@ -242,10 +218,7 @@ jobs:
   publish-core:
     name: Publish Core NuGet
     needs: [get-version, build-core, test-on-linux, test-on-windows]
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      (github.event_name == 'repository_dispatch' && startsWith(github.event.client_payload.tag, 'v')) ||
-      (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v6
@@ -262,10 +235,7 @@ jobs:
   create-release:
     name: Create GitHub Release
     needs: [get-version, publish-runtime, publish-core]
-    if: |
-      startsWith(github.ref, 'refs/tags/v') ||
-      (github.event_name == 'repository_dispatch' && startsWith(github.event.client_payload.tag, 'v')) ||
-      (github.event_name == 'workflow_dispatch' && startsWith(github.event.inputs.tag, 'v'))
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       # Download all artifacts to attach to release

@@ -1,5 +1,5 @@
 param(
-    [switch]$OpenReport = $true,
+    [switch]$OpenReport,
     [string]$ReportTypes = "Html;Badges;Cobertura;SonarQube"
 )
 
@@ -43,7 +43,7 @@ if (Test-Path $coberturaPath) {
   Write-Host ""
 }
 
-if ($OpenReport -and (Test-Path "coverage-report/index.html")) {
+if ((-not $OpenReport.IsPresent -or $OpenReport) -and (Test-Path "coverage-report/index.html")) {
   Write-Host "Opening coverage report in browser..."
   Start-Process "coverage-report/index.html"
 }
