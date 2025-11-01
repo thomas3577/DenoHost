@@ -6,7 +6,7 @@ permissions:
 
 on:
   push:
-    tags: ["v*"]
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -28,15 +28,23 @@ jobs:
           # Single source of truth: Directory.Build.props
           DENO_VERSION=$(grep '<DenoVersion>' Directory.Build.props | sed -E 's:.*<DenoVersion>(.*)</DenoVersion>.*:\1:')
 
-          # Extract version from tag
-          TAG_NAME="${GITHUB_REF#refs/tags/}"
-          PACKAGE_VERSION="${TAG_NAME#v}"
+          # Check if this is a tagged release
+          if [[ "$GITHUB_REF" =~ ^refs/tags/v[0-9] ]]; then
+            # Tagged release
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            PACKAGE_VERSION="${TAG_NAME#v}"
 
-          # Check if this is a prerelease based on tag name
-          IS_PRERELEASE="false"
-          if [[ "$TAG_NAME" =~ -(alpha|beta|rc|preview)\. ]]; then
+            # Check if this is a prerelease based on tag name
+            IS_PRERELEASE="false"
+            if [[ "$TAG_NAME" =~ -(alpha|beta|rc|preview)\. ]]; then
+              IS_PRERELEASE="true"
+              echo "Detected prerelease tag: $TAG_NAME"
+            fi
+          else
+            # Development build (main branch)
+            PACKAGE_VERSION="${DENO_VERSION}-dev"
+            TAG_NAME="v${DENO_VERSION}-dev"
             IS_PRERELEASE="true"
-            echo "Detected prerelease tag: $TAG_NAME"
           fi
 
           echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
