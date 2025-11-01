@@ -1,27 +1,8 @@
 param (
   [string]$ExecutablePath,
   [string]$DownloadFilename,
-  [string]$DevDenoVersion
+  [string]$DenoVersion
 )
-
-# Get last Git-Tag (e.g. "v2.4.1-alpha.1")
-$repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-Push-Location $repoRoot
-$gitTag = git describe --tags --abbrev=0 2>$null
-Pop-Location
-
-if (-not $gitTag) {
-  Write-Error "Could not determine Git tag. Using fallback ('v$DevDenoVersion')."
-  $gitTag = "v$DevDenoVersion" # Fallback
-}
-
-# Extract only the main version (e.g. 2.4.1 from v2.4.1-alpha.1)
-if ($gitTag -match '^v?(\d+\.\d+\.\d+)') {
-  $denoVersion = $matches[1]
-} else {
-  Write-Error "Could not parse Deno version from Git tag: $gitTag"
-  exit 1
-}
 
 # Check if Deno exists and version matches
 $needsDownload = $true
@@ -29,21 +10,20 @@ if (Test-Path $ExecutablePath) {
   Write-Host "Deno binary found at $ExecutablePath, checking version..."
 
   try {
-    # Get current version from existing binary
-    $versionOutput = & $ExecutablePath --version 2>$null
-    if ($versionOutput -match 'deno (\d+\.\d+\.\d+)') {
+    # Try to get version from file properties first (fastest)
+    $versionInfo = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($ExecutablePath)
+    if ($versionInfo.ProductVersion -and $versionInfo.ProductVersion -match '(\d+\.\d+\.\d+)') {
       $currentVersion = $matches[1]
-      Write-Host "Current Deno version: $currentVersion"
-      Write-Host "Required Deno version: $denoVersion"
+      Write-Host "File version: $currentVersion, Required: $DenoVersion"
 
-      if ($currentVersion -eq $denoVersion) {
+      if ($currentVersion -eq $DenoVersion) {
         Write-Host "Version matches! No download needed."
         $needsDownload = $false
       } else {
         Write-Host "Version mismatch! Will download correct version."
       }
     } else {
-      Write-Warning "Could not determine current Deno version. Will re-download."
+      Write-Warning "Could not determine version from file info. Will re-download."
     }
   } catch {
     Write-Warning "Error checking Deno version: $($_.Exception.Message). Will re-download."
@@ -55,7 +35,7 @@ if (-not $needsDownload) {
   exit 0
 }
 
-$downloadUrl = "https://github.com/denoland/deno/releases/download/v$($denoVersion)/$($DownloadFilename)"
+$downloadUrl = "https://github.com/denoland/deno/releases/download/v$($DenoVersion)/$($DownloadFilename)"
 # Use unique temp file name to avoid conflicts when multiple projects build in parallel
 $tempZip = "$env:TEMP\deno-$([System.Guid]::NewGuid().ToString('N').Substring(0,8)).zip"
 $extractDir = Split-Path $ExecutablePath
