@@ -259,11 +259,11 @@ public class DenoConfigSchemaTests
     // Important properties that should be implemented
     var importantSchemaProperties = new[]
     {
-            "compilerOptions", "importMap", "imports", "scopes", "lint", "fmt",
-            "tasks", "test", "bench", "publish", "lock", "nodeModulesDir",
-            "vendor", "unstable", "exclude", "name", "version", "exports",
-            "workspace", "unsafelyIgnoreCertificateErrors"
-        };
+      "compilerOptions", "importMap", "imports", "scopes", "lint", "fmt",
+      "tasks", "test", "bench", "publish", "lock", "nodeModulesDir",
+      "vendor", "unstable", "exclude", "name", "version", "exports",
+      "workspace", "unsafelyIgnoreCertificateErrors"
+    };
 
     var missingProperties = new List<string>();
 
