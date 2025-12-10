@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "enabledManagers": ["deno"],
+  "packageRules": [
+    {
+      "matchManagers": ["deno"],
+      "groupName": "Deno dependencies"
+    }
+  ],
+  "deno": {
+    "enabled": true
+  },
+  "schedule": ["before 6am on monday"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2
+}
