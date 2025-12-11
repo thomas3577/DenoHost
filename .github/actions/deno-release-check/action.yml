@@ -25,7 +25,7 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github-token }}
-      run: deno run --allow-net --allow-env --allow-write --allow-run ${{ github.action_path }}/scripts/fetch-deno-release.ts
+      run: deno run --allow-net --allow-env --allow-write --allow-run $GITHUB_ACTION_PATH/scripts/fetch-deno-release.ts
 
     - name: Check existing branches/PRs
       id: check
@@ -33,7 +33,7 @@ runs:
       env:
         DENO_VERSION: ${{ steps.deno.outputs.tag_core }}
         GH_TOKEN: ${{ inputs.github-token }}
-      run: deno run --allow-net --allow-env --allow-write ${{ github.action_path }}/scripts/check-existing-pr.ts
+      run: deno run --allow-net --allow-env --allow-write $GITHUB_ACTION_PATH/scripts/check-existing-pr.ts
 
     - name: Create branch and pull request
       id: create-pr
@@ -42,4 +42,4 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.github-token }}
         DENO_VERSION: ${{ steps.deno.outputs.tag_core }}
-      run: deno run --allow-net --allow-env --allow-run --allow-write ${{ github.action_path }}/scripts/create-pr.ts
+      run: deno run --allow-net --allow-env --allow-run --allow-write $GITHUB_ACTION_PATH/scripts/create-pr.ts

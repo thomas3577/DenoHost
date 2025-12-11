@@ -91,33 +91,18 @@ async function createBranch(branchName: string): Promise<void> {
 async function updateDenoVersion(newVersion: string): Promise<void> {
   console.log(`Updating Directory.Build.props to Deno version ${newVersion}`);
 
-  // Find the repo root - go up until we find Directory.Build.props
-  let filePath = 'Directory.Build.props';
-  const possiblePaths = [
-    'Directory.Build.props',
-    '../Directory.Build.props',
-    '../../Directory.Build.props',
-    '../../../Directory.Build.props',
-    '../../../../Directory.Build.props',
-  ];
+  // Use GITHUB_WORKSPACE to get the repository root
+  const workspace = Deno.env.get('GITHUB_WORKSPACE') || Deno.cwd();
+  const filePath = `${workspace}/Directory.Build.props`;
 
-  let foundPath = '';
-  for (const path of possiblePaths) {
-    try {
-      await Deno.stat(path);
-      foundPath = path;
-      filePath = path;
-      break;
-    } catch {
-      // File doesn't exist, try next path
-    }
+  console.log(`Looking for Directory.Build.props at: ${filePath}`);
+
+  try {
+    await Deno.stat(filePath);
+    console.log(`Found Directory.Build.props at: ${filePath}`);
+  } catch {
+    throw new Error(`Could not find Directory.Build.props file at ${filePath}`);
   }
-
-  if (!foundPath) {
-    throw new Error('Could not find Directory.Build.props file');
-  }
-
-  console.log(`Found Directory.Build.props at: ${filePath}`);
 
   try {
     // Read the current file
