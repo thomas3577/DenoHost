@@ -46,6 +46,9 @@ public class DenoConfig
   [JsonPropertyName("nodeModulesDir")]
   public object? NodeModulesDir { get; set; }
 
+  [JsonPropertyName("allowScripts")]
+  public object? AllowScripts { get; set; }
+
   [JsonPropertyName("vendor")]
   public bool? Vendor { get; set; }
 
