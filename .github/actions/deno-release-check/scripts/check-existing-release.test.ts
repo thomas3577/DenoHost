@@ -65,12 +65,12 @@ function checkForExistingUpdate(
   existingBranches: string[],
   denoVersion: string,
 ): boolean {
-  const branchPattern = `update-deno-v${denoVersion}`;
+  const branchPattern = `release/v${denoVersion}`;
   const prPattern = new RegExp(`update.*deno.*v?${denoVersion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
 
   const foundPR = existingPRs.find((pr) => prPattern.test(pr.title) || pr.head.ref === branchPattern);
 
-  const foundBranch = existingBranches.find((branch) => branch === branchPattern || branch.includes(`deno-v${denoVersion}`));
+  const foundBranch = existingBranches.find((branch) => branch === branchPattern);
 
   return !!(foundPR || foundBranch);
 }
@@ -80,7 +80,7 @@ Deno.test('fetchExistingPRs - successful API call', async () => {
     {
       number: 123,
       title: 'Update Deno to v1.45.0',
-      head: { ref: 'update-deno-v1.45.0' },
+      head: { ref: 'release/v1.45.0' },
       state: 'open',
     },
     {
@@ -127,7 +127,7 @@ Deno.test('fetchExistingPRs - API failure', async () => {
 Deno.test('fetchExistingBranches - successful API call', async () => {
   const mockBranches: GitHubBranch[] = [
     { name: 'main' },
-    { name: 'update-deno-v1.45.0' },
+    { name: 'release/v1.45.0' },
     { name: 'feature-branch' },
   ];
 
@@ -142,7 +142,7 @@ Deno.test('fetchExistingBranches - successful API call', async () => {
     const result = await fetchExistingBranches('test-token');
     assertEquals(result.length, 3);
     assertEquals(result[0], 'main');
-    assertEquals(result[1], 'update-deno-v1.45.0');
+    assertEquals(result[1], 'release/v1.45.0');
   } finally {
     restore();
   }
@@ -184,7 +184,7 @@ Deno.test('checkForExistingUpdate - finds existing PR by branch name', () => {
     {
       number: 123,
       title: 'Some other title',
-      head: { ref: 'update-deno-v1.45.0' },
+      head: { ref: 'release/v1.45.0' },
       state: 'open',
     },
   ];
@@ -196,18 +196,18 @@ Deno.test('checkForExistingUpdate - finds existing PR by branch name', () => {
 
 Deno.test('checkForExistingUpdate - finds existing branch', () => {
   const mockPRs: GitHubPR[] = [];
-  const mockBranches: string[] = ['main', 'update-deno-v1.45.0', 'feature'];
+  const mockBranches: string[] = ['main', 'release/v1.45.0', 'feature'];
 
   const result = checkForExistingUpdate(mockPRs, mockBranches, '1.45.0');
   assertEquals(result, true);
 });
 
-Deno.test('checkForExistingUpdate - finds branch with alternative pattern', () => {
+Deno.test('checkForExistingUpdate - does not find branch with wrong pattern', () => {
   const mockPRs: GitHubPR[] = [];
   const mockBranches: string[] = ['main', 'feature-deno-v1.45.0', 'other'];
 
   const result = checkForExistingUpdate(mockPRs, mockBranches, '1.45.0');
-  assertEquals(result, true);
+  assertEquals(result, false);
 });
 
 Deno.test('checkForExistingUpdate - no existing update found', () => {
@@ -240,11 +240,11 @@ Deno.test('checkForExistingUpdate - case insensitive PR title matching', () => {
   assertEquals(result, true);
 });
 
-Deno.test('checkForExistingUpdate - handles special regex characters in version', () => {
+Deno.test('checkForExistingUpdate - exact branch match required', () => {
   const mockPRs: GitHubPR[] = [];
-  const mockBranches: string[] = ['main', 'update-deno-v1.45.0-rc.1'];
+  const mockBranches: string[] = ['main', 'release/v1.45.0-rc.1'];
 
-  // Test that special regex characters are properly escaped
+  // Should not match because we need exact version match
   const result = checkForExistingUpdate(mockPRs, mockBranches, '1.45.0');
-  assertEquals(result, true); // Should match because branch contains the version
+  assertEquals(result, false);
 });

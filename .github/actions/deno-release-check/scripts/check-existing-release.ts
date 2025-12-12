@@ -136,13 +136,10 @@ async function main() {
   });
 
   // Check if any PR or branch exists for this Deno version
-  const branchPattern = `update-deno-v${denoVersion}`;
+  const branchPattern = `release/v${denoVersion}`;
   const prPattern = new RegExp(`update.*deno.*v?${denoVersion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
-
   const foundPR = existingPRs.find((pr) => prPattern.test(pr.title) || pr.head.ref === branchPattern);
-
-  const foundBranch = existingBranches.find((branch) => branch === branchPattern || branch.includes(`deno-v${denoVersion}`));
-
+  const foundBranch = existingBranches.find((branch) => branch === branchPattern);
   const alreadyExists = (foundPR || foundBranch) ? 'true' : 'false';
 
   // Set GitHub Actions outputs
