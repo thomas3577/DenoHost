@@ -73,6 +73,29 @@ async function fetchExistingBranches(): Promise<string[]> {
   }
 }
 
+async function checkCurrentVersion(): Promise<string | null> {
+  console.log('Checking current Deno version in Directory.Build.props...');
+
+  try {
+    const workspace = Deno.env.get('GITHUB_WORKSPACE') || Deno.cwd();
+    const filePath = `${workspace}/Directory.Build.props`;
+
+    const content = await Deno.readTextFile(filePath);
+    const match = content.match(/<DenoVersion>([\d.]+)<\/DenoVersion>/);
+
+    if (match && match[1]) {
+      console.log(`Current Deno version in repository: ${match[1]}`);
+      return match[1];
+    }
+
+    console.log('Could not find DenoVersion in Directory.Build.props');
+    return null;
+  } catch (error) {
+    console.error(`Failed to read Directory.Build.props: ${error}`);
+    return null;
+  }
+}
+
 async function main() {
   const denoVersion = Deno.env.get('DENO_VERSION');
   if (!denoVersion) {
@@ -81,6 +104,21 @@ async function main() {
   }
 
   console.log(`Checking for existing PR/branch for Deno version: ${denoVersion}`);
+
+  // Check if version is already in the repository
+  const currentVersion = await checkCurrentVersion();
+  if (currentVersion === denoVersion) {
+    console.log(`Deno version ${denoVersion} is already present in Directory.Build.props. Nothing to do.`);
+
+    const outputFile = Deno.env.get('GITHUB_OUTPUT');
+    if (outputFile) {
+      await Deno.writeTextFile(outputFile, `already_exists=true\n`, {
+        append: true,
+      });
+    }
+
+    Deno.exit(0);
+  }
 
   const [existingPRs, existingBranches] = await Promise.all([
     fetchExistingPRs(),

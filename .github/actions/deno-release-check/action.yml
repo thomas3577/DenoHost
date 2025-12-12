@@ -27,13 +27,13 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
       run: deno run --allow-net --allow-env --allow-write --allow-run $GITHUB_ACTION_PATH/scripts/fetch-deno-release.ts
 
-    - name: Check existing branches/PRs
+    - name: Check existing release
       id: check
       shell: bash
       env:
         DENO_VERSION: ${{ steps.deno.outputs.tag_core }}
         GH_TOKEN: ${{ inputs.github-token }}
-      run: deno run --allow-net --allow-env --allow-write $GITHUB_ACTION_PATH/scripts/check-existing-pr.ts
+      run: deno run --allow-net --allow-env --allow-write --allow-read $GITHUB_ACTION_PATH/scripts/check-existing-release.ts
 
     - name: Create branch and pull request
       id: create-pr
