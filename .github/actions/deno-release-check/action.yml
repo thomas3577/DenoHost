@@ -42,4 +42,4 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.github-token }}
         DENO_VERSION: ${{ steps.deno.outputs.tag_core }}
-      run: deno run --allow-net --allow-env --allow-run --allow-write $GITHUB_ACTION_PATH/scripts/create-pr.ts
+      run: deno run --allow-net --allow-env --allow-run --allow-read --allow-write $GITHUB_ACTION_PATH/scripts/create-pr.ts

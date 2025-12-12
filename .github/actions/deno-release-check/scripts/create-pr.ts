@@ -43,49 +43,32 @@ async function initializeRepo(): Promise<void> {
     throw new Error('GH_TOKEN environment variable not set');
   }
 
+  const repository = Deno.env.get('GITHUB_REPOSITORY');
+  if (!repository) {
+    throw new Error('GITHUB_REPOSITORY environment variable not set');
+  }
+
   console.log('Initializing repository...');
 
-  // Check if we're already in a git repository
-  try {
-    await runCommand(['git', 'rev-parse', '--git-dir']);
-    console.log('Already in a git repository');
-  } catch {
-    console.log('Initializing new git repository');
-    await runCommand(['git', 'init']);
-  }
-
-  // Check if origin remote already exists
-  try {
-    await runCommand(['git', 'remote', 'get-url', 'origin']);
-    console.log('Origin remote already exists');
-
-    // Update the remote URL with token for authentication
-    await runCommand([
-      'git',
-      'remote',
-      'set-url',
-      'origin',
-      `https://x-access-token:${ghToken}@github.com/thomas3577/DenoHost.git`,
-    ]);
-  } catch {
-    console.log('Adding origin remote');
-
-    await runCommand([
-      'git',
-      'remote',
-      'add',
-      'origin',
-      `https://x-access-token:${ghToken}@github.com/thomas3577/DenoHost.git`,
-    ]);
-  }
-
-  await runCommand(['git', 'fetch', 'origin', 'main']);
+  // Update the remote URL with token for authentication (needed for push)
+  await runCommand([
+    'git',
+    'remote',
+    'set-url',
+    'origin',
+    `https://x-access-token:${ghToken}@github.com/${repository}.git`,
+  ]);
 }
 
 async function createBranch(branchName: string): Promise<void> {
   console.log(`Creating branch: ${branchName}`);
 
-  await runCommand(['git', 'checkout', '-b', branchName, 'origin/main']);
+  // Create and switch to new branch from current HEAD
+  await runCommand(['git', 'checkout', '-b', branchName]);
+
+  // Verify we're on the new branch
+  const currentBranch = await runCommand(['git', 'branch', '--show-current']);
+  console.log(`Currently on branch: ${currentBranch}`);
 }
 
 async function updateDenoVersion(newVersion: string): Promise<void> {
@@ -95,13 +78,19 @@ async function updateDenoVersion(newVersion: string): Promise<void> {
   const workspace = Deno.env.get('GITHUB_WORKSPACE') || Deno.cwd();
   const filePath = `${workspace}/Directory.Build.props`;
 
+  console.log(`Working directory: ${Deno.cwd()}`);
+  console.log(`GITHUB_WORKSPACE: ${workspace}`);
   console.log(`Looking for Directory.Build.props at: ${filePath}`);
 
+  // List files in workspace for debugging
   try {
-    await Deno.stat(filePath);
-    console.log(`Found Directory.Build.props at: ${filePath}`);
-  } catch {
-    throw new Error(`Could not find Directory.Build.props file at ${filePath}`);
+    const files = [];
+    for await (const entry of Deno.readDir(workspace)) {
+      files.push(entry.name);
+    }
+    console.log(`Files in workspace: ${files.join(', ')}`);
+  } catch (error) {
+    console.error('Failed to list workspace files:', error);
   }
 
   try {
@@ -111,10 +100,10 @@ async function updateDenoVersion(newVersion: string): Promise<void> {
     // Replace the DenoVersion
     const updatedContent = content.replace(
       /<DenoVersion>[\d.]+<\/DenoVersion>/,
-      `<DenoVersion>${newVersion}</DenoVersion>`
+      `<DenoVersion>${newVersion}</DenoVersion>`,
     );
 
-    // Write back to file
+    // Write to file
     await Deno.writeTextFile(filePath, updatedContent);
 
     console.log(`Successfully updated DenoVersion to ${newVersion} in ${filePath}`);
@@ -135,6 +124,11 @@ async function createPullRequest(branchName: string, denoVersion: string): Promi
 
   console.log(`Creating pull request for branch: ${branchName}`);
 
+  const repository = Deno.env.get('GITHUB_REPOSITORY');
+  if (!repository) {
+    throw new Error('GITHUB_REPOSITORY environment variable not set');
+  }
+
   const title = `Update Deno to v${denoVersion}`;
   const body = `🚀 **Automated Deno Update**
 
@@ -154,7 +148,7 @@ This pull request updates DenoHost to use Deno v${denoVersion}.
 *This PR was created automatically by the Deno Release Check action.*`;
 
   try {
-    const response = await fetch('https://api.github.com/repos/thomas3577/DenoHost/pulls', {
+    const response = await fetch(`https://api.github.com/repos/${repository}/pulls`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ghToken}`,
@@ -190,7 +184,7 @@ async function pushBranch(branchName: string, denoVersion: string): Promise<void
 
   // Commit the changes
   await runCommand(['git', 'commit', '-m', `chore: update Deno to v${denoVersion}`]);
-  await runCommand(['git', 'push', 'origin', branchName]);
+  await runCommand(['git', 'push', '--force', 'origin', branchName]);
 }
 
 async function main() {

@@ -12,7 +12,7 @@ interface GitHubPRResponse {
 async function createPullRequest(
   branchName: string,
   denoVersion: string,
-  token: string
+  token: string,
 ): Promise<number> {
   const title = `Update Deno to v${denoVersion}`;
   const body = `🚀 **Automated Deno Update**
@@ -62,12 +62,12 @@ Deno.test('createPullRequest - successful creation', async () => {
   const mockPRResponse: GitHubPRResponse = {
     number: 123,
     title: 'Update Deno to v1.45.0',
-    html_url: 'https://github.com/thomas3577/DenoHost/pull/123'
+    html_url: 'https://github.com/thomas3577/DenoHost/pull/123',
   };
 
   const mockResponse = new Response(
     JSON.stringify(mockPRResponse),
-    { status: 201, headers: { 'content-type': 'application/json' } }
+    { status: 201, headers: { 'content-type': 'application/json' } },
   );
 
   stub(globalThis, 'fetch', () => Promise.resolve(mockResponse));
@@ -76,29 +76,31 @@ Deno.test('createPullRequest - successful creation', async () => {
     const result = await createPullRequest(
       'update-deno-v1.45.0',
       '1.45.0',
-      'test-token'
+      'test-token',
     );
     assertEquals(result, 123);
   } finally {
     restore();
   }
-});Deno.test('createPullRequest - API failure', async () => {
+});
+Deno.test('createPullRequest - API failure', async () => {
   const mockResponse = new Response(
     'Validation failed',
-    { status: 422 }
+    { status: 422 },
   );
 
   stub(globalThis, 'fetch', () => Promise.resolve(mockResponse));
 
   try {
     await assertRejects(
-      () => createPullRequest(
-        'update-deno-v1.45.0',
-        '1.45.0',
-        'test-token'
-      ),
+      () =>
+        createPullRequest(
+          'update-deno-v1.45.0',
+          '1.45.0',
+          'test-token',
+        ),
       Error,
-      'Failed to create pull request: 422  - Validation failed'
+      'Failed to create pull request: 422  - Validation failed',
     );
   } finally {
     restore();
@@ -110,12 +112,13 @@ Deno.test('createPullRequest - generates correct title and body', async () => {
 
   const mockResponse = new Response(
     JSON.stringify({ number: 123, title: 'test', html_url: 'test' }),
-    { status: 201, headers: { 'content-type': 'application/json' } }
+    { status: 201, headers: { 'content-type': 'application/json' } },
   );
 
-  stub(globalThis, 'fetch', (_url: RequestInfo | URL, options?: RequestInit) => {
-    if (options?.body) {
-      capturedRequestBody = JSON.parse(options.body as string);
+  // deno-lint-ignore no-explicit-any
+  stub(globalThis, 'fetch', (_input: string | URL | Request, init?: any) => {
+    if (init?.body) {
+      capturedRequestBody = JSON.parse(init.body as string);
     }
     return Promise.resolve(mockResponse);
   });
@@ -124,7 +127,7 @@ Deno.test('createPullRequest - generates correct title and body', async () => {
     await createPullRequest(
       'update-deno-v1.45.0',
       '1.45.0',
-      'test-token'
+      'test-token',
     );
 
     assertEquals(capturedRequestBody.title, 'Update Deno to v1.45.0');

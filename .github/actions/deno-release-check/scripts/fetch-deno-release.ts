@@ -98,7 +98,7 @@ async function main() {
   const outputFile = Deno.env.get('GITHUB_OUTPUT');
   if (outputFile) {
     await Deno.writeTextFile(outputFile, `tag_core=${tagCore}\nfull_tag=${fullTag}\n`, {
-      append: true
+      append: true,
     });
   }
 

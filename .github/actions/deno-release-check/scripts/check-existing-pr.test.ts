@@ -57,24 +57,20 @@ async function fetchExistingBranches(token?: string): Promise<string[]> {
   }
 
   const branches: GitHubBranch[] = await response.json();
-  return branches.map(branch => branch.name);
+  return branches.map((branch) => branch.name);
 }
 
 function checkForExistingUpdate(
   existingPRs: GitHubPR[],
   existingBranches: string[],
-  denoVersion: string
+  denoVersion: string,
 ): boolean {
   const branchPattern = `update-deno-v${denoVersion}`;
   const prPattern = new RegExp(`update.*deno.*v?${denoVersion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
 
-  const foundPR = existingPRs.find(pr =>
-    prPattern.test(pr.title) || pr.head.ref === branchPattern
-  );
+  const foundPR = existingPRs.find((pr) => prPattern.test(pr.title) || pr.head.ref === branchPattern);
 
-  const foundBranch = existingBranches.find(branch =>
-    branch === branchPattern || branch.includes(`deno-v${denoVersion}`)
-  );
+  const foundBranch = existingBranches.find((branch) => branch === branchPattern || branch.includes(`deno-v${denoVersion}`));
 
   return !!(foundPR || foundBranch);
 }
@@ -85,19 +81,19 @@ Deno.test('fetchExistingPRs - successful API call', async () => {
       number: 123,
       title: 'Update Deno to v1.45.0',
       head: { ref: 'update-deno-v1.45.0' },
-      state: 'open'
+      state: 'open',
     },
     {
       number: 124,
       title: 'Fix bug in handler',
       head: { ref: 'fix-bug' },
-      state: 'open'
-    }
+      state: 'open',
+    },
   ];
 
   const mockResponse = new Response(
     JSON.stringify(mockPRs),
-    { status: 200, headers: { 'content-type': 'application/json' } }
+    { status: 200, headers: { 'content-type': 'application/json' } },
   );
 
   stub(globalThis, 'fetch', () => Promise.resolve(mockResponse));
@@ -121,7 +117,7 @@ Deno.test('fetchExistingPRs - API failure', async () => {
     await assertRejects(
       () => fetchExistingPRs('test-token'),
       Error,
-      'GitHub API request failed: 403'
+      'GitHub API request failed: 403',
     );
   } finally {
     restore();
@@ -132,12 +128,12 @@ Deno.test('fetchExistingBranches - successful API call', async () => {
   const mockBranches: GitHubBranch[] = [
     { name: 'main' },
     { name: 'update-deno-v1.45.0' },
-    { name: 'feature-branch' }
+    { name: 'feature-branch' },
   ];
 
   const mockResponse = new Response(
     JSON.stringify(mockBranches),
-    { status: 200, headers: { 'content-type': 'application/json' } }
+    { status: 200, headers: { 'content-type': 'application/json' } },
   );
 
   stub(globalThis, 'fetch', () => Promise.resolve(mockResponse));
@@ -161,7 +157,7 @@ Deno.test('fetchExistingBranches - API failure', async () => {
     await assertRejects(
       () => fetchExistingBranches('test-token'),
       Error,
-      'GitHub API request failed: 404'
+      'GitHub API request failed: 404',
     );
   } finally {
     restore();
@@ -174,8 +170,8 @@ Deno.test('checkForExistingUpdate - finds existing PR by title', () => {
       number: 123,
       title: 'Update Deno to v1.45.0',
       head: { ref: 'some-branch' },
-      state: 'open'
-    }
+      state: 'open',
+    },
   ];
   const mockBranches: string[] = ['main', 'feature'];
 
@@ -189,8 +185,8 @@ Deno.test('checkForExistingUpdate - finds existing PR by branch name', () => {
       number: 123,
       title: 'Some other title',
       head: { ref: 'update-deno-v1.45.0' },
-      state: 'open'
-    }
+      state: 'open',
+    },
   ];
   const mockBranches: string[] = ['main'];
 
@@ -220,8 +216,8 @@ Deno.test('checkForExistingUpdate - no existing update found', () => {
       number: 123,
       title: 'Fix bug in handler',
       head: { ref: 'fix-bug' },
-      state: 'open'
-    }
+      state: 'open',
+    },
   ];
   const mockBranches: string[] = ['main', 'feature', 'fix-bug'];
 
@@ -235,8 +231,8 @@ Deno.test('checkForExistingUpdate - case insensitive PR title matching', () => {
       number: 123,
       title: 'UPDATE DENO TO V1.45.0',
       head: { ref: 'some-branch' },
-      state: 'open'
-    }
+      state: 'open',
+    },
   ];
   const mockBranches: string[] = ['main'];
 

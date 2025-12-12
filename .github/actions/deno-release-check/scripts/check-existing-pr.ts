@@ -66,7 +66,7 @@ async function fetchExistingBranches(): Promise<string[]> {
     }
 
     const branches: GitHubBranch[] = await response.json();
-    return branches.map(branch => branch.name);
+    return branches.map((branch) => branch.name);
   } catch (error) {
     console.error(`Failed to fetch branches: ${error}`);
     return [];
@@ -84,16 +84,16 @@ async function main() {
 
   const [existingPRs, existingBranches] = await Promise.all([
     fetchExistingPRs(),
-    fetchExistingBranches()
+    fetchExistingBranches(),
   ]);
 
   console.log('Existing open PRs:');
-  existingPRs.forEach(pr => {
+  existingPRs.forEach((pr) => {
     console.log(`  #${pr.number}: ${pr.title} (${pr.head.ref})`);
   });
 
   console.log('Existing branches:');
-  existingBranches.forEach(branch => {
+  existingBranches.forEach((branch) => {
     console.log(`  ${branch}`);
   });
 
@@ -101,13 +101,9 @@ async function main() {
   const branchPattern = `update-deno-v${denoVersion}`;
   const prPattern = new RegExp(`update.*deno.*v?${denoVersion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
 
-  const foundPR = existingPRs.find(pr =>
-    prPattern.test(pr.title) || pr.head.ref === branchPattern
-  );
+  const foundPR = existingPRs.find((pr) => prPattern.test(pr.title) || pr.head.ref === branchPattern);
 
-  const foundBranch = existingBranches.find(branch =>
-    branch === branchPattern || branch.includes(`deno-v${denoVersion}`)
-  );
+  const foundBranch = existingBranches.find((branch) => branch === branchPattern || branch.includes(`deno-v${denoVersion}`));
 
   const alreadyExists = (foundPR || foundBranch) ? 'true' : 'false';
 
