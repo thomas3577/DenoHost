@@ -1,0 +1,31 @@
+name: Check for new Deno release
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check_new_deno:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check Deno release and create tag
+        id: deno-check
+        uses: ./.github/actions/deno-release-check
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Display results
+        run: |
+          if [[ "${{ steps.deno-check.outputs.already-exists }}" == "true" ]]; then
+            echo "Tag already exists, no action needed"
+          else
+            echo "Created new tag: ${{ steps.deno-check.outputs.created-tag }}"
+          fi

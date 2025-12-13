@@ -1,0 +1,45 @@
+name: 'Deno Release Check'
+description: 'Check for new Deno releases and create pull request for update'
+inputs:
+  github-token:
+    description: 'GitHub token'
+    required: true
+outputs:
+  pr-number:
+    description: 'The created pull request number (if any)'
+    value: ${{ steps.create-pr.outputs.pr_number }}
+  branch-name:
+    description: 'The created branch name (if any)'
+    value: ${{ steps.create-pr.outputs.branch_name }}
+  already-exists:
+    description: 'Whether update already exists'
+    value: ${{ steps.check.outputs.already_exists }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Deno
+      uses: denoland/setup-deno@v2.0.3
+
+    - name: Fetch latest Deno release
+      id: deno
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: deno run --allow-net --allow-env --allow-write --allow-run $GITHUB_ACTION_PATH/scripts/fetch-deno-release.ts
+
+    - name: Check existing release
+      id: check
+      shell: bash
+      env:
+        DENO_VERSION: ${{ steps.deno.outputs.tag_core }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: deno run --allow-net --allow-env --allow-write --allow-read $GITHUB_ACTION_PATH/scripts/check-existing-release.ts
+
+    - name: Create branch and pull request
+      id: create-pr
+      if: steps.check.outputs.already_exists == 'false'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        DENO_VERSION: ${{ steps.deno.outputs.tag_core }}
+      run: deno run --allow-net --allow-env --allow-run --allow-read --allow-write $GITHUB_ACTION_PATH/scripts/create-pr.ts
