@@ -266,6 +266,9 @@ jobs:
         with:
           tag_name: ${{ needs.get-version.outputs.tag_name }}
           name: ${{ needs.get-version.outputs.tag_name }}
+          body: |
+            ## Deno Version
+            Update to Deno [v${{ needs.get-version.outputs.deno_version }}](https://github.com/denoland/deno/releases/tag/v${{ needs.get-version.outputs.deno_version }})
           prerelease: ${{ needs.get-version.outputs.is_prerelease == 'true' }}
           generate_release_notes: true
           files: |
