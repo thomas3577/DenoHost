@@ -86,6 +86,10 @@ await denoProcess.StopAsync();
 - Deno version is bundled per RID via GitHub Releases
 - No need to install Deno globally
 
+## Feedback
+
+If you're using DenoHost in a real project, I'd love to hear about it.
+
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
