@@ -42,4 +42,6 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.github-token }}
         DENO_VERSION: ${{ steps.deno.outputs.tag_core }}
+        GIT_USER_EMAIL: 'github-actions[bot]@users.noreply.github.com'
+        GIT_USER_NAME: 'github-actions[bot]'
       run: deno run --allow-net --allow-env --allow-run --allow-read --allow-write $GITHUB_ACTION_PATH/scripts/create-pr.ts

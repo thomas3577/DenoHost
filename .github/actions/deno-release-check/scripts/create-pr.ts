@@ -20,20 +20,27 @@ async function runCommand(cmd: string[]): Promise<string> {
 async function setupGit(): Promise<void> {
   console.log('Setting up Git configuration...');
 
+  const gitUserEmail = Deno.env.get('GIT_USER_EMAIL');
+  const gitUserName = Deno.env.get('GIT_USER_NAME');
+
+  if (!gitUserEmail || !gitUserName) {
+    throw new Error('GIT_USER_EMAIL and GIT_USER_NAME environment variables must be set.');
+  }
+
   await runCommand([
     'git',
     'config',
-    '--global',
+    '--local',
     'user.email',
-    'github-actions[bot]@users.noreply.github.com',
+    gitUserEmail,
   ]);
 
   await runCommand([
     'git',
     'config',
-    '--global',
+    '--local',
     'user.name',
-    'github-actions[bot]',
+    gitUserName,
   ]);
 }
 
