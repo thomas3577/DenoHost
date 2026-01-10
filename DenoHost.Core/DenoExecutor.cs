@@ -142,8 +142,9 @@ internal static class DenoExecutor
         "Deno execution completed successfully in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
       effectiveLogger?.LogDebug(LogEvents.DenoOutput, "Deno output: {Output}", output);
 
-      var typeName = typeof(T).Name;
-      var deserializedResult = typeName == "String" ? output : JsonSerializer.Deserialize(output, resultType, jsonSerializerOptions);
+      var deserializedResult = typeof(T) == typeof(string)
+        ? output
+        : JsonSerializer.Deserialize(output, resultType, jsonSerializerOptions);
 
       return deserializedResult != null
         ? (T)deserializedResult
