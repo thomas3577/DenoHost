@@ -270,6 +270,59 @@ public class DenoTests : IClassFixture<TempFileFixture>
       $"Execution should have been cancelled quickly, but took {sw.Elapsed.TotalMilliseconds}ms.");
   }
 
+  [Fact]
+  public async Task Execute_WithCancellation_KillsProcess()
+  {
+    // Arrange
+    var executorType = Type.GetType("DenoHost.Core.DenoExecutor, DenoHost.Core", throwOnError: true)!;
+    var callbackProperty = executorType.GetProperty(
+      "ProcessStartedCallback",
+      System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+    Assert.NotNull(callbackProperty);
+
+    var startedTcs = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+    Action<int> callback = pid => startedTcs.TrySetResult(pid);
+
+    callbackProperty!.SetValue(null, callback);
+    try
+    {
+      using var cts = new CancellationTokenSource(750);
+      var script = "console.log('Starting...');while(true){}";
+
+      // Act
+      var executeTask = Deno.Execute<string>("eval", [script], cts.Token);
+      var pid = await startedTcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+      await Assert.ThrowsAnyAsync<OperationCanceledException>(() => executeTask);
+
+      // Assert - process should be gone shortly after cancellation
+      var sw = System.Diagnostics.Stopwatch.StartNew();
+      while (sw.Elapsed < TimeSpan.FromSeconds(2))
+      {
+        try
+        {
+          var process = System.Diagnostics.Process.GetProcessById(pid);
+          if (process.HasExited)
+            return;
+        }
+        catch (ArgumentException)
+        {
+          // Process does not exist
+          return;
+        }
+
+        await Task.Delay(50);
+      }
+
+      Assert.Fail($"Deno process with PID {pid} was still running after cancellation.");
+    }
+    finally
+    {
+      // Cleanup test hook
+      callbackProperty!.SetValue(null, null);
+    }
+  }
+
   #endregion
 
   #region Config Tests

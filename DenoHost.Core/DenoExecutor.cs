@@ -14,6 +14,11 @@ namespace DenoHost.Core;
 internal static class DenoExecutor
 {
   /// <summary>
+  /// Test hook: invoked after the Deno process is started.
+  /// </summary>
+  internal static Action<int>? ProcessStartedCallback { get; set; }
+
+  /// <summary>
   /// Executes a Deno process with the specified parameters and returns the result as type <typeparamref name="T"/>.
   /// </summary>
   /// <typeparam name="T">The expected return type of the Deno process.</typeparam>
@@ -84,6 +89,25 @@ internal static class DenoExecutor
       };
 
       process.Start();
+
+      ProcessStartedCallback?.Invoke(process.Id);
+
+      using var cancellationRegistration = cancellationToken.Register(() =>
+      {
+        try
+        {
+          if (!process.HasExited)
+          {
+            effectiveLogger?.LogWarning(LogEvents.DenoExecutionError,
+              "Cancellation requested. Terminating Deno process...");
+            process.Kill(entireProcessTree: true);
+          }
+        }
+        catch
+        {
+          // Best-effort: process may have already exited/disposed.
+        }
+      });
 
       var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
       var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
