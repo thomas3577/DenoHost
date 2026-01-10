@@ -521,7 +521,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
     var options = new DenoExecuteOptions
     {
       Command = "eval",
-      Args = ["\"console.log(JSON.stringify({ CamelCase: 'value' }));\""],
+      Args = ["console.log(JSON.stringify({ CamelCase: 'value' }));"],
       JsonSerializerOptions = new JsonSerializerOptions
       {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -542,7 +542,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
-      await Deno.Execute("eval", ["\"console.error('Test error'); Deno.exit(1);\""]);
+      await Deno.Execute("eval", ["console.error('Test error'); Deno.exit(1);"]);
     });
 
     Assert.Contains("An error occurred during Deno execution after", ex.Message);

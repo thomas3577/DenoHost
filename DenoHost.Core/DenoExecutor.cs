@@ -63,29 +63,35 @@ internal static class DenoExecutor
       workingDirectory ??= Directory.GetCurrentDirectory();
 
       var fileName = Helper.GetDenoPath();
-      var arguments = Helper.BuildArguments(args, command);
+      var argumentList = Helper.BuildArgumentsArray(args, command);
 
-      if (string.IsNullOrWhiteSpace(arguments))
+      if (argumentList.Length == 0)
         throw new ArgumentException("No command or arguments provided for Deno execution.");
+
+      var argumentsForLog = string.Join(' ', argumentList);
 
       effectiveLogger?.LogInformation(LogEvents.DenoExecutionStarted,
         "Starting Deno execution: {Arguments} | Working Directory: {WorkingDirectory}",
-        arguments, workingDirectory);
+        argumentsForLog, workingDirectory);
+
+      var startInfo = new ProcessStartInfo
+      {
+        WorkingDirectory = workingDirectory,
+        FileName = fileName,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true,
+        StandardOutputEncoding = System.Text.Encoding.UTF8,
+        StandardErrorEncoding = System.Text.Encoding.UTF8
+      };
+
+      foreach (var arg in argumentList)
+        startInfo.ArgumentList.Add(arg);
 
       using var process = new Process
       {
-        StartInfo = new ProcessStartInfo
-        {
-          WorkingDirectory = workingDirectory,
-          FileName = fileName,
-          Arguments = arguments,
-          RedirectStandardOutput = true,
-          RedirectStandardError = true,
-          UseShellExecute = false,
-          CreateNoWindow = true,
-          StandardOutputEncoding = System.Text.Encoding.UTF8,
-          StandardErrorEncoding = System.Text.Encoding.UTF8
-        }
+        StartInfo = startInfo
       };
 
       process.Start();

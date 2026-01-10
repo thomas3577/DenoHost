@@ -14,16 +14,84 @@ internal static class Helper
     return string.Join(' ', argsArray);
   }
 
+  internal static string[] SplitCommandLine(string commandLine)
+  {
+    if (string.IsNullOrWhiteSpace(commandLine))
+      return [];
+
+    System.Collections.Generic.List<string> parts = [];
+    var current = new System.Text.StringBuilder();
+    bool inQuotes = false;
+
+    for (int i = 0; i < commandLine.Length; i++)
+    {
+      char c = commandLine[i];
+
+      if (inQuotes)
+      {
+        if (c == '\\' && i + 1 < commandLine.Length)
+        {
+          char next = commandLine[i + 1];
+          if (next == '"' || next == '\\')
+          {
+            current.Append(next);
+            i++;
+            continue;
+          }
+        }
+
+        if (c == '"')
+        {
+          inQuotes = false;
+          continue;
+        }
+
+        current.Append(c);
+        continue;
+      }
+
+      if (char.IsWhiteSpace(c))
+      {
+        if (current.Length > 0)
+        {
+          parts.Add(current.ToString());
+          current.Clear();
+        }
+        continue;
+      }
+
+      if (c == '"')
+      {
+        inQuotes = true;
+        continue;
+      }
+
+      current.Append(c);
+    }
+
+    if (inQuotes)
+      throw new ArgumentException("Command contains an unterminated quote.", nameof(commandLine));
+
+    if (current.Length > 0)
+      parts.Add(current.ToString());
+
+    return [.. parts];
+  }
+
   internal static string[] BuildArgumentsArray(string[]? args, string? command = null)
   {
     if (command == null)
       return args ?? [];
 
-    var result = new string[1 + (args?.Length ?? 0)];
-    result[0] = command;
+    var commandParts = SplitCommandLine(command);
+    if (commandParts.Length == 0)
+      return args ?? [];
+
+    var result = new string[commandParts.Length + (args?.Length ?? 0)];
+    Array.Copy(commandParts, 0, result, 0, commandParts.Length);
 
     if (args != null)
-      Array.Copy(args, 0, result, 1, args.Length);
+      Array.Copy(args, 0, result, commandParts.Length, args.Length);
 
     return result;
   }
