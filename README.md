@@ -56,6 +56,27 @@ string[] args = ["run", "app.ts"];
 await Deno.Execute(options, args);
 ```
 
+### Cancellation
+
+You can cancel execution via a `CancellationToken`. Cancellation throws an `OperationCanceledException` and terminates the underlying Deno process.
+
+```csharp
+using DenoHost.Core;
+
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+var options = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
+await Deno.Execute(options, ["run", "long-running.ts"], cts.Token);
+```
+
+### Arguments and quoting
+
+DenoHost passes arguments via `ProcessStartInfo.ArgumentList`. Pass each argument as its own string (avoid adding shell-style quotes inside argument strings).
+
+```csharp
+await Deno.Execute("eval", ["console.log('hello world')"]);
+```
+
 ## DenoProcess Example
 
 For long-running processes with interactive communication:

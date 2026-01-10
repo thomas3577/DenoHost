@@ -23,7 +23,7 @@ completion, the `DenoProcess` class enables:
 ### Process Lifecycle
 
 - `StartAsync()`: Starts the Deno process
-- `StopAsync()`: Stops the process (graceful shutdown with timeout)
+- `StopAsync()`: Stops the process (graceful shutdown with timeout; defaults to 30 seconds)
 - `RestartAsync()`: Restarts the process
 - `WaitForExitAsync()`: Waits for the natural termination of the process
 
@@ -157,6 +157,8 @@ The `DenoProcess` class provides robust error handling:
 - **Communication Errors**: Exceptions when sending inputs to stopped processes
 - **Timeout Handling**: Graceful shutdown with configurable timeout, followed by
   forced termination
+
+Note: `StopAsync()` uses a default timeout of 30 seconds if none is provided. For tests/CI, it is recommended to pass an explicit, shorter timeout.
 
 ```csharp
 try {
