@@ -233,25 +233,15 @@ public class DenoTests : IClassFixture<TempFileFixture>
   [Fact]
   public async Task Execute_WithCancellation_RespectsTimeout()
   {
-    // Arrange: long-running eval (infinite loop)
-    var script = "console.log('Starting...'); let i = 0; while(true) { i++; if (i % 10000000 === 0) console.log('Still running...', i); }";
+    // Arrange: long-running eval (infinite loop). Keep it whitespace-free so it stays a single argument.
+    var script = "console.log('Starting...');while(true){}";
     using var cts = new CancellationTokenSource(200); // cancel after 200ms
 
     var sw = System.Diagnostics.Stopwatch.StartNew();
 
     // Act & Assert
-    try
-    {
-      await Deno.Execute<string>("eval", [script], cts.Token);
-    }
-    catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
-    {
-      // This is expected - cancellation worked correctly
-    }
-    catch (OperationCanceledException)
-    {
-      // This is also acceptable - direct cancellation
-    }
+    await Assert.ThrowsAnyAsync<OperationCanceledException>(
+      () => Deno.Execute<string>("eval", [script], cts.Token));
 
     sw.Stop();
 
@@ -264,24 +254,14 @@ public class DenoTests : IClassFixture<TempFileFixture>
   public async Task Execute_WithBaseOptionsAndCancellation_RespectsTimeout()
   {
     var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = Path.GetTempPath() };
-    var script = "console.log('Starting...'); let i = 0; while(true) { i++; if (i % 10000000 === 0) console.log('Still running...', i); }";
+    var script = "console.log('Starting...');while(true){}";
     using var cts = new CancellationTokenSource(250);
 
     var sw = System.Diagnostics.Stopwatch.StartNew();
 
     // Act & Assert
-    try
-    {
-      await Deno.Execute<string>("eval", baseOptions, [script], cts.Token);
-    }
-    catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
-    {
-      // This is expected - cancellation worked correctly
-    }
-    catch (OperationCanceledException)
-    {
-      // This is also acceptable - direct cancellation
-    }
+    await Assert.ThrowsAnyAsync<OperationCanceledException>(
+      () => Deno.Execute<string>("eval", baseOptions, [script], cts.Token));
 
     sw.Stop();
 

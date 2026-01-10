@@ -122,12 +122,11 @@ internal static class DenoExecutor
     catch (OperationCanceledException ex)
     {
       stopwatch.Stop();
-      effectiveLogger?.LogError(LogEvents.DenoExecutionError, ex,
+      effectiveLogger?.LogWarning(LogEvents.DenoExecutionError, ex,
         "Deno execution was cancelled after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
 
-      // Convert TaskCanceledException to OperationCanceledException for consistent API
-      var cancellationEx = ex is TaskCanceledException ? new OperationCanceledException(ex.Message, ex) : ex;
-      throw new InvalidOperationException($"Deno execution was cancelled after {stopwatch.ElapsedMilliseconds}ms.", cancellationEx);
+      // Preserve cancellation semantics for callers.
+      throw;
     }
     catch (Exception ex)
     {
