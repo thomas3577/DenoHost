@@ -214,14 +214,45 @@ internal static class Helper
     return false;
   }
 
+  internal static bool IsTempDenoConfigPath(string path)
+  {
+    if (string.IsNullOrWhiteSpace(path))
+      return false;
+
+    try
+    {
+      var fullPath = Path.GetFullPath(path);
+      var tempRoot = Path.GetFullPath(Path.GetTempPath());
+
+      if (!fullPath.StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase))
+        return false;
+
+      var fileName = Path.GetFileName(fullPath);
+      if (!fileName.StartsWith("deno_config_", StringComparison.OrdinalIgnoreCase))
+        return false;
+
+      return fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
+             fileName.EndsWith(".jsonc", StringComparison.OrdinalIgnoreCase);
+    }
+    catch
+    {
+      return false;
+    }
+  }
+
   internal static string EnsureConfigFile(string configOrPath)
   {
-    if (!IsJsonPathLike(configOrPath))
+    if (string.IsNullOrWhiteSpace(configOrPath))
+      throw new ArgumentException("Configuration cannot be null or empty.", nameof(configOrPath));
+
+    var trimmed = configOrPath.Trim();
+
+    // Prefer treating as JSON when it clearly looks like JSON.
+    if (trimmed.Length > 0 && (trimmed[0] == '{' || trimmed[0] == '['))
     {
-      // Validate JSON before writing to temp file
       try
       {
-        JsonDocument.Parse(configOrPath);
+        ValidateJson(trimmed);
       }
       catch (JsonException ex)
       {
@@ -229,14 +260,36 @@ internal static class Helper
       }
 
       var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
-      File.WriteAllText(tempPath, configOrPath);
+      File.WriteAllText(tempPath, trimmed);
       return tempPath;
     }
 
-    if (!File.Exists(configOrPath))
-      throw new FileNotFoundException("The specified configuration path does not exist.", configOrPath);
+    // If it points to an existing file, treat as a path.
+    if (File.Exists(trimmed))
+      return trimmed;
 
-    return configOrPath;
+    // If it looks like a JSON path but doesn't exist, fail as path.
+    if (IsJsonPathLike(trimmed))
+      throw new FileNotFoundException("The specified configuration path does not exist.", trimmed);
+
+    // Fall back: try to parse as JSON.
+    try
+    {
+      ValidateJson(trimmed);
+    }
+    catch (JsonException ex)
+    {
+      throw new InvalidOperationException("Invalid JSON configuration provided.", ex);
+    }
+
+    var fallbackTempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
+    File.WriteAllText(fallbackTempPath, trimmed);
+    return fallbackTempPath;
+  }
+
+  private static void ValidateJson(string json)
+  {
+    using var _ = JsonDocument.Parse(json);
   }
 
   internal static void DeleteIfTempFile(string resolvedPath, string original)

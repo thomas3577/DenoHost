@@ -202,7 +202,7 @@ public class DenoProcess : IDisposable
     _logger = logger ?? Deno.Logger;
 
     // Store config info for cleanup if it's a temp file
-    _tempConfigPath = !Helper.IsJsonPathLike(configOrPath) ? configPath : null;
+    _tempConfigPath = Helper.IsTempDenoConfigPath(configPath) ? configPath : null;
   }
 
   /// <summary>
@@ -271,7 +271,7 @@ public class DenoProcess : IDisposable
       var configPath = Helper.EnsureConfigFile(configOrPath);
       var allArgs = Helper.AppendConfigArgument(args ?? [], configPath);
       finalArgs = Helper.BuildArgumentsArray(allArgs, command);
-      tempConfigPath = !Helper.IsJsonPathLike(configOrPath) ? configPath : null;
+      tempConfigPath = Helper.IsTempDenoConfigPath(configPath) ? configPath : null;
     }
     else
     {

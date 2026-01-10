@@ -291,7 +291,7 @@ public static class Deno
       {
         var ensured = Helper.EnsureConfigFile(configOrPath);
         resolvedConfigPath = ensured;
-        deleteResolved = !Helper.IsJsonPathLike(configOrPath);
+        deleteResolved = Helper.IsTempDenoConfigPath(ensured);
       }
 
       if (resolvedConfigPath != null)
