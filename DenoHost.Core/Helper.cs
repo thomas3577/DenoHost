@@ -14,16 +14,84 @@ internal static class Helper
     return string.Join(' ', argsArray);
   }
 
+  internal static string[] SplitCommandLine(string commandLine)
+  {
+    if (string.IsNullOrWhiteSpace(commandLine))
+      return [];
+
+    System.Collections.Generic.List<string> parts = [];
+    var current = new System.Text.StringBuilder();
+    bool inQuotes = false;
+
+    for (int i = 0; i < commandLine.Length; i++)
+    {
+      char c = commandLine[i];
+
+      if (inQuotes)
+      {
+        if (c == '\\' && i + 1 < commandLine.Length)
+        {
+          char next = commandLine[i + 1];
+          if (next == '"' || next == '\\')
+          {
+            current.Append(next);
+            i++;
+            continue;
+          }
+        }
+
+        if (c == '"')
+        {
+          inQuotes = false;
+          continue;
+        }
+
+        current.Append(c);
+        continue;
+      }
+
+      if (char.IsWhiteSpace(c))
+      {
+        if (current.Length > 0)
+        {
+          parts.Add(current.ToString());
+          current.Clear();
+        }
+        continue;
+      }
+
+      if (c == '"')
+      {
+        inQuotes = true;
+        continue;
+      }
+
+      current.Append(c);
+    }
+
+    if (inQuotes)
+      throw new ArgumentException("Command contains an unterminated quote.", nameof(commandLine));
+
+    if (current.Length > 0)
+      parts.Add(current.ToString());
+
+    return [.. parts];
+  }
+
   internal static string[] BuildArgumentsArray(string[]? args, string? command = null)
   {
     if (command == null)
       return args ?? [];
 
-    var result = new string[1 + (args?.Length ?? 0)];
-    result[0] = command;
+    var commandParts = SplitCommandLine(command);
+    if (commandParts.Length == 0)
+      return args ?? [];
+
+    var result = new string[commandParts.Length + (args?.Length ?? 0)];
+    Array.Copy(commandParts, 0, result, 0, commandParts.Length);
 
     if (args != null)
-      Array.Copy(args, 0, result, 1, args.Length);
+      Array.Copy(args, 0, result, commandParts.Length, args.Length);
 
     return result;
   }
@@ -146,14 +214,45 @@ internal static class Helper
     return false;
   }
 
+  internal static bool IsTempDenoConfigPath(string path)
+  {
+    if (string.IsNullOrWhiteSpace(path))
+      return false;
+
+    try
+    {
+      var fullPath = Path.GetFullPath(path);
+      var tempRoot = Path.GetFullPath(Path.GetTempPath());
+
+      if (!fullPath.StartsWith(tempRoot, StringComparison.OrdinalIgnoreCase))
+        return false;
+
+      var fileName = Path.GetFileName(fullPath);
+      if (!fileName.StartsWith("deno_config_", StringComparison.OrdinalIgnoreCase))
+        return false;
+
+      return fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ||
+             fileName.EndsWith(".jsonc", StringComparison.OrdinalIgnoreCase);
+    }
+    catch
+    {
+      return false;
+    }
+  }
+
   internal static string EnsureConfigFile(string configOrPath)
   {
-    if (!IsJsonPathLike(configOrPath))
+    if (string.IsNullOrWhiteSpace(configOrPath))
+      throw new ArgumentException("Configuration cannot be null or empty.", nameof(configOrPath));
+
+    var trimmed = configOrPath.Trim();
+
+    // Prefer treating as JSON when it clearly looks like JSON.
+    if (trimmed.Length > 0 && (trimmed[0] == '{' || trimmed[0] == '['))
     {
-      // Validate JSON before writing to temp file
       try
       {
-        JsonDocument.Parse(configOrPath);
+        ValidateJson(trimmed);
       }
       catch (JsonException ex)
       {
@@ -161,14 +260,36 @@ internal static class Helper
       }
 
       var tempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
-      File.WriteAllText(tempPath, configOrPath);
+      File.WriteAllText(tempPath, trimmed);
       return tempPath;
     }
 
-    if (!File.Exists(configOrPath))
-      throw new FileNotFoundException("The specified configuration path does not exist.", configOrPath);
+    // If it points to an existing file, treat as a path.
+    if (File.Exists(trimmed))
+      return trimmed;
 
-    return configOrPath;
+    // If it looks like a JSON path but doesn't exist, fail as path.
+    if (IsJsonPathLike(trimmed))
+      throw new FileNotFoundException("The specified configuration path does not exist.", trimmed);
+
+    // Fall back: try to parse as JSON.
+    try
+    {
+      ValidateJson(trimmed);
+    }
+    catch (JsonException ex)
+    {
+      throw new InvalidOperationException("Invalid JSON configuration provided.", ex);
+    }
+
+    var fallbackTempPath = Path.Combine(Path.GetTempPath(), $"deno_config_{Guid.NewGuid():N}.json");
+    File.WriteAllText(fallbackTempPath, trimmed);
+    return fallbackTempPath;
+  }
+
+  private static void ValidateJson(string json)
+  {
+    using var _ = JsonDocument.Parse(json);
   }
 
   internal static void DeleteIfTempFile(string resolvedPath, string original)

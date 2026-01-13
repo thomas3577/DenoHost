@@ -117,6 +117,26 @@ public class HelperTests
   }
 
   [Fact]
+  public void EnsureConfigFile_PrefersExistingFilePath()
+  {
+    var method = typeof(Helper).GetMethod("EnsureConfigFile", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var existingPath = Path.Combine(Path.GetTempPath(), $"existing_config_{Guid.NewGuid():N}.json");
+    File.WriteAllText(existingPath, """{ "imports": {} }""");
+
+    try
+    {
+      var result = method.Invoke(null, [existingPath]) as string;
+      Assert.Equal(existingPath, result);
+    }
+    finally
+    {
+      File.Delete(existingPath);
+    }
+  }
+
+  [Fact]
   public void AppendConfigArgument_WithValidConfigPath_AddsConfigFlag()
   {
     var args = new[] { "--allow-read", "script.ts" };

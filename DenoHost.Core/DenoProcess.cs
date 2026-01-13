@@ -21,6 +21,7 @@ public class DenoProcess : IDisposable
   private readonly string? _tempConfigPath;
   private readonly Lock _lock = new();
   private Process? _process;
+  private int? _lastExitCode;
   private bool _disposed;
 
   /// <summary>
@@ -78,14 +79,18 @@ public class DenoProcess : IDisposable
       {
         try
         {
-          if (_process == null || !_process.HasExited)
+          if (_process == null)
+            return _lastExitCode;
+
+          if (!_process.HasExited)
             return null;
+
           return _process.ExitCode;
         }
         catch (InvalidOperationException)
         {
           // Process has been disposed or exit code not available
-          return null;
+          return _lastExitCode;
         }
       }
     }
@@ -197,7 +202,7 @@ public class DenoProcess : IDisposable
     _logger = logger ?? Deno.Logger;
 
     // Store config info for cleanup if it's a temp file
-    _tempConfigPath = !Helper.IsJsonPathLike(configOrPath) ? configPath : null;
+    _tempConfigPath = Helper.IsTempDenoConfigPath(configPath) ? configPath : null;
   }
 
   /// <summary>
@@ -266,7 +271,7 @@ public class DenoProcess : IDisposable
       var configPath = Helper.EnsureConfigFile(configOrPath);
       var allArgs = Helper.AppendConfigArgument(args ?? [], configPath);
       finalArgs = Helper.BuildArgumentsArray(allArgs, command);
-      tempConfigPath = !Helper.IsJsonPathLike(configOrPath) ? configPath : null;
+      tempConfigPath = Helper.IsTempDenoConfigPath(configPath) ? configPath : null;
     }
     else
     {
@@ -293,6 +298,8 @@ public class DenoProcess : IDisposable
     {
       if (_process != null)
         throw new InvalidOperationException("Process is already started. Call Stop() before starting again.");
+
+      _lastExitCode = null;
     }
 
     var fileName = Helper.GetDenoPath();
@@ -300,21 +307,25 @@ public class DenoProcess : IDisposable
 
     _logger?.LogInformation("Starting Deno process: {FileName} {Arguments}", fileName, arguments);
 
+    var startInfo = new ProcessStartInfo
+    {
+      WorkingDirectory = _workingDirectory,
+      FileName = fileName,
+      RedirectStandardOutput = true,
+      RedirectStandardError = true,
+      RedirectStandardInput = true,
+      UseShellExecute = false,
+      CreateNoWindow = true,
+      StandardOutputEncoding = Encoding.UTF8,
+      StandardErrorEncoding = Encoding.UTF8
+    };
+
+    foreach (var arg in _args)
+      startInfo.ArgumentList.Add(arg);
+
     var process = new Process
     {
-      StartInfo = new ProcessStartInfo
-      {
-        WorkingDirectory = _workingDirectory,
-        FileName = fileName,
-        Arguments = arguments,
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
-        RedirectStandardInput = true,
-        UseShellExecute = false,
-        CreateNoWindow = true,
-        StandardOutputEncoding = Encoding.UTF8,
-        StandardErrorEncoding = Encoding.UTF8
-      },
+      StartInfo = startInfo,
       EnableRaisingEvents = true
     };
 
@@ -356,6 +367,10 @@ public class DenoProcess : IDisposable
       try
       {
         var exitCode = process.ExitCode;
+        using (_lock.EnterScope())
+        {
+          _lastExitCode = exitCode;
+        }
         _logger?.LogInformation("Deno process exited with code {ExitCode}", exitCode);
         ProcessExited?.Invoke(this, new ProcessExitedEventArgs(exitCode));
       }
@@ -464,6 +479,12 @@ public class DenoProcess : IDisposable
     if (process.HasExited)
     {
       _logger?.LogDebug("Process has already exited with code {ExitCode}", process.ExitCode);
+
+      using (_lock.EnterScope())
+      {
+        _lastExitCode = process.ExitCode;
+      }
+
       process.Dispose();
       return;
     }
@@ -491,6 +512,12 @@ public class DenoProcess : IDisposable
       try
       {
         await process.WaitForExitAsync(cts.Token);
+
+        using (_lock.EnterScope())
+        {
+          _lastExitCode = process.ExitCode;
+        }
+
         _logger?.LogInformation("Deno process stopped gracefully");
       }
       catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -505,6 +532,12 @@ public class DenoProcess : IDisposable
             process.Kill(entireProcessTree: true);
             await process.WaitForExitAsync(cancellationToken);
           }
+
+          using (_lock.EnterScope())
+          {
+            _lastExitCode = process.ExitCode;
+          }
+
           _logger?.LogInformation("Deno process terminated forcefully");
         }
         catch (Exception ex)

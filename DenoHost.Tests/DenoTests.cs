@@ -233,25 +233,15 @@ public class DenoTests : IClassFixture<TempFileFixture>
   [Fact]
   public async Task Execute_WithCancellation_RespectsTimeout()
   {
-    // Arrange: long-running eval (infinite loop)
-    var script = "console.log('Starting...'); let i = 0; while(true) { i++; if (i % 10000000 === 0) console.log('Still running...', i); }";
+    // Arrange: long-running eval (infinite loop). Keep it whitespace-free so it stays a single argument.
+    var script = "console.log('Starting...');while(true){}";
     using var cts = new CancellationTokenSource(200); // cancel after 200ms
 
     var sw = System.Diagnostics.Stopwatch.StartNew();
 
     // Act & Assert
-    try
-    {
-      await Deno.Execute<string>("eval", [script], cts.Token);
-    }
-    catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
-    {
-      // This is expected - cancellation worked correctly
-    }
-    catch (OperationCanceledException)
-    {
-      // This is also acceptable - direct cancellation
-    }
+    await Assert.ThrowsAnyAsync<OperationCanceledException>(
+      () => Deno.Execute<string>("eval", [script], cts.Token));
 
     sw.Stop();
 
@@ -264,30 +254,73 @@ public class DenoTests : IClassFixture<TempFileFixture>
   public async Task Execute_WithBaseOptionsAndCancellation_RespectsTimeout()
   {
     var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = Path.GetTempPath() };
-    var script = "console.log('Starting...'); let i = 0; while(true) { i++; if (i % 10000000 === 0) console.log('Still running...', i); }";
+    var script = "console.log('Starting...');while(true){}";
     using var cts = new CancellationTokenSource(250);
 
     var sw = System.Diagnostics.Stopwatch.StartNew();
 
     // Act & Assert
-    try
-    {
-      await Deno.Execute<string>("eval", baseOptions, [script], cts.Token);
-    }
-    catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
-    {
-      // This is expected - cancellation worked correctly
-    }
-    catch (OperationCanceledException)
-    {
-      // This is also acceptable - direct cancellation
-    }
+    await Assert.ThrowsAnyAsync<OperationCanceledException>(
+      () => Deno.Execute<string>("eval", baseOptions, [script], cts.Token));
 
     sw.Stop();
 
     // Assert that execution was cancelled within reasonable timeframe
     Assert.True(sw.Elapsed < TimeSpan.FromSeconds(3),
       $"Execution should have been cancelled quickly, but took {sw.Elapsed.TotalMilliseconds}ms.");
+  }
+
+  [Fact]
+  public async Task Execute_WithCancellation_KillsProcess()
+  {
+    // Arrange
+    var executorType = Type.GetType("DenoHost.Core.DenoExecutor, DenoHost.Core", throwOnError: true)!;
+    var callbackProperty = executorType.GetProperty(
+      "ProcessStartedCallback",
+      System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+    Assert.NotNull(callbackProperty);
+
+    var startedTcs = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+    Action<int> callback = pid => startedTcs.TrySetResult(pid);
+
+    callbackProperty!.SetValue(null, callback);
+    try
+    {
+      using var cts = new CancellationTokenSource(750);
+      var script = "console.log('Starting...');while(true){}";
+
+      // Act
+      var executeTask = Deno.Execute<string>("eval", [script], cts.Token);
+      var pid = await startedTcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+      await Assert.ThrowsAnyAsync<OperationCanceledException>(() => executeTask);
+
+      // Assert - process should be gone shortly after cancellation
+      var sw = System.Diagnostics.Stopwatch.StartNew();
+      while (sw.Elapsed < TimeSpan.FromSeconds(2))
+      {
+        try
+        {
+          var process = System.Diagnostics.Process.GetProcessById(pid);
+          if (process.HasExited)
+            return;
+        }
+        catch (ArgumentException)
+        {
+          // Process does not exist
+          return;
+        }
+
+        await Task.Delay(50);
+      }
+
+      Assert.Fail($"Deno process with PID {pid} was still running after cancellation.");
+    }
+    finally
+    {
+      // Cleanup test hook
+      callbackProperty!.SetValue(null, null);
+    }
   }
 
   #endregion
@@ -488,7 +521,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
     var options = new DenoExecuteOptions
     {
       Command = "eval",
-      Args = ["\"console.log(JSON.stringify({ CamelCase: 'value' }));\""],
+      Args = ["console.log(JSON.stringify({ CamelCase: 'value' }));"],
       JsonSerializerOptions = new JsonSerializerOptions
       {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -509,7 +542,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
-      await Deno.Execute("eval", ["\"console.error('Test error'); Deno.exit(1);\""]);
+      await Deno.Execute("eval", ["console.error('Test error'); Deno.exit(1);"]);
     });
 
     Assert.Contains("An error occurred during Deno execution after", ex.Message);

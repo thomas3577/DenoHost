@@ -14,6 +14,11 @@ namespace DenoHost.Core;
 internal static class DenoExecutor
 {
   /// <summary>
+  /// Test hook: invoked after the Deno process is started.
+  /// </summary>
+  internal static Action<int>? ProcessStartedCallback { get; set; }
+
+  /// <summary>
   /// Executes a Deno process with the specified parameters and returns the result as type <typeparamref name="T"/>.
   /// </summary>
   /// <typeparam name="T">The expected return type of the Deno process.</typeparam>
@@ -58,32 +63,57 @@ internal static class DenoExecutor
       workingDirectory ??= Directory.GetCurrentDirectory();
 
       var fileName = Helper.GetDenoPath();
-      var arguments = Helper.BuildArguments(args, command);
+      var argumentList = Helper.BuildArgumentsArray(args, command);
 
-      if (string.IsNullOrWhiteSpace(arguments))
+      if (argumentList.Length == 0)
         throw new ArgumentException("No command or arguments provided for Deno execution.");
+
+      var argumentsForLog = string.Join(' ', argumentList);
 
       effectiveLogger?.LogInformation(LogEvents.DenoExecutionStarted,
         "Starting Deno execution: {Arguments} | Working Directory: {WorkingDirectory}",
-        arguments, workingDirectory);
+        argumentsForLog, workingDirectory);
+
+      var startInfo = new ProcessStartInfo
+      {
+        WorkingDirectory = workingDirectory,
+        FileName = fileName,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true,
+        StandardOutputEncoding = System.Text.Encoding.UTF8,
+        StandardErrorEncoding = System.Text.Encoding.UTF8
+      };
+
+      foreach (var arg in argumentList)
+        startInfo.ArgumentList.Add(arg);
 
       using var process = new Process
       {
-        StartInfo = new ProcessStartInfo
-        {
-          WorkingDirectory = workingDirectory,
-          FileName = fileName,
-          Arguments = arguments,
-          RedirectStandardOutput = true,
-          RedirectStandardError = true,
-          UseShellExecute = false,
-          CreateNoWindow = true,
-          StandardOutputEncoding = System.Text.Encoding.UTF8,
-          StandardErrorEncoding = System.Text.Encoding.UTF8
-        }
+        StartInfo = startInfo
       };
 
       process.Start();
+
+      ProcessStartedCallback?.Invoke(process.Id);
+
+      using var cancellationRegistration = cancellationToken.Register(() =>
+      {
+        try
+        {
+          if (!process.HasExited)
+          {
+            effectiveLogger?.LogWarning(LogEvents.DenoExecutionError,
+              "Cancellation requested. Terminating Deno process...");
+            process.Kill(entireProcessTree: true);
+          }
+        }
+        catch
+        {
+          // Best-effort: process may have already exited/disposed.
+        }
+      });
 
       var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
       var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
@@ -112,8 +142,9 @@ internal static class DenoExecutor
         "Deno execution completed successfully in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
       effectiveLogger?.LogDebug(LogEvents.DenoOutput, "Deno output: {Output}", output);
 
-      var typeName = typeof(T).Name;
-      var deserializedResult = typeName == "String" ? output : JsonSerializer.Deserialize(output, resultType, jsonSerializerOptions);
+      var deserializedResult = typeof(T) == typeof(string)
+        ? output
+        : JsonSerializer.Deserialize(output, resultType, jsonSerializerOptions);
 
       return deserializedResult != null
         ? (T)deserializedResult
@@ -122,12 +153,11 @@ internal static class DenoExecutor
     catch (OperationCanceledException ex)
     {
       stopwatch.Stop();
-      effectiveLogger?.LogError(LogEvents.DenoExecutionError, ex,
+      effectiveLogger?.LogWarning(LogEvents.DenoExecutionError, ex,
         "Deno execution was cancelled after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
 
-      // Convert TaskCanceledException to OperationCanceledException for consistent API
-      var cancellationEx = ex is TaskCanceledException ? new OperationCanceledException(ex.Message, ex) : ex;
-      throw new InvalidOperationException($"Deno execution was cancelled after {stopwatch.ElapsedMilliseconds}ms.", cancellationEx);
+      // Preserve cancellation semantics for callers.
+      throw;
     }
     catch (Exception ex)
     {

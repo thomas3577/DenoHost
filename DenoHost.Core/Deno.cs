@@ -164,7 +164,7 @@ public static class Deno
   /// <param name="cancellationToken">Optional token to cancel the operation.</param>
   /// <returns>A task producing the deserialized result.</returns>
   public static Task<T> Execute<T>(string[] args, CancellationToken cancellationToken = default)
-    => ExecuteCore<T>(null!, args, null, null, null, cancellationToken);
+    => ExecuteCore<T>(null, args, null, null, null, cancellationToken);
 
   /// <summary>
   /// Executes Deno with base options and arguments.
@@ -187,7 +187,7 @@ public static class Deno
   public static Task<T> Execute<T>(DenoExecuteBaseOptions baseOptions, string[] args, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(baseOptions);
-    return ExecuteCore<T>(null!, args, baseOptions, null, null, cancellationToken);
+    return ExecuteCore<T>(null, args, baseOptions, null, null, cancellationToken);
   }
 
   /// <summary>
@@ -269,7 +269,11 @@ public static class Deno
     string? configOrPath,
     CancellationToken cancellationToken)
   {
-    if (command == null && (args == null || args.Length == 0))
+    var normalizedCommand = string.IsNullOrWhiteSpace(command) ? null : command;
+    var normalizedConfigOrPath = string.IsNullOrWhiteSpace(configOrPath) ? null : configOrPath;
+    var normalizedArgs = args ?? [];
+
+    if (normalizedCommand == null && normalizedArgs.Length == 0)
       throw new ArgumentException("Either command or args must be provided.");
 
     string? tempPath;
@@ -278,7 +282,7 @@ public static class Deno
 
     try
     {
-      if (configObject != null && configOrPath != null)
+      if (configObject != null && normalizedConfigOrPath != null)
         throw new ArgumentException("Either 'config' or 'configOrPath' should be provided, not both.");
 
       if (configObject != null)
@@ -287,23 +291,23 @@ public static class Deno
         resolvedConfigPath = tempPath;
         deleteResolved = true;
       }
-      else if (!string.IsNullOrWhiteSpace(configOrPath))
+      else if (normalizedConfigOrPath != null)
       {
-        var ensured = Helper.EnsureConfigFile(configOrPath);
+        var ensured = Helper.EnsureConfigFile(normalizedConfigOrPath);
         resolvedConfigPath = ensured;
-        deleteResolved = !Helper.IsJsonPathLike(configOrPath);
+        deleteResolved = Helper.IsTempDenoConfigPath(ensured);
       }
 
       if (resolvedConfigPath != null)
-        args = Helper.AppendConfigArgument(args ?? [], resolvedConfigPath);
+        normalizedArgs = Helper.AppendConfigArgument(normalizedArgs, resolvedConfigPath);
 
       return await DenoExecutor.Execute<T>(
         baseOptions?.WorkingDirectory,
-        command,
+        normalizedCommand,
         typeof(T),
         baseOptions?.JsonSerializerOptions,
         baseOptions?.Logger ?? Logger,
-        args,
+        normalizedArgs,
         cancellationToken).ConfigureAwait(false);
     }
     finally
