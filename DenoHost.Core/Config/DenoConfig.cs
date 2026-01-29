@@ -61,6 +61,9 @@ public class DenoConfig
   [JsonPropertyName("publish")]
   public object? Publish { get; set; }
 
+  [JsonPropertyName("deploy")]
+  public object? Deploy { get; set; }
+
   [JsonPropertyName("bench")]
   public BenchConfig? Bench { get; set; }
 
