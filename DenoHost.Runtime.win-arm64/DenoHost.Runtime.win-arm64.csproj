@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <PackageId>DenoHost.Runtime.win-arm64</PackageId>
+    <Description>Deno binary for Windows ARM64</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <RuntimeRid>win-arm64</RuntimeRid>
+    <DenoFileName>deno.exe</DenoFileName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>true</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
+    <PropertyGroup>
+      <DenoDownloadScriptPathPwsh>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools\download-deno.ps1'))</DenoDownloadScriptPathPwsh>
+      <DenoDownloadScriptPathBash>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools/download-deno.sh'))</DenoDownloadScriptPathBash>
+      <DenoExecutable>$(MSBuildThisFileDirectory)$(DenoFileName)</DenoExecutable>
+      <DenoDownloadFilename>deno-aarch64-pc-windows-msvc.zip</DenoDownloadFilename>
+    </PropertyGroup>
+
+    <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
+    <Exec Condition="'$(OS)' == 'Windows_NT'"
+          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DenoVersion "$(DenoVersion)"'
+          ContinueOnError="true" IgnoreExitCode="true" />
+    <Exec Condition="'$(OS)' != 'Windows_NT'"
+          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DenoVersion)"'
+          ContinueOnError="true" IgnoreExitCode="true" />
+  </Target>
+
+  <Import Project="$(MSBuildThisFileDirectory)..\build\DenoRuntime.targets" />
+</Project>
