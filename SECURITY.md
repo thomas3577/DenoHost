@@ -7,11 +7,11 @@ We take security seriously and encourage responsible reporting.
 
 Security fixes are provided only for the **latest published NuGet packages** and GitHub release.
 
-| Component            | Supported Versions     |
-|---------------------|-------------------------|
-| DenoHost.Core       | Latest NuGet version ✔️ |
-| DenoHost.Runtime.*  | Latest NuGet version ✔️ |
-| Older releases      | Not supported ❌        |
+| Component            | Supported Versions      |
+|----------------------|-------------------------|
+| DenoHost.Core        | Latest NuGet version ✔️ |
+| DenoHost.Runtime.*   | Latest NuGet version ✔️ |
+| Older releases       | Not supported ❌        |
 
 Because we ship native and third-party binaries, older packages are **not** patched retroactively.
 

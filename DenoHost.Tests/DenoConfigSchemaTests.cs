@@ -9,10 +9,10 @@ namespace DenoHost.Tests;
 /// </summary>
 public class DenoConfigSchemaTests
 {
-  // Dynamisch: Ermittle die Deno-Version aus dem Deno-Binary (plattformübergreifend)
+  // Dynamically determine the Deno version from the Deno binary (cross-platform)
   private static string GetDenoVersion()
   {
-    // Finde das Deno Binary in einem der verfügbaren Runtime Packages
+    // Find the Deno binary in one of the available runtime packages
     var baseDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
     var solutionRoot = FindSolutionRoot(baseDirectory!);
 
@@ -22,7 +22,7 @@ public class DenoConfigSchemaTests
 
     if (!File.Exists(denoExePath))
     {
-      // Fallback: Suche in allen verfügbaren Runtime Packages
+      // Fallback: Search in all available Runtime Packages
       var runtimeDirs = Directory.GetDirectories(solutionRoot, "DenoHost.Runtime.*");
       foreach (var runtimeDir in runtimeDirs)
       {
@@ -36,7 +36,7 @@ public class DenoConfigSchemaTests
     }
 
     if (!File.Exists(denoExePath))
-      throw new FileNotFoundException($"Deno-Binary nicht gefunden. Suchpfad: {denoExePath} (Platform: {runtimeId})");
+      throw new FileNotFoundException($"Deno binary not found. Search path: {denoExePath} (Platform: {runtimeId})");
 
     var process = new System.Diagnostics.Process
     {
@@ -53,11 +53,11 @@ public class DenoConfigSchemaTests
     string? output = process.StandardOutput.ReadToEnd();
     process.WaitForExit();
 
-    // Erwartete Ausgabe: "deno x.y.z\nv8 ...\ntypescript ..."
-    // Wir suchen die erste Zeile mit "deno " und extrahieren die Version
+    // Expected output: "deno x.y.z\nv8 ...\ntypescript ..."
+    // We look for the first line starting with "deno " and extract the version
     var firstLine = output.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("deno "));
     if (firstLine == null)
-      throw new InvalidOperationException($"Konnte Deno-Version nicht auslesen. Ausgabe: {output}");
+      throw new InvalidOperationException($"Could not read Deno version. Output: {output}");
 
     var version = firstLine.Trim().Split(' ')[1];
     if (!version.StartsWith('v'))
@@ -85,7 +85,7 @@ public class DenoConfigSchemaTests
       return "win-x64";
     else if (OperatingSystem.IsLinux())
     {
-      // Erkennung der Architektur für Linux
+      // Detection of architecture for Linux
       return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture switch
       {
         System.Runtime.InteropServices.Architecture.X64 => "linux-x64",
@@ -95,7 +95,7 @@ public class DenoConfigSchemaTests
     }
     else if (OperatingSystem.IsMacOS())
     {
-      // Erkennung der Architektur für macOS
+      // Detection of architecture for macOS
       return System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture switch
       {
         System.Runtime.InteropServices.Architecture.X64 => "osx-x64",
