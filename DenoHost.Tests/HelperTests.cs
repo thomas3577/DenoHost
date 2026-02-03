@@ -205,7 +205,7 @@ public class HelperTests
     Assert.False((bool)method.Invoke(null, [null])!);
     Assert.False((bool)method.Invoke(null, [""])!);
     Assert.False((bool)method.Invoke(null, ["   "])!);
-    Assert.False((bool)method.Invoke(null, ["notjson.txt"])!);
+    Assert.False((bool)method.Invoke(null, ["not_json.txt"])!);
   }
 
   [Theory]

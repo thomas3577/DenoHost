@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en",
+  "allowCompoundWords": true,
+  "useGitignore": true,
+  "ignorePaths": [
+    "**/bin/**",
+    "**/obj/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/*.min.*",
+    "**/*.lock",
+    "**/*.generated.*"
+  ],
+  "dictionaries": [
+    "softwareTerms",
+    "typescript",
+    "node",
+    "dotnet",
+    "powershell",
+    "bash",
+    "git",
+    "csharp",
+    "companies"
+  ],
+  "ignoreRegExpList": [
+    "/0x[0-9a-fA-F]+/g",
+    "/\\b[A-Z]{2,}\\b/g",
+    "/\\b[a-z]+[A-Z][a-zA-Z]*\\b/g"
+  ],
+  "words": [
+    "denoland",
+    "msvc",
+    "snupkg",
+    "SonarQube",
+    "uuidgen",
+    "nupkgs",
+    "xunit"
+  ]
+}

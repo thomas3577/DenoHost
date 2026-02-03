@@ -66,6 +66,9 @@ jobs:
           - rid: win-x64
             proj: DenoHost.Runtime.win-x64/DenoHost.Runtime.win-x64.csproj
             os: windows-latest
+          - rid: win-arm64
+            proj: DenoHost.Runtime.win-arm64/DenoHost.Runtime.win-arm64.csproj
+            os: windows-latest
           - rid: linux-x64
             proj: DenoHost.Runtime.linux-x64/DenoHost.Runtime.linux-x64.csproj
             os: ubuntu-latest
@@ -208,7 +211,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     strategy:
       matrix:
-        rid: [win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64]
+        rid: [win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64]
     runs-on: ubuntu-latest
 
     steps:

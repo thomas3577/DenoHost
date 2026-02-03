@@ -36,6 +36,7 @@ dotnet add package DenoHost.Core
 | ------------------------------ | ---------------------------- | ------------- |
 | `DenoHost.Core`                | Core execution logic (API)   | all           |
 | `DenoHost.Runtime.win-x64`     | Bundled Deno for Windows     | `win-x64`     |
+| `DenoHost.Runtime.win-arm64`   | Bundled Deno for Windows ARM | `win-arm64`   |
 | `DenoHost.Runtime.linux-x64`   | Deno for Linux               | `linux-x64`   |
 | `DenoHost.Runtime.linux-arm64` | Deno for ARM Linux           | `linux-arm64` |
 | `DenoHost.Runtime.osx-x64`     | Deno for macOS Intel         | `osx-x64`     |
