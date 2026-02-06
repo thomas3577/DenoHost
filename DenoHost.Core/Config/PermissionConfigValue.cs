@@ -61,7 +61,7 @@ public class PermissionConfigValue
   /// <returns>A new PermissionConfigValue instance.</returns>
   public static PermissionConfigValue FromArray(params string[] values)
   {
-    return new PermissionConfigValue { ArrayValue = new List<string>(values) };
+    return new PermissionConfigValue { ArrayValue = [.. values] };
   }
 }
 

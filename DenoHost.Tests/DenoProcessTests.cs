@@ -250,8 +250,8 @@ public class DenoProcessTests
     );
 
     // Act
-    await denoProcess.StartAsync();
-    var exitCode = await denoProcess.WaitForExitAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
+    var exitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.Equal(0, exitCode);
@@ -279,8 +279,8 @@ public class DenoProcessTests
     };
 
     // Act
-    await denoProcess.StartAsync();
-    var exitCode = await denoProcess.WaitForExitAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
+    var exitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.True(processExited, "ProcessExited event was not raised");
@@ -302,7 +302,7 @@ public class DenoProcessTests
 
     // Act & Assert
     await Assert.ThrowsAsync<InvalidOperationException>(
-        () => denoProcess.SendInputAsync("test")
+        () => denoProcess.SendInputAsync("test", TestContext.Current.CancellationToken)
     );
   }
 
@@ -329,12 +329,12 @@ public class DenoProcessTests
     );
 
     // Act
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // Assert - Check properties while running or just after completion
     Assert.True(denoProcess.ProcessId.HasValue);
 
-    var exitCode = await denoProcess.WaitForExitAsync();
+    var exitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     Assert.False(denoProcess.IsRunning);
     Assert.Equal(0, exitCode);
@@ -355,17 +355,17 @@ public class DenoProcessTests
         logger: _logger
     );
 
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // Act & Assert
     var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-        () => denoProcess.StartAsync()
+        () => denoProcess.StartAsync(TestContext.Current.CancellationToken)
     );
 
     Assert.Contains("Process is already started", ex.Message);
 
     // Cleanup
-    await denoProcess.StopAsync();
+    await denoProcess.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
   }
 
   [Fact]
@@ -383,9 +383,9 @@ public class DenoProcessTests
     // We expect either an exception or the process to exit with non-zero code
     try
     {
-      await denoProcess.StartAsync();
+      await denoProcess.StartAsync(TestContext.Current.CancellationToken);
       // If we get here, wait for exit and check the exit code
-      var exitCode = await denoProcess.WaitForExitAsync();
+      var exitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
       Assert.NotEqual(0, exitCode); // Should fail with non-zero exit code
     }
     catch (Exception)
@@ -418,8 +418,8 @@ public class DenoProcessTests
     };
 
     // Act
-    await denoProcess.StartAsync();
-    var exitCode = await denoProcess.WaitForExitAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
+    var exitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.True(errorReceived, "Error event should have been triggered");
@@ -439,17 +439,17 @@ public class DenoProcessTests
 
     // Act & Assert - Process not started
     var ex1 = await Assert.ThrowsAsync<InvalidOperationException>(
-        () => denoProcess.SendInputAsync("test input")
+        () => denoProcess.SendInputAsync("test input", TestContext.Current.CancellationToken)
     );
     Assert.Contains("Process is not running", ex1.Message);
 
     // Start and let it complete
-    await denoProcess.StartAsync();
-    await denoProcess.WaitForExitAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
+    await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Act & Assert - Process completed
     var ex2 = await Assert.ThrowsAsync<InvalidOperationException>(
-        () => denoProcess.SendInputAsync("test input")
+        () => denoProcess.SendInputAsync("test input", TestContext.Current.CancellationToken)
     );
     Assert.Contains("Process is not running", ex2.Message);
   }
@@ -482,15 +482,15 @@ public class DenoProcessTests
     };
 
     // Act
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // Wait for the process to be ready
-    await Task.Delay(200);
+    await Task.Delay(200, TestContext.Current.CancellationToken);
 
     if (denoProcess.IsRunning && processReady)
     {
       // This should not throw
-      await denoProcess.SendInputAsync("test message");
+      await denoProcess.SendInputAsync("test message", TestContext.Current.CancellationToken);
       Assert.True(true, "SendInputAsync completed without throwing");
     }
     else
@@ -498,7 +498,7 @@ public class DenoProcessTests
       Assert.True(true, "Process exited before we could test SendInput");
     }
 
-    await denoProcess.WaitForExitAsync();
+    await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
   }
 
   [Fact]
@@ -536,10 +536,10 @@ public class DenoProcessTests
     };
 
     // Act
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // Wait a moment to ensure it's still running after startup
-    await Task.Delay(300);
+    await Task.Delay(300, TestContext.Current.CancellationToken);
 
     if (!denoProcess.IsRunning)
     {
@@ -548,7 +548,7 @@ public class DenoProcessTests
       return;
     }
 
-    var exitCode = await denoProcess.WaitForExitAsync();
+    var exitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.Equal(0, exitCode);
@@ -566,7 +566,7 @@ public class DenoProcessTests
     using var denoProcess = new DenoProcess(["--version"], logger: _logger);
 
     // Act & Assert - Should not throw when stopping a process that isn't running
-    await denoProcess.StopAsync();
+    await denoProcess.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
     Assert.False(denoProcess.IsRunning);
   }
 
@@ -581,12 +581,12 @@ public class DenoProcessTests
     );
 
     // Act
-    await denoProcess.StartAsync();
-    await Task.Delay(100); // Let it start
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
+    await Task.Delay(100, TestContext.Current.CancellationToken); // Let it start
 
     if (denoProcess.IsRunning)
     {
-      await denoProcess.StopAsync(timeout: TimeSpan.FromSeconds(1));
+      await denoProcess.StopAsync(timeout: TimeSpan.FromSeconds(1), cancellationToken: TestContext.Current.CancellationToken);
       Assert.False(denoProcess.IsRunning);
     }
     else
@@ -606,11 +606,11 @@ public class DenoProcessTests
         logger: _logger
     );
 
-    await denoProcess.StartAsync();
-    await denoProcess.WaitForExitAsync(); // Process exits naturally
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
+    await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken); // Process exits naturally
 
     // Act & Assert - Should not throw when stopping already stopped process
-    await denoProcess.StopAsync();
+    await denoProcess.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
     Assert.False(denoProcess.IsRunning);
   }
 
@@ -625,10 +625,10 @@ public class DenoProcessTests
     );
 
     // Act
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // Give it a moment to start
-    await Task.Delay(200);
+    await Task.Delay(200, TestContext.Current.CancellationToken);
 
     if (!denoProcess.IsRunning)
     {
@@ -637,7 +637,7 @@ public class DenoProcessTests
       return;
     }
 
-    await denoProcess.StopAsync(timeout: TimeSpan.FromSeconds(2));
+    await denoProcess.StopAsync(timeout: TimeSpan.FromSeconds(2), cancellationToken: TestContext.Current.CancellationToken);
 
     // Assert
     Assert.False(denoProcess.IsRunning);
@@ -659,8 +659,8 @@ public class DenoProcessTests
     );
 
     // Act - Restart without starting first
-    await denoProcess.RestartAsync();
-    var exitCode = await denoProcess.WaitForExitAsync();
+    await denoProcess.RestartAsync(cancellationToken: TestContext.Current.CancellationToken);
+    var exitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.Equal(0, exitCode);
@@ -674,16 +674,16 @@ public class DenoProcessTests
     using var denoProcess = new DenoProcess(["repl"], logger: _logger);
 
     // Act
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
     var firstProcessId = denoProcess.ProcessId;
 
-    await Task.Delay(500); // Give REPL time to start
+    await Task.Delay(500, TestContext.Current.CancellationToken); // Give REPL time to start
 
     // Verify it's actually running before restart
     Assert.True(denoProcess.IsRunning, "REPL process should be running before restart");
     Assert.NotNull(firstProcessId);
 
-    await denoProcess.RestartAsync(timeout: TimeSpan.FromSeconds(5));
+    await denoProcess.RestartAsync(timeout: TimeSpan.FromSeconds(5), cancellationToken: TestContext.Current.CancellationToken);
     var secondProcessId = denoProcess.ProcessId;
 
     // Assert
@@ -693,7 +693,7 @@ public class DenoProcessTests
         "Process should be running or have completed successfully after restart");
 
     // Cleanup
-    await denoProcess.StopAsync();
+    await denoProcess.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
   }
 
   [Fact]
@@ -707,29 +707,29 @@ public class DenoProcessTests
     );
 
     // Act
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // Give it time to start up
-    await Task.Delay(200);
+    await Task.Delay(200, TestContext.Current.CancellationToken);
 
     if (!denoProcess.IsRunning)
     {
       // Process exited quickly, just test that restart works
-      await denoProcess.RestartAsync();
+      await denoProcess.RestartAsync(cancellationToken: TestContext.Current.CancellationToken);
       Assert.True(true, "Restart worked even though process exited quickly");
       return;
     }
 
     var firstProcessId = denoProcess.ProcessId;
 
-    await denoProcess.RestartAsync();
+    await denoProcess.RestartAsync(cancellationToken: TestContext.Current.CancellationToken);
     var secondProcessId = denoProcess.ProcessId;
 
     // Assert
     Assert.NotEqual(firstProcessId, secondProcessId);
 
     // Cleanup
-    await denoProcess.StopAsync();
+    await denoProcess.StopAsync(cancellationToken: TestContext.Current.CancellationToken);
   }
 
   #endregion
@@ -744,7 +744,7 @@ public class DenoProcessTests
 
     // Act & Assert
     var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-        () => denoProcess.WaitForExitAsync()
+        () => denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken)
     );
 
     Assert.Contains("Process is not running", ex.Message);
@@ -760,10 +760,10 @@ public class DenoProcessTests
         logger: _logger
     );
 
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // Act
-    var exitCode = await denoProcess.WaitForExitAsync();
+    var exitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.Equal(0, exitCode);
@@ -780,13 +780,13 @@ public class DenoProcessTests
         logger: _logger
     );
 
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // Wait for natural exit
-    var firstExitCode = await denoProcess.WaitForExitAsync();
+    var firstExitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Act - Wait again on already exited process
-    var secondExitCode = await denoProcess.WaitForExitAsync();
+    var secondExitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.Equal(0, firstExitCode);
@@ -817,8 +817,8 @@ public class DenoProcessTests
     {
       denoProcess = new DenoProcess("eval", config, ["Deno.exit(0);"], logger: _logger);
 
-      await denoProcess.StartAsync();
-      await denoProcess.WaitForExitAsync();
+      await denoProcess.StartAsync(TestContext.Current.CancellationToken);
+      await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
       // Capture temp files before disposal
       var tempDir = Path.GetTempPath();
@@ -833,7 +833,7 @@ public class DenoProcessTests
       if (tempFile != null)
       {
         // Give some time for cleanup
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         Assert.False(File.Exists(tempFile), "Temp config file should be deleted");
       }
     }
@@ -867,23 +867,23 @@ public class DenoProcessTests
 
     // Act & Assert
     await Assert.ThrowsAsync<ObjectDisposedException>(
-        () => denoProcess.StartAsync()
+        () => denoProcess.StartAsync(TestContext.Current.CancellationToken)
     );
 
     await Assert.ThrowsAsync<ObjectDisposedException>(
-        () => denoProcess.SendInputAsync("test")
+        () => denoProcess.SendInputAsync("test", TestContext.Current.CancellationToken)
     );
 
     await Assert.ThrowsAsync<ObjectDisposedException>(
-        () => denoProcess.StopAsync()
+        () => denoProcess.StopAsync(cancellationToken: TestContext.Current.CancellationToken)
     );
 
     await Assert.ThrowsAsync<ObjectDisposedException>(
-        () => denoProcess.RestartAsync()
+        () => denoProcess.RestartAsync(cancellationToken: TestContext.Current.CancellationToken)
     );
 
     await Assert.ThrowsAsync<ObjectDisposedException>(
-        () => denoProcess.WaitForExitAsync()
+        () => denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken)
     );
   }
 
@@ -900,7 +900,7 @@ public class DenoProcessTests
         logger: _logger
     );
 
-    await denoProcess.StartAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // Dispose should stop the process
     denoProcess.Dispose();
@@ -938,7 +938,7 @@ public class DenoProcessTests
     if (tempFile != null)
     {
       // Give a moment for cleanup
-      await Task.Delay(100);
+      await Task.Delay(100, TestContext.Current.CancellationToken);
       Assert.False(File.Exists(tempFile), "Temporary config file should be cleaned up after disposal");
     }
   }
@@ -958,8 +958,8 @@ public class DenoProcessTests
     );
 
     // Act & Assert - Should not throw even without event subscribers
-    await denoProcess.StartAsync();
-    var exitCode = await denoProcess.WaitForExitAsync();
+    await denoProcess.StartAsync(TestContext.Current.CancellationToken);
+    var exitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // The main point is that it doesn't throw, exit code doesn't matter
     Assert.True(exitCode >= 0, "Process should complete without throwing");
@@ -985,8 +985,8 @@ public class DenoProcessTests
         actualExitCode = e.ExitCode;
       };
 
-      await denoProcess.StartAsync();
-      var waitExitCode = await denoProcess.WaitForExitAsync();
+      await denoProcess.StartAsync(TestContext.Current.CancellationToken);
+      var waitExitCode = await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
 
       Assert.Equal(expectedExitCode, waitExitCode);
       Assert.Equal(expectedExitCode, actualExitCode);
@@ -1011,8 +1011,8 @@ public class DenoProcessTests
     using var process = new DenoProcess(options);
 
     // Act
-    await process.StartAsync();
-    var exitCode = await process.WaitForExitAsync();
+    await process.StartAsync(TestContext.Current.CancellationToken);
+    var exitCode = await process.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.True(process.ExitCode.HasValue);
@@ -1033,8 +1033,8 @@ public class DenoProcessTests
     using var process = new DenoProcess("--version", config, logger: _logger);
 
     // Act
-    await process.StartAsync();
-    var exitCode = await process.WaitForExitAsync();
+    await process.StartAsync(TestContext.Current.CancellationToken);
+    var exitCode = await process.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.True(process.ExitCode.HasValue);
@@ -1053,8 +1053,8 @@ public class DenoProcessTests
     using var process = new DenoProcess("--version", baseOptions);
 
     // Act
-    await process.StartAsync();
-    var exitCode = await process.WaitForExitAsync();
+    await process.StartAsync(TestContext.Current.CancellationToken);
+    var exitCode = await process.WaitForExitAsync(TestContext.Current.CancellationToken);
 
     // Assert
     Assert.True(process.ExitCode.HasValue);
@@ -1084,7 +1084,7 @@ public class DenoProcessTests
     );
 
     // Act - Try concurrent operations
-    var startTask = denoProcess.StartAsync();
+    var startTask = denoProcess.StartAsync(TestContext.Current.CancellationToken);
 
     // These should handle concurrency gracefully
     var tasks = new[]
@@ -1092,27 +1092,27 @@ public class DenoProcessTests
       startTask,
       Task.Run(async () =>
       {
-        await Task.Delay(100); // Start after process begins
+        await Task.Delay(100, TestContext.Current.CancellationToken); // Start after process begins
         if (denoProcess.IsRunning)
         {
           try
           {
-            await denoProcess.SendInputAsync("test");
+            await denoProcess.SendInputAsync("test", TestContext.Current.CancellationToken);
           }
           catch (InvalidOperationException)
           {
             // Expected if process doesn't read stdin
           }
         }
-      }),
+      }, TestContext.Current.CancellationToken),
       Task.Run(async () =>
       {
-        await Task.Delay(500);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
 
         Assert.True(denoProcess.ProcessId > 0, "ProcessId should be greater than 0");
         Assert.True(denoProcess.IsRunning || denoProcess.ExitCode.HasValue,
           "Process should either be running or have exited");
-      })
+      }, TestContext.Current.CancellationToken)
     };
 
     // Assert - Should not throw or deadlock
@@ -1120,7 +1120,7 @@ public class DenoProcessTests
 
     if (denoProcess.IsRunning)
     {
-      await denoProcess.WaitForExitAsync();
+      await denoProcess.WaitForExitAsync(TestContext.Current.CancellationToken);
     }
 
     Assert.True(true); // If we get here, no deadlocks occurred
