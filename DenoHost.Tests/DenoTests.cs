@@ -113,14 +113,9 @@ public class TempFileFixture : IDisposable
   }
 }
 
-public class DenoTests : IClassFixture<TempFileFixture>
+public class DenoTests(TempFileFixture tempFileFixture) : IClassFixture<TempFileFixture>
 {
-  private readonly TempFileFixture _tempFileFixture;
-
-  public DenoTests(TempFileFixture tempFileFixture)
-  {
-    _tempFileFixture = tempFileFixture;
-  }
+  private readonly TempFileFixture _tempFileFixture = tempFileFixture;
 
   #region Validation Tests
 
@@ -129,7 +124,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     await Assert.ThrowsAsync<ArgumentNullException>(async () =>
     {
-      await Deno.Execute((DenoExecuteOptions)null!);
+      await Deno.Execute((DenoExecuteOptions)null!, TestContext.Current.CancellationToken);
     });
   }
 
@@ -138,7 +133,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     await Assert.ThrowsAsync<ArgumentNullException>(async () =>
     {
-      await Deno.Execute((DenoExecuteBaseOptions)null!, ["--version"]);
+      await Deno.Execute((DenoExecuteBaseOptions)null!, ["--version"], TestContext.Current.CancellationToken);
     });
   }
 
@@ -154,7 +149,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
     {
-      await Deno.Execute(options);
+      await Deno.Execute(options, TestContext.Current.CancellationToken);
     });
 
     Assert.Contains("Either 'config' or 'configOrPath' should be provided, not both", ex.Message);
@@ -165,7 +160,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
     {
-      await Deno.Execute(Array.Empty<string>());
+      await Deno.Execute([], TestContext.Current.CancellationToken);
     });
 
     Assert.Contains("Either command or args must be provided", ex.Message);
@@ -176,7 +171,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
     {
-      await Deno.Execute<string>(Array.Empty<string>());
+      await Deno.Execute<string>([], TestContext.Current.CancellationToken);
     });
 
     Assert.Contains("Either command or args must be provided", ex.Message);
@@ -187,7 +182,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
-      await Deno.Execute("invalidcommand");
+      await Deno.Execute("invalidcommand", TestContext.Current.CancellationToken);
     });
   }
 
@@ -196,7 +191,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     var ex = await Assert.ThrowsAsync<NotSupportedException>(async () =>
     {
-      await Deno.Execute<dynamic>("--version");
+      await Deno.Execute<dynamic>("--version", TestContext.Current.CancellationToken);
     });
 
     Assert.Contains("Dynamic types are not supported", ex.Message);
@@ -210,7 +205,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   [Fact]
   public async Task Execute_WithVersion_ReturnsDenoVersion()
   {
-    var result = await Deno.Execute<string>("--version");
+    var result = await Deno.Execute<string>("--version", TestContext.Current.CancellationToken);
 
     Assert.NotNull(result);
     Assert.Contains("deno", result.ToLower());
@@ -222,7 +217,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
     _tempFileFixture.CreateTempFile("test_cwd.ts", "console.log(Deno.cwd());");
     var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = _tempFileFixture.TempDirectory };
 
-    var result = await Deno.Execute<string>("run", baseOptions, ["--allow-read", "test_cwd.ts"]);
+    var result = await Deno.Execute<string>("run", baseOptions, ["--allow-read", "test_cwd.ts"], TestContext.Current.CancellationToken);
     Assert.Contains(_tempFileFixture.TempDirectory.TrimEnd(Path.DirectorySeparatorChar), result);
   }
 
@@ -291,7 +286,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
       // Act
       var executeTask = Deno.Execute<string>("eval", [script], cts.Token);
-      var pid = await startedTcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
+      var pid = await startedTcs.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
       await Assert.ThrowsAnyAsync<OperationCanceledException>(() => executeTask);
 
@@ -311,7 +306,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
           return;
         }
 
-        await Task.Delay(50);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
       }
 
       Assert.Fail($"Deno process with PID {pid} was still running after cancellation.");
@@ -340,7 +335,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     var scriptPath = _tempFileFixture.CreateTempFile("test_config.ts", "console.log('Config test passed');");
 
-    await Deno.Execute("run", config, ["--allow-net", scriptPath]);
+    await Deno.Execute("run", config, ["--allow-net", scriptPath], TestContext.Current.CancellationToken);
 
     // No exception means success for this void method
     Assert.True(true); // Explicit assertion to satisfy linter
@@ -352,7 +347,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
     var jsonConfig = """{ "imports": { "@test/": "https://deno.land/std@0.200.0/" } }""";
     var scriptPath = _tempFileFixture.CreateTempFile("test_json_config.ts", "console.log('JSON config test passed');");
 
-    await Deno.Execute("run", jsonConfig, ["--allow-net", scriptPath]);
+    await Deno.Execute("run", jsonConfig, ["--allow-net", scriptPath], TestContext.Current.CancellationToken);
 
     // No exception means success for this void method
     Assert.True(true); // Explicit assertion to satisfy linter
@@ -367,7 +362,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
     {
       await Assert.ThrowsAsync<InvalidOperationException>(async () =>
       {
-        await Deno.Execute("run", invalidJson, ["script.ts"]);
+        await Deno.Execute("run", invalidJson, ["script.ts"], TestContext.Current.CancellationToken);
       });
     }
     finally
@@ -417,7 +412,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      await Deno.Execute("run", configPath, ["--allow-read", scriptPath]);
+      await Deno.Execute("run", configPath, ["--allow-read", scriptPath], TestContext.Current.CancellationToken);
     }
     finally
     {
@@ -452,7 +447,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      var result = await Deno.Execute<TestResult>("run", config, ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<TestResult>("run", config, ["--allow-read", scriptPath], TestContext.Current.CancellationToken);
 
       Assert.Equal("Import map test", result.Message);
       Assert.True(result.HasImports);
@@ -483,7 +478,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      var result = await Deno.Execute<Dictionary<string, object>>("run", ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<Dictionary<string, object>>("run", ["--allow-read", scriptPath], TestContext.Current.CancellationToken);
 
       Assert.NotNull(result);
       Assert.Equal("Test", result["name"].ToString());
@@ -504,7 +499,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath], TestContext.Current.CancellationToken);
 
       Assert.NotNull(result);
       Assert.Contains("Raw string output without JSON", result);
@@ -529,7 +524,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
       }
     };
 
-    var result = await Deno.Execute<Dictionary<string, object>>(options);
+    var result = await Deno.Execute<Dictionary<string, object>>(options, TestContext.Current.CancellationToken);
     Assert.True(result.ContainsKey("CamelCase"));
   }
 
@@ -542,7 +537,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
     {
-      await Deno.Execute("eval", ["console.error('Test error'); Deno.exit(1);"]);
+      await Deno.Execute("eval", ["console.error('Test error'); Deno.exit(1);"], TestContext.Current.CancellationToken);
     });
 
     Assert.Contains("An error occurred during Deno execution after", ex.Message);
@@ -564,7 +559,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      var result = await Deno.Execute<Dictionary<string, object>>("run", ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<Dictionary<string, object>>("run", ["--allow-read", scriptPath], TestContext.Current.CancellationToken);
 
       Assert.Contains("🦕", result["unicode"].ToString());
       Assert.Contains("line1\nline2", result["newlines"].ToString());
@@ -587,7 +582,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
     var tasks = new List<Task<string>>();
     for (int i = 0; i < 3; i++)
     {
-      tasks.Add(Deno.Execute<string>("--version"));
+      tasks.Add(Deno.Execute<string>("--version", TestContext.Current.CancellationToken));
     }
 
     var results = await Task.WhenAll(tasks);
@@ -613,7 +608,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
       Config = config
     };
 
-    var result = await Deno.Execute<string>(options);
+    var result = await Deno.Execute<string>(options, TestContext.Current.CancellationToken);
 
     Assert.NotNull(result);
     Assert.Contains("deno", result.ToLower());
@@ -627,7 +622,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      await File.WriteAllTextAsync(configPath, configContent);
+      await File.WriteAllTextAsync(configPath, configContent, TestContext.Current.CancellationToken);
 
       var options = new DenoExecuteOptions
       {
@@ -635,7 +630,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
         ConfigOrPath = configPath
       };
 
-      var result = await Deno.Execute<string>(options);
+      var result = await Deno.Execute<string>(options, TestContext.Current.CancellationToken);
 
       Assert.NotNull(result);
       Assert.Contains("deno", result.ToLower());
@@ -650,7 +645,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   [Fact]
   public async Task Execute_SimpleCommand_ExecutesCorrectly()
   {
-    await Deno.Execute("--version");
+    await Deno.Execute("--version", TestContext.Current.CancellationToken);
 
     // This should cover the simple Execute(string command) method
     // No exception means success for this void method
@@ -665,7 +660,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
       WorkingDirectory = Path.GetTempPath()
     };
 
-    await Deno.Execute("--version", baseOptions);
+    await Deno.Execute("--version", baseOptions, TestContext.Current.CancellationToken);
 
     // No exception means success for this void method
     Assert.True(true); // Explicit assertion to satisfy linter
@@ -679,7 +674,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
       WorkingDirectory = Path.GetTempPath()
     };
 
-    var result = await Deno.Execute<string>("--version", baseOptions);
+    var result = await Deno.Execute<string>("--version", baseOptions, TestContext.Current.CancellationToken);
 
     Assert.NotNull(result);
     Assert.Contains("deno", result.ToLower());
@@ -693,7 +688,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
       Command = "--version"
     };
 
-    await Deno.Execute(options);
+    await Deno.Execute(options, TestContext.Current.CancellationToken);
 
     // No exception means success for this void method
     Assert.True(true); // Explicit assertion to satisfy linter
@@ -704,7 +699,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     var args = new[] { "--version" };
 
-    var result = await Deno.Execute<string>(args);
+    var result = await Deno.Execute<string>(args, TestContext.Current.CancellationToken);
 
     Assert.NotNull(result);
     Assert.Contains("deno", result.ToLower());
@@ -720,7 +715,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
     };
     var args = new[] { "--help" };
 
-    await Deno.Execute(command, baseOptions, args);
+    await Deno.Execute(command, baseOptions, args, TestContext.Current.CancellationToken);
 
     // No exception means success for this void method
     Assert.True(true); // Explicit assertion to satisfy linter
@@ -735,7 +730,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
     };
     var args = new[] { "--version" };
 
-    await Deno.Execute(baseOptions, args);
+    await Deno.Execute(baseOptions, args, TestContext.Current.CancellationToken);
 
     // No exception means success for this void method
     Assert.True(true); // Explicit assertion to satisfy linter
@@ -746,7 +741,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
   {
     var args = new[] { "--version" };
 
-    await Deno.Execute(args);
+    await Deno.Execute(args, TestContext.Current.CancellationToken);
 
     // No exception means success for this void method
     Assert.True(true); // Explicit assertion to satisfy linter
@@ -761,7 +756,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
     };
     var args = new[] { "--version" };
 
-    var result = await Deno.Execute<string>(baseOptions, args);
+    var result = await Deno.Execute<string>(baseOptions, args, TestContext.Current.CancellationToken);
 
     Assert.NotNull(result);
     Assert.Contains("deno", result.ToLower());
@@ -774,7 +769,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     await Assert.ThrowsAsync<ArgumentNullException>(async () =>
     {
-      await Deno.Execute<string>((DenoExecuteBaseOptions)null!, args);
+      await Deno.Execute<string>((DenoExecuteBaseOptions)null!, args, TestContext.Current.CancellationToken);
     });
   }
 
@@ -816,7 +811,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath], TestContext.Current.CancellationToken);
 
       Assert.NotNull(result);
       Assert.Equal(size, result.Trim().Length);
@@ -843,7 +838,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath], TestContext.Current.CancellationToken);
 
       Assert.NotNull(result);
       Assert.Equal("success", result.Trim());
@@ -873,7 +868,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath], TestContext.Current.CancellationToken);
 
       Assert.NotNull(result);
       Assert.Equal(stdoutSize, result.Trim().Length);
@@ -905,7 +900,7 @@ public class DenoTests : IClassFixture<TempFileFixture>
 
     try
     {
-      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath]);
+      var result = await Deno.Execute<string>("run", ["--allow-read", scriptPath], TestContext.Current.CancellationToken);
 
       Assert.NotNull(result);
       Assert.EndsWith("final", result.Trim());

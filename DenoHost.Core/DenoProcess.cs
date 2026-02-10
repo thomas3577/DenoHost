@@ -251,10 +251,10 @@ public class DenoProcess : IDisposable
     var args = options.Args;
 
     if (config != null && !string.IsNullOrWhiteSpace(configOrPath))
-      throw new ArgumentException("Either 'config' or 'configOrPath' should be provided, not both.");
+      throw new ArgumentException("Either 'config' or 'configOrPath' should be provided, not both.", nameof(options));
 
     if (string.IsNullOrWhiteSpace(command))
-      throw new ArgumentException("Command cannot be null or empty.", nameof(command));
+      throw new ArgumentException("The Command property cannot be null or empty.", nameof(options));
 
     string[]? finalArgs;
     string? tempConfigPath = null;

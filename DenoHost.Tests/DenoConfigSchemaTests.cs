@@ -55,10 +55,7 @@ public class DenoConfigSchemaTests
 
     // Expected output: "deno x.y.z\nv8 ...\ntypescript ..."
     // We look for the first line starting with "deno " and extract the version
-    var firstLine = output.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("deno "));
-    if (firstLine == null)
-      throw new InvalidOperationException($"Could not read Deno version. Output: {output}");
-
+    var firstLine = output.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("deno ")) ?? throw new InvalidOperationException($"Could not read Deno version. Output: {output}");
     var version = firstLine.Trim().Split(' ')[1];
     if (!version.StartsWith('v'))
       version = "v" + version;
@@ -69,7 +66,7 @@ public class DenoConfigSchemaTests
   private static string FindSolutionRoot(string startPath)
   {
     var directory = new DirectoryInfo(startPath);
-    while (directory != null && !directory.GetFiles("*.sln").Any())
+    while (directory != null && directory.GetFiles("*.sln").Length == 0)
     {
       directory = directory.Parent;
     }
@@ -129,7 +126,7 @@ public class DenoConfigSchemaTests
     // without being explicitly implemented in DenoConfig or at least being detected.
 
     // Arrange: Download schema as raw JSON
-    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl());
+    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl(), TestContext.Current.CancellationToken);
     var schemaDocument = JsonDocument.Parse(schemaJson);
 
     // Get ALL properties from the schema
@@ -187,7 +184,7 @@ public class DenoConfigSchemaTests
   public async Task DenoConfig_AllPropertiesExistInOfficialSchema()
   {
     // Arrange: Download schema as raw JSON
-    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl());
+    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl(), TestContext.Current.CancellationToken);
     var schemaDocument = JsonDocument.Parse(schemaJson);
 
     // Get all properties from the schema
@@ -231,7 +228,7 @@ public class DenoConfigSchemaTests
   public async Task DenoConfig_ReportMissingPropertiesFromSchema()
   {
     // Arrange: Download schema as raw JSON
-    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl());
+    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl(), TestContext.Current.CancellationToken);
     var schemaDocument = JsonDocument.Parse(schemaJson);
 
     // Get all properties from the schema
@@ -423,7 +420,7 @@ public class DenoConfigSchemaTests
     // This test provides information about schema compatibility without failing
 
     // Arrange: Download schema
-    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl());
+    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl(), TestContext.Current.CancellationToken);
     var schemaDocument = JsonDocument.Parse(schemaJson);
 
     // Get schema info
