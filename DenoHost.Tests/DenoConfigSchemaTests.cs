@@ -57,6 +57,12 @@ public class DenoConfigSchemaTests
     // We look for the first line starting with "deno " and extract the version
     var firstLine = output.Split('\n').FirstOrDefault(l => l.TrimStart().StartsWith("deno ")) ?? throw new InvalidOperationException($"Could not read Deno version. Output: {output}");
     var version = firstLine.Trim().Split(' ')[1];
+
+    // Remove any build metadata (e.g., "+fb4db33")
+    var plusIndex = version.IndexOf('+');
+    if (plusIndex > 0)
+      version = version[..plusIndex];
+
     if (!version.StartsWith('v'))
       version = "v" + version;
 
@@ -109,7 +115,7 @@ public class DenoConfigSchemaTests
   private static string GetDenoSchemaUrl()
   {
     var version = GetDenoVersion();
-    var url = $"https://raw.githubusercontent.com/denoland/deno/refs/tags/{version}/cli/schemas/config-file.v1.json";
+    var url = $"https://raw.githubusercontent.com/denoland/deno/{version}/cli/schemas/config-file.v1.json";
 
     // Output the schema URL for test visibility
     Console.WriteLine($"Using Deno schema: {url}");
@@ -122,8 +128,11 @@ public class DenoConfigSchemaTests
   [Fact]
   public async Task DenoConfig_TopLevelProperties_MustMatchExactly()
   {
-    // This test ensures that NO new top-level properties are added to the Deno schema
-    // without being explicitly implemented in DenoConfig or at least being detected.
+    // This test ensures that DenoConfig stays in sync with the official Deno schema.
+    // It validates that:
+    // 1. All properties from the Deno schema are implemented in DenoConfig
+    // 2. No deprecated/removed properties remain in DenoConfig
+    // This is the PRIMARY test to ensure DenoHost v{x.x.x} === Deno Schema v{x.x.x}
 
     // Arrange: Download schema as raw JSON
     var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl(), TestContext.Current.CancellationToken);
@@ -183,6 +192,9 @@ public class DenoConfigSchemaTests
   [Fact]
   public async Task DenoConfig_AllPropertiesExistInOfficialSchema()
   {
+    // This test ensures that all properties implemented in DenoConfig also exist in the official Deno schema.
+    // This catches deprecated or removed properties that should be cleaned up from DenoConfig.
+
     // Arrange: Download schema as raw JSON
     var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl(), TestContext.Current.CancellationToken);
     var schemaDocument = JsonDocument.Parse(schemaJson);
@@ -222,65 +234,6 @@ public class DenoConfigSchemaTests
     Assert.True(missingProperties.Count == 0,
         $"Properties not found in official Deno schema: {string.Join(", ", missingProperties)}. " +
         $"The schema may have changed or these properties are deprecated.");
-  }
-
-  [Fact]
-  public async Task DenoConfig_ReportMissingPropertiesFromSchema()
-  {
-    // Arrange: Download schema as raw JSON
-    var schemaJson = await HttpClient.GetStringAsync(GetDenoSchemaUrl(), TestContext.Current.CancellationToken);
-    var schemaDocument = JsonDocument.Parse(schemaJson);
-
-    // Get all properties from the schema
-    var schemaProperties = new HashSet<string>();
-    if (schemaDocument.RootElement.TryGetProperty("properties", out var propertiesElement))
-    {
-      foreach (var property in propertiesElement.EnumerateObject())
-      {
-        schemaProperties.Add(property.Name);
-      }
-    }
-
-    // Get implemented property names
-    var implementedProperties = new HashSet<string>();
-    var properties = typeof(DenoConfig).GetProperties();
-    foreach (var property in properties)
-    {
-      var jsonPropertyAttr = property.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>();
-      if (jsonPropertyAttr != null)
-      {
-        implementedProperties.Add(jsonPropertyAttr.Name);
-      }
-    }
-
-    // Important properties that should be implemented
-    var importantSchemaProperties = new[]
-    {
-      "compilerOptions", "importMap", "imports", "scopes", "lint", "fmt",
-      "tasks", "test", "bench", "publish", "lock", "nodeModulesDir",
-      "vendor", "unstable", "exclude", "name", "version", "exports",
-      "workspace", "unsafelyIgnoreCertificateErrors"
-    };
-
-    var missingProperties = new List<string>();
-
-    foreach (var schemaProperty in importantSchemaProperties)
-    {
-      if (schemaProperties.Contains(schemaProperty) &&
-          !implementedProperties.Contains(schemaProperty))
-      {
-        missingProperties.Add(schemaProperty);
-      }
-    }
-
-    // Report findings (this is informational, not necessarily a failure)
-    if (missingProperties.Count > 0)
-    {
-      var message = $"DenoConfig is missing these properties from the official schema: {string.Join(", ", missingProperties)}";
-
-      // Using output helper instead of failing the test
-      throw new Xunit.Sdk.XunitException(message + "\nConsider adding these properties to maintain full compatibility.");
-    }
   }
 
   [Fact]
