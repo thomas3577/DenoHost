@@ -107,6 +107,12 @@ internal static class DenoExecutor
             effectiveLogger?.LogWarning(LogEvents.DenoExecutionError,
               "Cancellation requested. Terminating Deno process...");
             process.Kill(entireProcessTree: true);
+
+            // Force close streams to unblock ReadToEndAsync().
+            // This is necessary since Deno 2.7.0 changed stdio close behavior (see PR #32237).
+            // The streams will throw ObjectDisposedException, which we handle as cancellation.
+            try { process.StandardOutput.Close(); } catch { }
+            try { process.StandardError.Close(); } catch { }
           }
         }
         catch
@@ -115,40 +121,63 @@ internal static class DenoExecutor
         }
       });
 
-      var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-      var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
-      var waitForExitTask = process.WaitForExitAsync(cancellationToken);
-
-      await Task.WhenAll(outputTask, errorTask, waitForExitTask).ConfigureAwait(false);
-
-      string output = outputTask.Result;
-      string error = errorTask.Result;
-      stopwatch.Stop();
-
-      if (process.ExitCode != 0)
+      try
       {
-        effectiveLogger?.LogError(LogEvents.DenoExecutionFailed,
-          "Deno execution failed with exit code {ExitCode} after {ElapsedMs}ms. Error: {Error}",
-          process.ExitCode, stopwatch.ElapsedMilliseconds, error);
+        var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+        var waitForExitTask = process.WaitForExitAsync(cancellationToken);
 
-        throw new InvalidOperationException(
-          $"Deno exited with code {process.ExitCode}.{Environment.NewLine}" +
-          $"Standard Output:{Environment.NewLine}{output}{Environment.NewLine}" +
-          $"Standard Error:{Environment.NewLine}{error}"
-        );
+        await Task.WhenAll(outputTask, errorTask, waitForExitTask).ConfigureAwait(false);
+
+        string output = outputTask.Result;
+        string error = errorTask.Result;
+        stopwatch.Stop();
+
+        // Check if operation was cancelled before checking exit code
+        if (cancellationToken.IsCancellationRequested)
+        {
+          effectiveLogger?.LogWarning(LogEvents.DenoExecutionError,
+            "Deno execution was cancelled after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+          throw new OperationCanceledException(
+            $"Deno execution was cancelled after {stopwatch.ElapsedMilliseconds}ms.",
+            cancellationToken);
+        }
+
+        if (process.ExitCode != 0)
+        {
+          effectiveLogger?.LogError(LogEvents.DenoExecutionFailed,
+            "Deno execution failed with exit code {ExitCode} after {ElapsedMs}ms. Error: {Error}",
+            process.ExitCode, stopwatch.ElapsedMilliseconds, error);
+
+          throw new InvalidOperationException(
+            $"Deno exited with code {process.ExitCode}.{Environment.NewLine}" +
+            $"Standard Output:{Environment.NewLine}{output}{Environment.NewLine}" +
+            $"Standard Error:{Environment.NewLine}{error}"
+          );
+        }
+
+        effectiveLogger?.LogInformation(LogEvents.DenoExecutionCompleted,
+          "Deno execution completed successfully in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+        effectiveLogger?.LogDebug(LogEvents.DenoOutput, "Deno output: {Output}", output);
+
+        var deserializedResult = typeof(T) == typeof(string)
+          ? output
+          : JsonSerializer.Deserialize(output, resultType, jsonSerializerOptions);
+
+        return deserializedResult != null
+          ? (T)deserializedResult
+          : throw new InvalidOperationException("Deserialization returned null.");
       }
-
-      effectiveLogger?.LogInformation(LogEvents.DenoExecutionCompleted,
-        "Deno execution completed successfully in {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
-      effectiveLogger?.LogDebug(LogEvents.DenoOutput, "Deno output: {Output}", output);
-
-      var deserializedResult = typeof(T) == typeof(string)
-        ? output
-        : JsonSerializer.Deserialize(output, resultType, jsonSerializerOptions);
-
-      return deserializedResult != null
-        ? (T)deserializedResult
-        : throw new InvalidOperationException("Deserialization returned null.");
+      catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
+      {
+        // Stream was closed due to cancellation - treat as normal cancellation
+        stopwatch.Stop();
+        effectiveLogger?.LogWarning(LogEvents.DenoExecutionError,
+          "Deno execution was cancelled after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
+        throw new OperationCanceledException(
+          $"Deno execution was cancelled after {stopwatch.ElapsedMilliseconds}ms.",
+          cancellationToken);
+      }
     }
     catch (OperationCanceledException ex)
     {
