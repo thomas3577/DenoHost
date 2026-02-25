@@ -18,7 +18,7 @@ public static class JsonOptions
  * Represents the configuration for Deno, including compiler options, import maps, linting, formatting,
  * tasks, lock files, certificate error handling, testing configurations, and imports.
  *
- * Check against https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json
+ * Check against https://raw.githubusercontent.com/denoland/deno/{version}/cli/schemas/config-file.v1.json
  */
 public class DenoConfig
 {
