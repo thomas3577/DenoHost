@@ -216,7 +216,7 @@ jobs:
 
     steps:
       - name: Download Runtime Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime/${{ matrix.rid }}
@@ -233,7 +233,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core
@@ -252,13 +252,13 @@ jobs:
     steps:
       # Download all artifacts to attach to release
       - name: Download Core Package
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core
 
       - name: Download Runtime Packages
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: DenoHost.Runtime.*.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime
