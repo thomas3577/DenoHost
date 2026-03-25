@@ -13,7 +13,7 @@
     <Copyright>Copyright © 2025 Thomas Huber</Copyright>
 
     <!-- Official Deno Version -->
-    <DenoVersion>2.7.7</DenoVersion>
+    <DenoVersion>2.7.8</DenoVersion>
   </PropertyGroup>
 
   <ItemGroup>
