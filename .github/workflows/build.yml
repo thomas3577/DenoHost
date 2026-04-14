@@ -265,7 +265,7 @@ jobs:
           merge-multiple: true
 
       - name: Create GitHub Release with Auto-Generated Notes
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.get-version.outputs.tag_name }}
           name: ${{ needs.get-version.outputs.tag_name }}
