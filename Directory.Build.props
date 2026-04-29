@@ -16,6 +16,10 @@
     <DenoVersion>2.7.14</DenoVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <RuntimeFrameworkVersion>9.0.15</RuntimeFrameworkVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)assets/images/icon.png" Pack="true"
       PackagePath="assets/images/icon.png" />
