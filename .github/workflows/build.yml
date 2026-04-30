@@ -67,7 +67,9 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       - name: Check for Vulnerable Packages
         run: dotnet list DenoHost.sln package --vulnerable --include-transitive
@@ -136,7 +138,9 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       - name: Display .NET Info
         run: dotnet --info
@@ -165,7 +169,9 @@ jobs:
 
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       - name: Build Test Project (Release, win-x64)
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
@@ -200,7 +206,9 @@ jobs:
 
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       - name: Build Test Project (Release, linux-x64)
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64
