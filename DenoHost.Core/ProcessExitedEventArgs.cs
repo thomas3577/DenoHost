@@ -11,8 +11,8 @@ namespace DenoHost.Core;
 /// <param name="exitCode">The exit code of the process.</param>
 public class ProcessExitedEventArgs(int exitCode) : EventArgs
 {
-    /// <summary>
-    /// Gets the exit code of the process.
-    /// </summary>
-    public int ExitCode { get; } = exitCode;
+  /// <summary>
+  /// Gets the exit code of the process.
+  /// </summary>
+  public int ExitCode { get; } = exitCode;
 }
