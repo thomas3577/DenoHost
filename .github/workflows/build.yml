@@ -57,9 +57,35 @@ jobs:
           echo "##[notice]Tag name: $TAG_NAME"
           echo "##[notice]Is prerelease: $IS_PRERELEASE"
 
+  quality-checks:
+    name: Quality Checks
+    needs: get-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+
+      - name: Check for Vulnerable Packages
+        run: |
+          OUTPUT=$(dotnet list DenoHost.sln package --vulnerable --include-transitive --format json)
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q '"severity"'; then
+            echo "::error::Vulnerable packages detected!"
+            exit 1
+          fi
+
+      - name: Lint (dotnet format)
+        run: dotnet format DenoHost.sln --verify-no-changes --severity warn
+
   build-runtime:
     name: Build Runtime Packages
-    needs: get-version
+    needs: [get-version, quality-checks]
     strategy:
       matrix:
         include:
@@ -89,9 +115,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
+          dotnet-version: 10.0.x
 
       - name: Make shell script executable
         shell: bash
@@ -121,14 +145,11 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
-            8.0.x
             9.0.x
+            10.0.x
 
       - name: Display .NET Info
         run: dotnet --info
-
-      - name: Check for Vulnerable Packages
-        run: dotnet list package --vulnerable || true
 
       - name: Build Solution
         run: dotnet build DenoHost.sln -c Release
@@ -155,8 +176,8 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
-            8.0.x
             9.0.x
+            10.0.x
 
       - name: Build Test Project (Release, win-x64)
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
@@ -192,8 +213,8 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
-            8.0.x
             9.0.x
+            10.0.x
 
       - name: Build Test Project (Release, linux-x64)
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64
