@@ -72,7 +72,13 @@ jobs:
             10.0.x
 
       - name: Check for Vulnerable Packages
-        run: dotnet list DenoHost.sln package --vulnerable --include-transitive
+        run: |
+          OUTPUT=$(dotnet list DenoHost.sln package --vulnerable --include-transitive --format json)
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q '"severity"'; then
+            echo "::error::Vulnerable packages detected!"
+            exit 1
+          fi
 
       - name: Lint (dotnet format)
         run: dotnet format DenoHost.sln --verify-no-changes --severity warn
