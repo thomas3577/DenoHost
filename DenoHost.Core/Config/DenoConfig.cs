@@ -104,6 +104,12 @@ public class DenoConfig
   [JsonPropertyName("minimumDependencyAge")]
   public object? MinimumDependencyAge { get; set; }
 
+  [JsonPropertyName("catalog")]
+  public Dictionary<string, string>? Catalog { get; set; }
+
+  [JsonPropertyName("catalogs")]
+  public Dictionary<string, Dictionary<string, string>>? Catalogs { get; set; }
+
   /// <summary>
   /// Captures any additional properties not explicitly defined.
   /// This ensures forward compatibility when Deno adds new configuration options.
