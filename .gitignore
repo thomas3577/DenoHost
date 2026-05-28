@@ -22,6 +22,9 @@ coverage-report/
 # Deno binaries
 deno
 deno.exe
+deno.metadata.json
+deno.metadata.sig
+deno.exe.sha256sum
 *.zip
 
 .env

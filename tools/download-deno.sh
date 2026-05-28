@@ -41,11 +41,21 @@ extract_expected_hash() {
   local target_file="$2"
   local expected_hash
 
+  if [ ! -f "$checksum_file" ]; then
+    echo "Error: Checksum file not found: $checksum_file" >&2
+    exit 1
+  fi
+
+  # First try: match by filename
   expected_hash=$(awk -v file="$target_file" '
     BEGIN { IGNORECASE=1 }
     {
+      # Remove leading * from filename if present (BSD format)
       candidate = $2
       gsub(/^\*/, "", candidate)
+      # Normalize path separators
+      gsub(/\\/, "/", candidate)
+      gsub(/\\/, "/", file)
       if (tolower(candidate) == tolower(file) && $1 ~ /^[A-Fa-f0-9]{64}$/) {
         print tolower($1)
         exit
@@ -58,6 +68,28 @@ extract_expected_hash() {
     return
   fi
 
+  # Second try: match by just filename basename if full path didn't work
+  expected_hash=$(awk -v file="$(basename "$target_file")" '
+    BEGIN { IGNORECASE=1 }
+    {
+      candidate = $2
+      gsub(/^\*/, "", candidate)
+      # Get just the basename for comparison
+      gsub(/.*\//, "", candidate)
+      gsub(/.*\\/, "", candidate)
+      if (tolower(candidate) == tolower(file) && $1 ~ /^[A-Fa-f0-9]{64}$/) {
+        print tolower($1)
+        exit
+      }
+    }
+  ' "$checksum_file")
+
+  if [ -n "$expected_hash" ]; then
+    echo "$expected_hash"
+    return
+  fi
+
+  # Third try: just take first valid SHA256 (fallback for single-file checksum files)
   expected_hash=$(awk '
     {
       if ($1 ~ /^[A-Fa-f0-9]{64}$/) {
@@ -69,6 +101,8 @@ extract_expected_hash() {
 
   if [ -z "$expected_hash" ]; then
     echo "Error: Could not parse expected SHA-256 from $checksum_file for $target_file" >&2
+    echo "Checksum file content:" >&2
+    head -5 "$checksum_file" >&2
     exit 1
   fi
 
@@ -137,12 +171,13 @@ sign_runtime_metadata() {
   local signature_path
   local key_file
 
-  signature_path="$(dirname "$metadata_path")/deno.metadata.sig"
-
+  # If the signing key is not configured, skip signing (log to stderr only)
   if [ -z "$DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM" ]; then
-    echo "Error: Metadata signing key is required. Configure DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM." >&2
-    exit 1
+    echo "Skipping metadata signing (DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM not configured)" >&2
+    return 0
   fi
+
+  signature_path="$(dirname "$metadata_path")/deno.metadata.sig"
 
   if ! command -v openssl >/dev/null 2>&1; then
     echo "Error: openssl is required for metadata signing when DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is set." >&2

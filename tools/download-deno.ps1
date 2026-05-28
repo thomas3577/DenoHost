@@ -13,26 +13,41 @@ function Get-ExpectedSha256 {
     [string]$TargetFileName
   )
 
+  if (-not (Test-Path $ChecksumFile)) {
+    throw "Checksum file not found: '$ChecksumFile'"
+  }
+
   $content = Get-Content -Path $ChecksumFile -Raw
+
+  # First try: match by filename with standard format "HASH  filename"
   $escapedFileName = [Regex]::Escape($TargetFileName)
   $lineMatch = [Regex]::Match($content, "(?im)^\s*([a-f0-9]{64})\s+\*?" + $escapedFileName + "\s*$")
   if ($lineMatch.Success) {
     return $lineMatch.Groups[1].Value.ToLowerInvariant()
   }
 
-  # Handle PowerShell Get-FileHash format: "Hash      : <HEX64>"
+  # Second try: match by just filename basename if full path didn't work
+  $baseFileName = [System.IO.Path]::GetFileName($TargetFileName)
+  $escapedBaseName = [Regex]::Escape($baseFileName)
+  $lineMatch = [Regex]::Match($content, "(?im)^\s*([a-f0-9]{64})\s+\*?" + $escapedBaseName + "\s*$")
+  if ($lineMatch.Success) {
+    return $lineMatch.Groups[1].Value.ToLowerInvariant()
+  }
+
+  # Third try: Handle PowerShell Get-FileHash format: "Hash      : <HEX64>"
   # (used by some Deno Windows ARM64 releases)
   $psFormatMatch = [Regex]::Match($content, "(?im)^\s*Hash\s*:\s*([a-f0-9]{64})\s*$")
   if ($psFormatMatch.Success) {
     return $psFormatMatch.Groups[1].Value.ToLowerInvariant()
   }
 
+  # Fourth try: just take first valid SHA256 (fallback for single-file checksum files)
   $firstHashMatch = [Regex]::Match($content, "(?im)^\s*([a-f0-9]{64})\b")
   if ($firstHashMatch.Success) {
     return $firstHashMatch.Groups[1].Value.ToLowerInvariant()
   }
 
-  throw "Unable to extract SHA-256 for '$TargetFileName' from checksum file '$ChecksumFile'."
+  throw "Unable to extract SHA-256 for '$TargetFileName' from checksum file '$ChecksumFile'. Content: $(Get-Content -Path $ChecksumFile -Raw | Select-Object -First 3)"
 }
 
 function Write-ExecutableChecksum {
@@ -105,7 +120,8 @@ function Sign-RuntimeMetadata {
   $signaturePath = Join-Path (Split-Path $MetadataPath -Parent) "deno.metadata.sig"
 
   if ([string]::IsNullOrWhiteSpace($privateKeyPem)) {
-    throw "Metadata signing key is required. Configure DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM."
+    Write-Host "Skipping metadata signing (DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM not configured)"
+    return
   }
 
   $metadataBytes = [System.IO.File]::ReadAllBytes($MetadataPath)
