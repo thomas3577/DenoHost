@@ -15,6 +15,23 @@ Security fixes are provided only for the **latest published NuGet packages** and
 
 Because we ship native and third-party binaries, older packages are **not** patched retroactively.
 
+## Runtime Integrity Validation
+
+`DenoHost` validates runtime integrity before starting a process:
+
+- Preferred path: signed metadata verification (`deno.metadata.json` + `deno.metadata.sig`) and binary hash match.
+- Compatibility fallback: `.sha256sum` validation when signature artifacts are not present.
+
+To enforce strict signed-metadata validation (no fallback), set:
+
+`DENOHOST_REQUIRE_SIGNED_METADATA=true`
+
+For emergency incident mitigation, this check can be bypassed temporarily by setting:
+
+`DENOHOST_ALLOW_CHECKSUM_BYPASS=true`
+
+This bypass is intended as break-glass only and should be removed as soon as the incident is resolved.
+
 ## Reporting a Vulnerability
 
 Please report vulnerabilities privately:

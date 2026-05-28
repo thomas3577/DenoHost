@@ -330,6 +330,84 @@ public class HelperTests
   }
 
   [Fact]
+  public void IsChecksumBypassEnabled_WithTrueValue_ReturnsTrue()
+  {
+    var method = typeof(Helper).GetMethod("IsChecksumBypassEnabled", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var original = Environment.GetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS");
+    try
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", "true");
+      Assert.True((bool)method.Invoke(null, null)!);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", original);
+    }
+  }
+
+  [Fact]
+  public void IsChecksumBypassEnabled_WithMissingOrFalseValue_ReturnsFalse()
+  {
+    var method = typeof(Helper).GetMethod("IsChecksumBypassEnabled", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var original = Environment.GetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS");
+    try
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", null);
+      Assert.False((bool)method.Invoke(null, null)!);
+
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", "false");
+      Assert.False((bool)method.Invoke(null, null)!);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", original);
+    }
+  }
+
+  [Fact]
+  public void IsSignedMetadataRequired_WithTrueValue_ReturnsTrue()
+  {
+    var method = typeof(Helper).GetMethod("IsSignedMetadataRequired", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var original = Environment.GetEnvironmentVariable("DENOHOST_REQUIRE_SIGNED_METADATA");
+    try
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_REQUIRE_SIGNED_METADATA", "true");
+      Assert.True((bool)method.Invoke(null, null)!);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_REQUIRE_SIGNED_METADATA", original);
+    }
+  }
+
+  [Fact]
+  public void IsSignedMetadataRequired_WithMissingOrFalseValue_ReturnsFalse()
+  {
+    var method = typeof(Helper).GetMethod("IsSignedMetadataRequired", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var original = Environment.GetEnvironmentVariable("DENOHOST_REQUIRE_SIGNED_METADATA");
+    try
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_REQUIRE_SIGNED_METADATA", null);
+      Assert.False((bool)method.Invoke(null, null)!);
+
+      Environment.SetEnvironmentVariable("DENOHOST_REQUIRE_SIGNED_METADATA", "false");
+      Assert.False((bool)method.Invoke(null, null)!);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_REQUIRE_SIGNED_METADATA", original);
+    }
+  }
+
+  [Fact]
   public void GetDenoPath_WhenExecutableNotFound_ThrowsFileNotFoundException()
   {
     // This test is tricky because it depends on the actual file system

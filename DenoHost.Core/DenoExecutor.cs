@@ -62,6 +62,13 @@ internal static class DenoExecutor
     {
       workingDirectory ??= Directory.GetCurrentDirectory();
 
+      if (Helper.IsChecksumBypassEnabled())
+      {
+        effectiveLogger?.LogWarning(
+          "Deno executable checksum validation is bypassed via environment variable {EnvVar}. This should only be used temporarily for incident mitigation.",
+          Helper.ChecksumBypassEnvVarName);
+      }
+
       var fileName = Helper.GetDenoPath();
       var argumentList = Helper.BuildArgumentsArray(args, command);
 

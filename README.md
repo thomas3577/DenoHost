@@ -108,6 +108,33 @@ await denoProcess.StopAsync();
 - Deno version is bundled per RID via GitHub Releases
 - No need to install Deno globally
 
+## Security Integrity Checks
+
+- Runtime packages verify downloaded Deno archives with SHA-256 before extraction.
+- A SHA-256 checksum file is generated for the bundled executable and shipped with each runtime package.
+- Runtime packages can additionally ship `deno.metadata.json` and `deno.metadata.sig`.
+- `DenoHost.Core` prefers signed metadata verification (signature + binary hash). If signature artifacts are missing, it falls back to `.sha256sum` verification.
+
+### Metadata Signing
+
+- Signing key input for build/runtime packaging: `DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM`
+- Verification key input for runtime validation: `DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM`
+- `DenoHost.Core` includes a built-in public key and can be overridden via `DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM`.
+- Set `DENOHOST_REQUIRE_SIGNED_METADATA=true` to disable checksum fallback and require signed metadata at runtime.
+- Set `DENOHOST_REQUIRE_METADATA_SIGNATURE=true` in build jobs to fail when signature artifacts cannot be generated.
+
+If no signing private key is configured, signature artifacts are not generated and checksum fallback is used.
+
+### Break-Glass (temporary bypass)
+
+For incident mitigation only, checksum validation can be bypassed by setting:
+
+```bash
+DENOHOST_ALLOW_CHECKSUM_BYPASS=true
+```
+
+Use this only as a short-term emergency workaround. Keep it disabled in normal operation.
+
 ## Feedback
 
 If you're using DenoHost in a real project, I'd love to hear about it.

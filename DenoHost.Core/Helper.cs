@@ -1,13 +1,30 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
+using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using DenoHost.Core.Config;
 
 namespace DenoHost.Core;
 
 internal static class Helper
 {
+  internal const string ChecksumBypassEnvVarName = "DENOHOST_ALLOW_CHECKSUM_BYPASS";
+  internal const string MetadataPublicKeyEnvVarName = "DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM";
+  internal const string SignedMetadataRequiredEnvVarName = "DENOHOST_REQUIRE_SIGNED_METADATA";
+  private const string BuiltInMetadataSigningPublicKeyPem = """
+-----BEGIN PUBLIC KEY-----
+MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBRnj6ILWatyOt1WieU/cWoyLQwf6n
+oEw6eGbECClUd4f2XuBccjDSdgj2GPiQXOGKJ1I+Wh/sb0EC1SM1B2hjPBEBvozG
+q6+o54AUQ16b2iPzt3g7TumcfZB0qxr5XmhcWMnPtPvmc5fXgGtInEjlKAl3dr20
+XxGSOTFMItGfBKP0gKM=
+-----END PUBLIC KEY-----
+""";
+  private const string MetadataFileName = "deno.metadata.json";
+  private const string MetadataSignatureFileName = "deno.metadata.sig";
+
   internal static string BuildArguments(string[]? args, string? command = null)
   {
     var argsArray = BuildArgumentsArray(args, command);
@@ -121,8 +138,21 @@ internal static class Helper
 
     // Validate file permissions and executable status
     ValidateExecutableFile(normalizedPath);
+    ValidateExecutableIntegrity(normalizedPath);
 
     return normalizedPath;
+  }
+
+  internal static bool IsChecksumBypassEnabled()
+  {
+    var value = Environment.GetEnvironmentVariable(ChecksumBypassEnvVarName);
+    return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+  }
+
+  internal static bool IsSignedMetadataRequired()
+  {
+    var value = Environment.GetEnvironmentVariable(SignedMetadataRequiredEnvVarName);
+    return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
   }
 
   internal static string GetRuntimeId()
@@ -177,6 +207,175 @@ internal static class Helper
     {
       throw new UnauthorizedAccessException($"Cannot access Deno executable at {filePath}. Check file permissions.", ex);
     }
+  }
+
+  private static void ValidateExecutableIntegrity(string executablePath)
+  {
+    if (IsChecksumBypassEnabled())
+      return;
+
+    var executableDirectory = Path.GetDirectoryName(executablePath)
+      ?? throw new InvalidOperationException($"Unable to resolve executable directory for '{executablePath}'.");
+    var metadataPath = Path.Combine(executableDirectory, MetadataFileName);
+    var metadataSignaturePath = Path.Combine(executableDirectory, MetadataSignatureFileName);
+    var hasMetadataFile = File.Exists(metadataPath);
+    var hasMetadataSignature = File.Exists(metadataSignaturePath);
+    var isStrictSignedMode = IsSignedMetadataRequired();
+
+    if (hasMetadataFile ^ hasMetadataSignature)
+    {
+      throw new SecurityException(
+        $"Signed metadata artifacts are incomplete for '{executablePath}'. Expected both '{MetadataFileName}' and '{MetadataSignatureFileName}'.");
+    }
+
+    if (hasMetadataFile && hasMetadataSignature)
+    {
+      ValidateSignedExecutableMetadata(executablePath, metadataPath, metadataSignaturePath);
+      return;
+    }
+
+    if (isStrictSignedMode)
+    {
+      throw new SecurityException(
+        $"Signed metadata is required but missing for '{executablePath}'. Set {SignedMetadataRequiredEnvVarName}=false only for temporary compatibility scenarios.");
+    }
+
+    var checksumPath = executablePath + ".sha256sum";
+    if (!File.Exists(checksumPath))
+    {
+      throw new FileNotFoundException(
+        "Neither signed metadata files nor checksum file for Deno executable were found.",
+        checksumPath);
+    }
+
+    var expectedHash = ReadExpectedChecksum(checksumPath, Path.GetFileName(executablePath));
+    var actualHash = ComputeSha256(executablePath);
+
+    if (!string.Equals(expectedHash, actualHash, StringComparison.OrdinalIgnoreCase))
+    {
+      throw new SecurityException(
+        $"Checksum validation failed for Deno executable '{executablePath}'. Expected '{expectedHash}', got '{actualHash}'.");
+    }
+  }
+
+  private static void ValidateSignedExecutableMetadata(string executablePath, string metadataPath, string metadataSignaturePath)
+  {
+    var metadataBytes = File.ReadAllBytes(metadataPath);
+    var signatureText = File.ReadAllText(metadataSignaturePath).Trim();
+    if (string.IsNullOrWhiteSpace(signatureText))
+      throw new SecurityException($"Metadata signature file '{metadataSignaturePath}' is empty.");
+
+    byte[] signatureBytes;
+    try
+    {
+      signatureBytes = Convert.FromBase64String(signatureText);
+    }
+    catch (FormatException ex)
+    {
+      throw new SecurityException($"Metadata signature file '{metadataSignaturePath}' does not contain valid Base64.", ex);
+    }
+
+    var publicKeyPem = GetMetadataPublicKeyPem();
+    if (string.IsNullOrWhiteSpace(publicKeyPem))
+    {
+      throw new SecurityException(
+        $"Signed metadata was found for '{executablePath}', but no public key is configured. " +
+        $"Set {MetadataPublicKeyEnvVarName} or provide a built-in public key.");
+    }
+
+    using var ecdsa = ECDsa.Create();
+    ecdsa.ImportFromPem(publicKeyPem);
+
+    var signatureValid = ecdsa.VerifyData(metadataBytes, signatureBytes, HashAlgorithmName.SHA256);
+    if (!signatureValid)
+      throw new SecurityException($"Metadata signature validation failed for '{metadataPath}'.");
+
+    RuntimeMetadata? metadata;
+    try
+    {
+      metadata = JsonSerializer.Deserialize<RuntimeMetadata>(metadataBytes);
+    }
+    catch (JsonException ex)
+    {
+      throw new SecurityException($"Metadata file '{metadataPath}' is invalid JSON.", ex);
+    }
+
+    if (metadata is null)
+      throw new SecurityException($"Metadata file '{metadataPath}' is empty or invalid.");
+
+    if (!string.Equals(metadata.FileName, Path.GetFileName(executablePath), StringComparison.OrdinalIgnoreCase))
+      throw new SecurityException($"Metadata file name '{metadata.FileName}' does not match executable '{Path.GetFileName(executablePath)}'.");
+
+    if (!string.Equals(metadata.Rid, GetRuntimeId(), StringComparison.OrdinalIgnoreCase))
+      throw new SecurityException($"Metadata RID '{metadata.Rid}' does not match current runtime '{GetRuntimeId()}'.");
+
+    var actualHash = ComputeSha256(executablePath);
+    if (!string.Equals(metadata.Sha256, actualHash, StringComparison.OrdinalIgnoreCase))
+    {
+      throw new SecurityException(
+        $"Metadata hash validation failed for Deno executable '{executablePath}'. Expected '{metadata.Sha256}', got '{actualHash}'.");
+    }
+  }
+
+  private static string? GetMetadataPublicKeyPem()
+  {
+    var envValue = Environment.GetEnvironmentVariable(MetadataPublicKeyEnvVarName);
+    if (!string.IsNullOrWhiteSpace(envValue))
+      return envValue;
+
+    return string.IsNullOrWhiteSpace(BuiltInMetadataSigningPublicKeyPem)
+      ? null
+      : BuiltInMetadataSigningPublicKeyPem;
+  }
+
+  private static string ReadExpectedChecksum(string checksumPath, string executableName)
+  {
+    var lines = File.ReadAllLines(checksumPath);
+
+    foreach (var rawLine in lines)
+    {
+      var line = rawLine.Trim();
+      if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
+        continue;
+
+      var parts = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+      if (parts.Length == 0)
+        continue;
+
+      if (!IsSha256(parts[0]))
+        continue;
+
+      if (parts.Length == 1)
+        return parts[0].ToLowerInvariant();
+
+      var candidateName = parts[1].TrimStart('*');
+      if (string.Equals(candidateName, executableName, StringComparison.OrdinalIgnoreCase))
+        return parts[0].ToLowerInvariant();
+    }
+
+    throw new InvalidOperationException(
+      $"Unable to parse expected SHA-256 checksum for '{executableName}' from '{checksumPath}'.");
+  }
+
+  private static bool IsSha256(string value)
+  {
+    if (value.Length != 64)
+      return false;
+
+    foreach (var ch in value)
+    {
+      if (!Uri.IsHexDigit(ch))
+        return false;
+    }
+
+    return true;
+  }
+
+  private static string ComputeSha256(string filePath)
+  {
+    using var stream = File.OpenRead(filePath);
+    var hash = SHA256.HashData(stream);
+    return Convert.ToHexString(hash).ToLowerInvariant();
   }
 
   internal static string WriteTempConfig(DenoConfig config)
@@ -318,5 +517,29 @@ internal static class Helper
     {
       throw new IOException($"Failed to delete temporary file: {resolvedPath}", ex);
     }
+  }
+
+  private sealed class RuntimeMetadata
+  {
+    [JsonPropertyName("metadataVersion")]
+    public int MetadataVersion { get; set; }
+
+    [JsonPropertyName("fileName")]
+    public string FileName { get; set; } = string.Empty;
+
+    [JsonPropertyName("rid")]
+    public string Rid { get; set; } = string.Empty;
+
+    [JsonPropertyName("denoVersion")]
+    public string DenoVersion { get; set; } = string.Empty;
+
+    [JsonPropertyName("sha256")]
+    public string Sha256 { get; set; } = string.Empty;
+
+    [JsonPropertyName("source")]
+    public string Source { get; set; } = string.Empty;
+
+    [JsonPropertyName("createdAtUtc")]
+    public string CreatedAtUtc { get; set; } = string.Empty;
   }
 }

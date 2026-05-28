@@ -123,7 +123,23 @@ jobs:
 
       - name: Pack Runtime Package
         shell: bash
+        env:
+          DENOHOST_REQUIRE_METADATA_SIGNATURE: ${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}
+          DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM }}
+          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: |
+          if [ "${DENOHOST_REQUIRE_METADATA_SIGNATURE}" = "true" ]; then
+            if [ -z "${DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM}" ]; then
+              echo "::error::Release builds require DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM secret."
+              exit 1
+            fi
+
+            if [ -z "${DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM}" ]; then
+              echo "::error::Release builds require DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM secret."
+              exit 1
+            fi
+          fi
+
           VERSION=${{ needs.get-version.outputs.package_version }}
           dotnet pack ${{ matrix.proj }} -c Release -p:Version=$VERSION --output ./nupkg/runtime/${{ matrix.rid }}
 
@@ -180,6 +196,9 @@ jobs:
             10.0.x
 
       - name: Build Test Project (Release, win-x64)
+        env:
+          DENOHOST_REQUIRE_SIGNED_METADATA: ${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}
+          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
 
       - name: Check deno.exe exists
@@ -187,6 +206,9 @@ jobs:
         run: test -f DenoHost.Tests/bin/Release/net9.0/win-x64/runtimes/win-x64/native/deno.exe
 
       - name: Run Unit Tests with Coverage
+        env:
+          DENOHOST_REQUIRE_SIGNED_METADATA: ${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}
+          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64 --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
 
       - name: Install ReportGenerator
@@ -217,6 +239,9 @@ jobs:
             10.0.x
 
       - name: Build Test Project (Release, linux-x64)
+        env:
+          DENOHOST_REQUIRE_SIGNED_METADATA: ${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}
+          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64
 
       - name: Check deno exists
@@ -224,6 +249,9 @@ jobs:
         run: test -f DenoHost.Tests/bin/Release/net9.0/linux-x64/runtimes/linux-x64/native/deno
 
       - name: Run Unit Tests
+        env:
+          DENOHOST_REQUIRE_SIGNED_METADATA: ${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}
+          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64 --no-build
 
   publish-runtime:

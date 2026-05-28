@@ -5,6 +5,15 @@
       <RidOutputDir>$(TargetDir)runtimes/$(RuntimeRid)/native</RidOutputDir>
       <DenoSrc>$(MSBuildProjectDirectory)/$(DenoFileName)</DenoSrc>
       <DenoDst>$(RidOutputDir)/$(DenoFileName)</DenoDst>
+      <DenoChecksumFileName>$(DenoFileName).sha256sum</DenoChecksumFileName>
+      <DenoChecksumSrc>$(MSBuildProjectDirectory)/$(DenoChecksumFileName)</DenoChecksumSrc>
+      <DenoChecksumDst>$(RidOutputDir)/$(DenoChecksumFileName)</DenoChecksumDst>
+      <DenoMetadataFileName>deno.metadata.json</DenoMetadataFileName>
+      <DenoMetadataSrc>$(MSBuildProjectDirectory)/$(DenoMetadataFileName)</DenoMetadataSrc>
+      <DenoMetadataDst>$(RidOutputDir)/$(DenoMetadataFileName)</DenoMetadataDst>
+      <DenoMetadataSigFileName>deno.metadata.sig</DenoMetadataSigFileName>
+      <DenoMetadataSigSrc>$(MSBuildProjectDirectory)/$(DenoMetadataSigFileName)</DenoMetadataSigSrc>
+      <DenoMetadataSigDst>$(RidOutputDir)/$(DenoMetadataSigFileName)</DenoMetadataSigDst>
     </PropertyGroup>
 
     <Message Importance="high" Text="Copying $(DenoFileName) from: $(DenoSrc) to: $(DenoDst)" />
@@ -13,6 +22,15 @@
     <Copy Condition="Exists('$(DenoSrc)')" SourceFiles="$(DenoSrc)"
           DestinationFiles="$(DenoDst)" SkipUnchangedFiles="true" />
 
+          <Copy Condition="Exists('$(DenoChecksumSrc)')" SourceFiles="$(DenoChecksumSrc)"
+          DestinationFiles="$(DenoChecksumDst)" SkipUnchangedFiles="true" />
+
+          <Copy Condition="Exists('$(DenoMetadataSrc)')" SourceFiles="$(DenoMetadataSrc)"
+            DestinationFiles="$(DenoMetadataDst)" SkipUnchangedFiles="true" />
+
+          <Copy Condition="Exists('$(DenoMetadataSigSrc)')" SourceFiles="$(DenoMetadataSigSrc)"
+            DestinationFiles="$(DenoMetadataSigDst)" SkipUnchangedFiles="true" />
+
     <!-- Ensure executable bit on Unix -->
     <Exec Condition="$([MSBuild]::IsOsUnixLike()) and Exists('$(DenoDst)')" Command="chmod +x '$(DenoDst)'" />
   </Target>
@@ -20,6 +38,18 @@
   <!-- NuGet packaging layout -->
   <ItemGroup>
     <None Include="$(MSBuildProjectDirectory)/$(DenoFileName)"
+          Pack="true"
+          PackagePath="runtimes/$(RuntimeRid)/native" />
+    <None Include="$(MSBuildProjectDirectory)/$(DenoFileName).sha256sum"
+          Condition="Exists('$(MSBuildProjectDirectory)/$(DenoFileName).sha256sum')"
+          Pack="true"
+          PackagePath="runtimes/$(RuntimeRid)/native" />
+        <None Include="$(MSBuildProjectDirectory)/deno.metadata.json"
+          Condition="Exists('$(MSBuildProjectDirectory)/deno.metadata.json')"
+          Pack="true"
+          PackagePath="runtimes/$(RuntimeRid)/native" />
+        <None Include="$(MSBuildProjectDirectory)/deno.metadata.sig"
+          Condition="Exists('$(MSBuildProjectDirectory)/deno.metadata.sig')"
           Pack="true"
           PackagePath="runtimes/$(RuntimeRid)/native" />
   </ItemGroup>
