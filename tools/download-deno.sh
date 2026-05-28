@@ -187,10 +187,10 @@ sign_runtime_metadata() {
   local signature_path
   local key_file
 
-  # If the signing key is not configured, skip signing (log to stderr only)
+  # Signing is mandatory when emitting runtime metadata.
   if [ -z "$DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM" ]; then
-    echo "Skipping metadata signing (DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM not configured)" >&2
-    return 0
+    echo "Error: DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is required to sign runtime metadata." >&2
+    exit 1
   fi
 
   signature_path="$(dirname "$metadata_path")/deno.metadata.sig"

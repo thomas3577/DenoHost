@@ -194,6 +194,7 @@ jobs:
 
       - name: Build Test Project (Release, win-x64)
         env:
+          DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM }}
           DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
 
@@ -235,6 +236,7 @@ jobs:
 
       - name: Build Test Project (Release, linux-x64)
         env:
+          DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM }}
           DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64
 
