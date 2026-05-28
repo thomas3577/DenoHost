@@ -19,12 +19,7 @@ Because we ship native and third-party binaries, older packages are **not** patc
 
 `DenoHost` validates runtime integrity before starting a process:
 
-- Preferred path: signed metadata verification (`deno.metadata.json` + `deno.metadata.sig`) and binary hash match.
-- Compatibility fallback: `.sha256sum` validation when signature artifacts are not present.
-
-To enforce strict signed-metadata validation (no fallback), set:
-
-`DENOHOST_REQUIRE_SIGNED_METADATA=true`
+- Required path: signed metadata verification (`deno.metadata.json` + `deno.metadata.sig`) and binary hash match.
 
 For emergency incident mitigation, this check can be bypassed temporarily by setting:
 

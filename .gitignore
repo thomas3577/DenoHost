@@ -25,3 +25,4 @@ deno.exe
 *.zip
 
 .env
+keys/

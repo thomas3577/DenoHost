@@ -113,17 +113,15 @@ await denoProcess.StopAsync();
 - Runtime packages verify downloaded Deno archives with SHA-256 before extraction.
 - A SHA-256 checksum file is generated for the bundled executable and shipped with each runtime package.
 - Runtime packages can additionally ship `deno.metadata.json` and `deno.metadata.sig`.
-- `DenoHost.Core` prefers signed metadata verification (signature + binary hash). If signature artifacts are missing, it falls back to `.sha256sum` verification.
+- `DenoHost.Core` requires signed metadata verification (signature + binary hash) before process start.
 
 ### Metadata Signing
 
 - Signing key input for build/runtime packaging: `DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM`
 - Verification key input for runtime validation: `DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM`
 - `DenoHost.Core` includes a built-in public key and can be overridden via `DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM`.
-- Set `DENOHOST_REQUIRE_SIGNED_METADATA=true` to disable checksum fallback and require signed metadata at runtime.
-- Set `DENOHOST_REQUIRE_METADATA_SIGNATURE=true` in build jobs to fail when signature artifacts cannot be generated.
 
-If no signing private key is configured, signature artifacts are not generated and checksum fallback is used.
+If no signing private key is configured, runtime package build fails.
 
 ### Break-Glass (temporary bypass)
 

@@ -13,7 +13,6 @@ internal static class Helper
 {
   internal const string ChecksumBypassEnvVarName = "DENOHOST_ALLOW_CHECKSUM_BYPASS";
   internal const string MetadataPublicKeyEnvVarName = "DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM";
-  internal const string SignedMetadataRequiredEnvVarName = "DENOHOST_REQUIRE_SIGNED_METADATA";
   private const string BuiltInMetadataSigningPublicKeyPem = """
 -----BEGIN PUBLIC KEY-----
 MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBRnj6ILWatyOt1WieU/cWoyLQwf6n
@@ -149,12 +148,6 @@ XxGSOTFMItGfBKP0gKM=
     return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
   }
 
-  internal static bool IsSignedMetadataRequired()
-  {
-    var value = Environment.GetEnvironmentVariable(SignedMetadataRequiredEnvVarName);
-    return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
-  }
-
   internal static string GetRuntimeId()
   {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -220,7 +213,6 @@ XxGSOTFMItGfBKP0gKM=
     var metadataSignaturePath = Path.Combine(executableDirectory, MetadataSignatureFileName);
     var hasMetadataFile = File.Exists(metadataPath);
     var hasMetadataSignature = File.Exists(metadataSignaturePath);
-    var isStrictSignedMode = IsSignedMetadataRequired();
 
     if (hasMetadataFile ^ hasMetadataSignature)
     {
@@ -234,28 +226,8 @@ XxGSOTFMItGfBKP0gKM=
       return;
     }
 
-    if (isStrictSignedMode)
-    {
-      throw new SecurityException(
-        $"Signed metadata is required but missing for '{executablePath}'. Set {SignedMetadataRequiredEnvVarName}=false only for temporary compatibility scenarios.");
-    }
-
-    var checksumPath = executablePath + ".sha256sum";
-    if (!File.Exists(checksumPath))
-    {
-      throw new FileNotFoundException(
-        "Neither signed metadata files nor checksum file for Deno executable were found.",
-        checksumPath);
-    }
-
-    var expectedHash = ReadExpectedChecksum(checksumPath, Path.GetFileName(executablePath));
-    var actualHash = ComputeSha256(executablePath);
-
-    if (!string.Equals(expectedHash, actualHash, StringComparison.OrdinalIgnoreCase))
-    {
-      throw new SecurityException(
-        $"Checksum validation failed for Deno executable '{executablePath}'. Expected '{expectedHash}', got '{actualHash}'.");
-    }
+    throw new SecurityException(
+      $"Signed metadata is required but missing for '{executablePath}'. Expected both '{MetadataFileName}' and '{MetadataSignatureFileName}'.");
   }
 
   private static void ValidateSignedExecutableMetadata(string executablePath, string metadataPath, string metadataSignaturePath)

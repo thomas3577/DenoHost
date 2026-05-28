@@ -122,20 +122,12 @@ sign_runtime_metadata() {
   local metadata_path="$1"
   local signature_path
   local key_file
-  local require_signature
 
   signature_path="$(dirname "$metadata_path")/deno.metadata.sig"
-  require_signature="${DENOHOST_REQUIRE_METADATA_SIGNATURE:-false}"
 
   if [ -z "$DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM" ]; then
-    if [ "$require_signature" = "true" ]; then
-      echo "Error: Metadata signing key is required because DENOHOST_REQUIRE_METADATA_SIGNATURE=true. Configure DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM." >&2
-      exit 1
-    fi
-
-    rm -f "$signature_path"
-    echo "Warning: Metadata signing key is not configured (DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM). Signature file will not be generated." >&2
-    return
+    echo "Error: Metadata signing key is required. Configure DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM." >&2
+    exit 1
   fi
 
   if ! command -v openssl >/dev/null 2>&1; then

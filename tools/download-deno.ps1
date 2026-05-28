@@ -95,20 +95,10 @@ function Sign-RuntimeMetadata {
   )
 
   $privateKeyPem = [Environment]::GetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM")
-  $requireSignature = [string]::Equals([Environment]::GetEnvironmentVariable("DENOHOST_REQUIRE_METADATA_SIGNATURE"), "true", [StringComparison]::OrdinalIgnoreCase)
   $signaturePath = Join-Path (Split-Path $MetadataPath -Parent) "deno.metadata.sig"
 
   if ([string]::IsNullOrWhiteSpace($privateKeyPem)) {
-    if ($requireSignature) {
-      throw "Metadata signing key is required because DENOHOST_REQUIRE_METADATA_SIGNATURE=true. Configure DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM."
-    }
-
-    if (Test-Path $signaturePath) {
-      Remove-Item $signaturePath -Force
-    }
-
-    Write-Warning "Metadata signing key is not configured (DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM). Signature file will not be generated."
-    return
+    throw "Metadata signing key is required. Configure DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM."
   }
 
   $metadataBytes = [System.IO.File]::ReadAllBytes($MetadataPath)
