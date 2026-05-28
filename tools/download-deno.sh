@@ -89,7 +89,23 @@ extract_expected_hash() {
     return
   fi
 
-  # Third try: just take first valid SHA256 (fallback for single-file checksum files)
+  # Third try: PowerShell Get-FileHash format: "Hash      : <HEX64>"
+  expected_hash=$(awk '
+    BEGIN { IGNORECASE=1 }
+    /^\s*Hash\s*:\s*[A-Fa-f0-9]{64}/ {
+      match($0, /[A-Fa-f0-9]{64}/)
+      hash = substr($0, RSTART, RLENGTH)
+      print tolower(hash)
+      exit
+    }
+  ' "$checksum_file")
+
+  if [ -n "$expected_hash" ]; then
+    echo "$expected_hash"
+    return
+  fi
+
+  # Fourth try: just take first valid SHA256 (fallback for single-file checksum files)
   expected_hash=$(awk '
     {
       if ($1 ~ /^[A-Fa-f0-9]{64}$/) {
