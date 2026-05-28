@@ -164,8 +164,8 @@ jobs:
       - name: Display .NET Info
         run: dotnet --info
 
-      - name: Build Solution
-        run: dotnet build DenoHost.sln -c Release
+      - name: Build Core Project
+        run: dotnet build DenoHost.Core/DenoHost.Core.csproj -c Release
 
       - name: Pack Core Project
         run: |
