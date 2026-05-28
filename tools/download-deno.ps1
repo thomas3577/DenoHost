@@ -20,6 +20,13 @@ function Get-ExpectedSha256 {
     return $lineMatch.Groups[1].Value.ToLowerInvariant()
   }
 
+  # Handle PowerShell Get-FileHash format: "Hash      : <HEX64>"
+  # (used by some Deno Windows ARM64 releases)
+  $psFormatMatch = [Regex]::Match($content, "(?im)^\s*Hash\s*:\s*([a-f0-9]{64})\s*$")
+  if ($psFormatMatch.Success) {
+    return $psFormatMatch.Groups[1].Value.ToLowerInvariant()
+  }
+
   $firstHashMatch = [Regex]::Match($content, "(?im)^\s*([a-f0-9]{64})\b")
   if ($firstHashMatch.Success) {
     return $firstHashMatch.Groups[1].Value.ToLowerInvariant()

@@ -275,7 +275,7 @@ XxGSOTFMItGfBKP0gKM=
     if (metadata is null)
       throw new SecurityException($"Metadata file '{metadataPath}' is empty or invalid.");
 
-    if (!string.Equals(metadata.FileName, Path.GetFileName(executablePath), StringComparison.OrdinalIgnoreCase))
+    if (!string.Equals(metadata.FileName, Path.GetFileName(executablePath), StringComparison.Ordinal))
       throw new SecurityException($"Metadata file name '{metadata.FileName}' does not match executable '{Path.GetFileName(executablePath)}'.");
 
     if (!string.Equals(metadata.Rid, GetRuntimeId(), StringComparison.OrdinalIgnoreCase))

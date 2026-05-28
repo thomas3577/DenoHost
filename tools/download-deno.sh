@@ -95,6 +95,16 @@ resolve_runtime_rid() {
   echo "unknown"
 }
 
+json_escape() {
+  local value="$1"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  value="${value//$'\n'/\\n}"
+  value="${value//$'\r'/\\r}"
+  value="${value//$'\t'/\\t}"
+  printf "%s" "$value"
+}
+
 write_runtime_metadata() {
   local executable="$1"
   local deno_version="$2"
@@ -104,14 +114,16 @@ write_runtime_metadata() {
   local executable_hash
   local metadata_path
   local created_at
+  local source_url
 
   executable_name=$(basename "$executable")
   executable_hash=$(compute_sha256 "$executable")
   metadata_path="$(dirname "$executable")/deno.metadata.json"
   created_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  source_url="https://github.com/denoland/deno/releases/download/v${deno_version}/${archive_name}"
 
   cat > "$metadata_path" <<EOF
-{"metadataVersion":1,"fileName":"$executable_name","rid":"$runtime_rid","denoVersion":"$deno_version","sha256":"$executable_hash","source":"https://github.com/denoland/deno/releases/download/v$deno_version/$archive_name","createdAtUtc":"$created_at"}
+{"metadataVersion":1,"fileName":"$(json_escape "$executable_name")","rid":"$(json_escape "$runtime_rid")","denoVersion":"$(json_escape "$deno_version")","sha256":"$(json_escape "$executable_hash")","source":"$(json_escape "$source_url")","createdAtUtc":"$(json_escape "$created_at")"}
 EOF
 
   # Keep human-readable log output off stdout so callers using command substitution
@@ -138,10 +150,14 @@ sign_runtime_metadata() {
   fi
 
   key_file=$(mktemp)
+  # Ensure the private key temp file is removed even if openssl fails or the script
+  # is interrupted; the trap is cleared after successful cleanup.
+  trap 'rm -f "$key_file"' EXIT ERR INT TERM
   printf "%s" "$DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM" > "$key_file"
 
   openssl dgst -sha256 -sign "$key_file" -binary "$metadata_path" | openssl base64 -A > "$signature_path"
   rm -f "$key_file"
+  trap - EXIT ERR INT TERM
 
   echo "Wrote runtime metadata signature to $signature_path"
 }
