@@ -114,8 +114,10 @@ write_runtime_metadata() {
 {"metadataVersion":1,"fileName":"$executable_name","rid":"$runtime_rid","denoVersion":"$deno_version","sha256":"$executable_hash","source":"https://github.com/denoland/deno/releases/download/v$deno_version/$archive_name","createdAtUtc":"$created_at"}
 EOF
 
-  echo "Wrote runtime metadata to $metadata_path"
-  echo "$metadata_path"
+  # Keep human-readable log output off stdout so callers using command substitution
+  # receive only the metadata path.
+  echo "Wrote runtime metadata to $metadata_path" >&2
+  printf "%s\n" "$metadata_path"
 }
 
 sign_runtime_metadata() {
