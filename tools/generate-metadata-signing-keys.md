@@ -38,7 +38,7 @@ Store file contents in repository secrets:
 - DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: used during runtime package build to create deno.metadata.sig.
 - DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: optional runtime override for signature verification key.
 
-Signing is required: if DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is missing, runtime package build fails.
+Signing is skipped when DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is missing, but release/package builds should still provide the secret.
 
 ## Security Notes
 

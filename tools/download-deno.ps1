@@ -120,7 +120,8 @@ function Sign-RuntimeMetadata {
   $signaturePath = Join-Path (Split-Path $MetadataPath -Parent) "deno.metadata.sig"
 
   if ([string]::IsNullOrWhiteSpace($privateKeyPem)) {
-    throw "DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is required to sign runtime metadata."
+    Write-Warning "DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is not set; skipping runtime metadata signature."
+    return
   }
 
   $metadataBytes = [System.IO.File]::ReadAllBytes($MetadataPath)

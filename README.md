@@ -121,7 +121,7 @@ await denoProcess.StopAsync();
 - Verification key input for runtime validation: `DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM`
 - `DenoHost.Core` includes a built-in public key and can be overridden via `DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM`.
 
-If no signing private key is configured, runtime package build fails.
+If no signing private key is configured, runtime metadata signing is skipped. Release/package builds should still provide the signing secrets.
 
 ### Break-Glass (temporary bypass)
 
