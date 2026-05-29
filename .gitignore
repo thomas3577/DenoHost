@@ -29,3 +29,4 @@ deno.exe.sha256sum
 
 .env
 keys/
+artifacts/

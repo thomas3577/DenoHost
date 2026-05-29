@@ -8,6 +8,7 @@ We currently maintain two separate implementations for the Deno download/bootstr
 - `tools/download-deno.sh`
 
 Both scripts contain the same core workflow:
+
 - download Deno
 - verify checksum
 - extract the archive
@@ -24,6 +25,7 @@ Replace the duplicated script logic with a single .NET-based CLI tool that imple
 ## Why .NET CLI
 
 A .NET CLI seems like the better fit for this repository because:
+
 - the project is already .NET-based
 - cryptography, JSON handling, and filesystem logic are easier to maintain in C#
 - the implementation can be tested more cleanly
