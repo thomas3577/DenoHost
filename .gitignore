@@ -25,6 +25,7 @@ deno.exe
 deno.metadata.json
 deno.metadata.sig
 deno.exe.sha256sum
+deno.sha256sum
 *.zip
 
 .env
