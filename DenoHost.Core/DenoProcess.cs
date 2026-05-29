@@ -302,6 +302,13 @@ public class DenoProcess : IDisposable
       _lastExitCode = null;
     }
 
+    if (Helper.IsChecksumBypassEnabled())
+    {
+      _logger?.LogWarning(
+        "Deno executable checksum validation is bypassed via environment variable {EnvVar}. This should only be used temporarily for incident mitigation.",
+        Helper.ChecksumBypassEnvVarName);
+    }
+
     var fileName = Helper.GetDenoPath();
     var arguments = string.Join(" ", _args);
 

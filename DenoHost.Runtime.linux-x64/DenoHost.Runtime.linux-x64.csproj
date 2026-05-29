@@ -31,11 +31,11 @@
     <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
 
     <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DenoVersion "$(DenoVersion)"'
-          ContinueOnError="true" IgnoreExitCode="true" />
+          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DenoVersion "$(DenoVersion)" -RuntimeRid "$(RuntimeRid)"'
+          ContinueOnError="false" IgnoreExitCode="false" />
     <Exec Condition="'$(OS)' != 'Windows_NT'"
-          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DenoVersion)"'
-          ContinueOnError="true" IgnoreExitCode="true" />
+          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DenoVersion)" "$(RuntimeRid)"'
+          ContinueOnError="false" IgnoreExitCode="false" />
   </Target>
 
   <!-- Common copy/pack logic -->
