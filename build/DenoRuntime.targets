@@ -1,4 +1,8 @@
 <Project>
+  <PropertyGroup>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);AddRuntimeFilesToPack</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
   <!-- Copies deno into bin/.../runtimes/<rid>/native and packs it into NuGet the same way -->
   <Target Name="CopyDenoToRuntimeFolder" AfterTargets="Build">
     <PropertyGroup>
@@ -35,25 +39,28 @@
     <Exec Condition="$([MSBuild]::IsOsUnixLike()) and Exists('$(DenoDst)')" Command="chmod +x '$(DenoDst)'" />
   </Target>
 
-  <!-- Add files to pack at target execution time so generated files are not missed -->
-  <Target Name="AddRuntimeFilesToPack" BeforeTargets="GenerateNuspec">
+  <!-- Add files to package via SDK-specific content pipeline. -->
+  <Target Name="AddRuntimeFilesToPack">
     <ItemGroup>
-      <None Include="$(MSBuildProjectDirectory)/$(DenoFileName)"
-            Condition="Exists('$(MSBuildProjectDirectory)/$(DenoFileName)')"
-            Pack="true"
-            PackagePath="runtimes/$(RuntimeRid)/native" />
-      <None Include="$(MSBuildProjectDirectory)/$(DenoFileName).sha256sum"
-            Condition="Exists('$(MSBuildProjectDirectory)/$(DenoFileName).sha256sum')"
-            Pack="true"
-            PackagePath="runtimes/$(RuntimeRid)/native" />
-      <None Include="$(MSBuildProjectDirectory)/deno.metadata.json"
-            Condition="Exists('$(MSBuildProjectDirectory)/deno.metadata.json')"
-            Pack="true"
-            PackagePath="runtimes/$(RuntimeRid)/native" />
-      <None Include="$(MSBuildProjectDirectory)/deno.metadata.sig"
-            Condition="Exists('$(MSBuildProjectDirectory)/deno.metadata.sig')"
-            Pack="true"
-            PackagePath="runtimes/$(RuntimeRid)/native" />
+      <TfmSpecificPackageFile Include="$(MSBuildProjectDirectory)/$(DenoFileName)"
+                              Condition="Exists('$(MSBuildProjectDirectory)/$(DenoFileName)')">
+        <PackagePath>runtimes/$(RuntimeRid)/native/</PackagePath>
+      </TfmSpecificPackageFile>
+
+      <TfmSpecificPackageFile Include="$(MSBuildProjectDirectory)/$(DenoFileName).sha256sum"
+                              Condition="Exists('$(MSBuildProjectDirectory)/$(DenoFileName).sha256sum')">
+        <PackagePath>runtimes/$(RuntimeRid)/native/</PackagePath>
+      </TfmSpecificPackageFile>
+
+      <TfmSpecificPackageFile Include="$(MSBuildProjectDirectory)/deno.metadata.json"
+                              Condition="Exists('$(MSBuildProjectDirectory)/deno.metadata.json')">
+        <PackagePath>runtimes/$(RuntimeRid)/native/</PackagePath>
+      </TfmSpecificPackageFile>
+
+      <TfmSpecificPackageFile Include="$(MSBuildProjectDirectory)/deno.metadata.sig"
+                              Condition="Exists('$(MSBuildProjectDirectory)/deno.metadata.sig')">
+        <PackagePath>runtimes/$(RuntimeRid)/native/</PackagePath>
+      </TfmSpecificPackageFile>
     </ItemGroup>
   </Target>
 </Project>
