@@ -64,6 +64,9 @@
     <PropertyGroup>
       <DenoFile Condition="'$(OS)' == 'Windows_NT'">deno.exe</DenoFile>
       <DenoFile Condition="'$(OS)' != 'Windows_NT'">deno</DenoFile>
+      <DenoChecksumFile>$(DenoFile).sha256sum</DenoChecksumFile>
+      <DenoMetadataFile>deno.metadata.json</DenoMetadataFile>
+      <DenoMetadataSigFile>deno.metadata.sig</DenoMetadataSigFile>
 
       <RuntimeProjectDir>$(MSBuildThisFileDirectory)..\DenoHost.Runtime.$(RuntimeIdentifier)</RuntimeProjectDir>
       <RuntimeOutputDir>$(RuntimeProjectDir)\bin\$(Configuration)\netstandard2.1\runtimes\$(RuntimeIdentifier)\native</RuntimeOutputDir>
@@ -79,6 +82,21 @@
           SourceFiles="$(RuntimeOutputDir)\$(DenoFile)"
           DestinationFiles="$(TargetRuntimeDir)\$(DenoFile)"
           SkipUnchangedFiles="true" />
+
+        <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoChecksumFile)')"
+          SourceFiles="$(RuntimeOutputDir)\$(DenoChecksumFile)"
+          DestinationFiles="$(TargetRuntimeDir)\$(DenoChecksumFile)"
+          SkipUnchangedFiles="true" />
+
+            <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoMetadataFile)')"
+              SourceFiles="$(RuntimeOutputDir)\$(DenoMetadataFile)"
+              DestinationFiles="$(TargetRuntimeDir)\$(DenoMetadataFile)"
+              SkipUnchangedFiles="true" />
+
+            <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoMetadataSigFile)')"
+              SourceFiles="$(RuntimeOutputDir)\$(DenoMetadataSigFile)"
+              DestinationFiles="$(TargetRuntimeDir)\$(DenoMetadataSigFile)"
+              SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

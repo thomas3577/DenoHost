@@ -1,8 +1,142 @@
 param (
   [string]$ExecutablePath,
   [string]$DownloadFilename,
-  [string]$DenoVersion
+  [string]$DenoVersion,
+  [string]$RuntimeRid = ""
 )
+
+$ErrorActionPreference = 'Stop'
+
+function Get-ExpectedSha256 {
+  param (
+    [string]$ChecksumFile,
+    [string]$TargetFileName
+  )
+
+  if (-not (Test-Path $ChecksumFile)) {
+    throw "Checksum file not found: '$ChecksumFile'"
+  }
+
+  $content = Get-Content -Path $ChecksumFile -Raw
+
+  # First try: match by filename with standard format "HASH  filename"
+  $escapedFileName = [Regex]::Escape($TargetFileName)
+  $lineMatch = [Regex]::Match($content, "(?im)^\s*([a-f0-9]{64})\s+\*?" + $escapedFileName + "\s*$")
+  if ($lineMatch.Success) {
+    return $lineMatch.Groups[1].Value.ToLowerInvariant()
+  }
+
+  # Second try: match by just filename basename if full path didn't work
+  $baseFileName = [System.IO.Path]::GetFileName($TargetFileName)
+  $escapedBaseName = [Regex]::Escape($baseFileName)
+  $lineMatch = [Regex]::Match($content, "(?im)^\s*([a-f0-9]{64})\s+\*?" + $escapedBaseName + "\s*$")
+  if ($lineMatch.Success) {
+    return $lineMatch.Groups[1].Value.ToLowerInvariant()
+  }
+
+  # Third try: Handle PowerShell Get-FileHash format: "Hash      : <HEX64>"
+  # (used by some Deno Windows ARM64 releases)
+  $psFormatMatch = [Regex]::Match($content, "(?im)^\s*Hash\s*:\s*([a-f0-9]{64})\s*$")
+  if ($psFormatMatch.Success) {
+    return $psFormatMatch.Groups[1].Value.ToLowerInvariant()
+  }
+
+  # Fourth try: just take first valid SHA256 (fallback for single-file checksum files)
+  $firstHashMatch = [Regex]::Match($content, "(?im)^\s*([a-f0-9]{64})\b")
+  if ($firstHashMatch.Success) {
+    return $firstHashMatch.Groups[1].Value.ToLowerInvariant()
+  }
+
+  throw "Unable to extract SHA-256 for '$TargetFileName' from checksum file '$ChecksumFile'. Content: $(Get-Content -Path $ChecksumFile -Raw | Select-Object -First 3)"
+}
+
+function Write-ExecutableChecksum {
+  param (
+    [string]$Executable,
+    [string]$OutputFile
+  )
+
+  if (-not (Test-Path $Executable)) {
+    throw "Executable not found at '$Executable'."
+  }
+
+  $hash = (Get-FileHash -Algorithm SHA256 -Path $Executable).Hash.ToLowerInvariant()
+  $exeName = Split-Path $Executable -Leaf
+  Set-Content -Path $OutputFile -Value "$hash  $exeName"
+  Write-Host "Wrote executable checksum to $OutputFile"
+}
+
+function Resolve-RuntimeRid {
+  param (
+    [string]$Executable,
+    [string]$ProvidedRuntimeRid
+  )
+
+  if (-not [string]::IsNullOrWhiteSpace($ProvidedRuntimeRid)) {
+    return $ProvidedRuntimeRid
+  }
+
+  $runtimeDir = Split-Path (Split-Path $Executable -Parent) -Leaf
+  if ($runtimeDir -like "DenoHost.Runtime.*") {
+    return $runtimeDir.Substring("DenoHost.Runtime.".Length)
+  }
+
+  return "unknown"
+}
+
+function Write-RuntimeMetadata {
+  param (
+    [string]$Executable,
+    [string]$Version,
+    [string]$Rid,
+    [string]$ArchiveName
+  )
+
+  $exeName = Split-Path $Executable -Leaf
+  $exeHash = (Get-FileHash -Algorithm SHA256 -Path $Executable).Hash.ToLowerInvariant()
+  $metadataPath = Join-Path (Split-Path $Executable -Parent) "deno.metadata.json"
+  $metadata = [ordered]@{
+    metadataVersion = 1
+    fileName = $exeName
+    rid = $Rid
+    denoVersion = $Version
+    sha256 = $exeHash
+    source = "https://github.com/denoland/deno/releases/download/v$Version/$ArchiveName"
+    createdAtUtc = [DateTime]::UtcNow.ToString("o")
+  }
+
+  $metadataJson = $metadata | ConvertTo-Json -Compress
+  [System.IO.File]::WriteAllText($metadataPath, $metadataJson, [System.Text.UTF8Encoding]::new($false))
+  Write-Host "Wrote runtime metadata to $metadataPath"
+  return $metadataPath
+}
+
+function Sign-RuntimeMetadata {
+  param (
+    [string]$MetadataPath
+  )
+
+  $privateKeyPem = [Environment]::GetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM")
+  $signaturePath = Join-Path (Split-Path $MetadataPath -Parent) "deno.metadata.sig"
+
+  if ([string]::IsNullOrWhiteSpace($privateKeyPem)) {
+    Write-Warning "DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is not set; skipping runtime metadata signature."
+    return
+  }
+
+  $metadataBytes = [System.IO.File]::ReadAllBytes($MetadataPath)
+  $ecdsa = [System.Security.Cryptography.ECDsa]::Create()
+  try {
+    $ecdsa.ImportFromPem($privateKeyPem)
+    $signatureBytes = $ecdsa.SignData($metadataBytes, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
+    $signatureBase64 = [Convert]::ToBase64String($signatureBytes)
+    [System.IO.File]::WriteAllText($signaturePath, $signatureBase64, [System.Text.UTF8Encoding]::new($false))
+  } finally {
+    $ecdsa.Dispose()
+  }
+
+  Write-Host "Wrote runtime metadata signature to $signaturePath"
+}
 
 # Check if Deno exists and version matches
 $needsDownload = $true
@@ -31,38 +165,59 @@ if (Test-Path $ExecutablePath) {
 }
 
 if (-not $needsDownload) {
+  Write-ExecutableChecksum -Executable $ExecutablePath -OutputFile "$ExecutablePath.sha256sum"
+  $resolvedRid = Resolve-RuntimeRid -Executable $ExecutablePath -ProvidedRuntimeRid $RuntimeRid
+  $metadataPath = Write-RuntimeMetadata -Executable $ExecutablePath -Version $DenoVersion -Rid $resolvedRid -ArchiveName $DownloadFilename
+  Sign-RuntimeMetadata -MetadataPath $metadataPath
   Write-Host "Deno setup complete at $ExecutablePath"
   exit 0
 }
 
 $downloadUrl = "https://github.com/denoland/deno/releases/download/v$($DenoVersion)/$($DownloadFilename)"
+$checksumUrl = "$downloadUrl.sha256sum"
 # Use unique temp file name to avoid conflicts when multiple projects build in parallel
 $tempZip = "$env:TEMP\deno-$([System.Guid]::NewGuid().ToString('N').Substring(0,8)).zip"
+$tempChecksum = "$tempZip.sha256sum"
 $extractDir = Split-Path $ExecutablePath
 
 Write-Host "Downloading Deno from $downloadUrl"
-Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing
+Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing -ErrorAction Stop
+
+Write-Host "Downloading checksum from $checksumUrl"
+Invoke-WebRequest -Uri $checksumUrl -OutFile $tempChecksum -UseBasicParsing -ErrorAction Stop
+
+$expectedHash = Get-ExpectedSha256 -ChecksumFile $tempChecksum -TargetFileName $DownloadFilename
+$actualHash = (Get-FileHash -Algorithm SHA256 -Path $tempZip).Hash.ToLowerInvariant()
+
+if ($expectedHash -ne $actualHash) {
+  throw "Checksum verification failed for '$DownloadFilename'. Expected: $expectedHash Actual: $actualHash"
+}
+
+Write-Host "Checksum verification passed for $DownloadFilename"
 
 Write-Host "Extracting to $extractDir"
 Expand-Archive -Path $tempZip -DestinationPath $extractDir -Force
 
-# Rename if necessary
-$downloadedExe = Get-ChildItem -Path $extractDir -Recurse | Where-Object { $_.Name -like "deno*" -and !$_.PSIsContainer } | Select-Object -First 1
+# Rename only the actual extracted Deno binary if needed.
+$downloadedExe = Get-ChildItem -Path $extractDir -Recurse -File |
+  Where-Object { $_.Name -eq "deno" -or $_.Name -eq "deno.exe" } |
+  Select-Object -First 1
 if ($downloadedExe -and $downloadedExe.FullName -ne $ExecutablePath) {
   Rename-Item -Path $downloadedExe.FullName -NewName (Split-Path $ExecutablePath -Leaf)
 }
 
+Write-ExecutableChecksum -Executable $ExecutablePath -OutputFile "$ExecutablePath.sha256sum"
+$resolvedRid = Resolve-RuntimeRid -Executable $ExecutablePath -ProvidedRuntimeRid $RuntimeRid
+$metadataPath = Write-RuntimeMetadata -Executable $ExecutablePath -Version $DenoVersion -Rid $resolvedRid -ArchiveName $DownloadFilename
+Sign-RuntimeMetadata -MetadataPath $metadataPath
+
 # Clean up temp file with retry logic
 try {
   Remove-Item $tempZip -ErrorAction Stop
-} catch {
-  Write-Warning "Could not remove temp file $tempZip : $($_.Exception.Message)"
-  # Try to remove it again after a short delay
-  Start-Sleep -Milliseconds 100
-  try {
-    Remove-Item $tempZip -ErrorAction Stop
-  } catch {
-    Write-Warning "Second attempt to remove temp file failed. Continuing anyway."
+  if (Test-Path $tempChecksum) {
+    Remove-Item $tempChecksum -ErrorAction Stop
   }
+} catch {
+  Write-Warning "Could not remove temporary download files ($tempZip / $tempChecksum): $($_.Exception.Message)"
 }
 Write-Host "Deno setup complete at $ExecutablePath"
