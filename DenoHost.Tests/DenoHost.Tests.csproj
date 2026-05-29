@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DenoHost.Core\DenoHost.Core.csproj" />
+    <ProjectReference Include="..\DenoHost.Runtime.Downloader\DenoHost.Runtime.Downloader.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-arm64'">

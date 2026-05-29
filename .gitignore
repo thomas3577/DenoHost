@@ -31,3 +31,4 @@ deno.sha256sum
 .env
 keys/
 artifacts/
+Idea.md
