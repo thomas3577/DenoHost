@@ -268,6 +268,14 @@ echo "Checksum verification passed for $DOWNLOAD_FILENAME"
 echo "Extracting to $EXTRACT_DIR"
 unzip -o "$TMP_ZIP" -d "$EXTRACT_DIR"
 
+downloaded_exe=$(find "$EXTRACT_DIR" -type f \( -name "deno" -o -name "deno.exe" \) | head -n 1)
+
+# Some archives contain files like deno.metadata.json and deno.sha256sum next to the binary.
+# Only rename the actual binary, never the first file that merely starts with deno.
+if [ -n "$downloaded_exe" ] && [ "$downloaded_exe" != "$EXECUTABLE_PATH" ]; then
+  mv -f "$downloaded_exe" "$EXECUTABLE_PATH"
+fi
+
 write_executable_checksum "$EXECUTABLE_PATH" "$EXECUTABLE_PATH.sha256sum"
 RESOLVED_RID=$(resolve_runtime_rid "$EXECUTABLE_PATH" "$RUNTIME_RID")
 METADATA_PATH=$(write_runtime_metadata "$EXECUTABLE_PATH" "$DENO_VERSION" "$RESOLVED_RID" "$DOWNLOAD_FILENAME")

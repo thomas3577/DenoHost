@@ -197,8 +197,10 @@ Write-Host "Checksum verification passed for $DownloadFilename"
 Write-Host "Extracting to $extractDir"
 Expand-Archive -Path $tempZip -DestinationPath $extractDir -Force
 
-# Rename if necessary
-$downloadedExe = Get-ChildItem -Path $extractDir -Recurse | Where-Object { $_.Name -like "deno*" -and !$_.PSIsContainer } | Select-Object -First 1
+# Rename only the actual extracted Deno binary if needed.
+$downloadedExe = Get-ChildItem -Path $extractDir -Recurse -File |
+  Where-Object { $_.Name -eq "deno" -or $_.Name -eq "deno.exe" } |
+  Select-Object -First 1
 if ($downloadedExe -and $downloadedExe.FullName -ne $ExecutablePath) {
   Rename-Item -Path $downloadedExe.FullName -NewName (Split-Path $ExecutablePath -Leaf)
 }
