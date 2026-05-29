@@ -140,6 +140,39 @@ jobs:
           VERSION=${{ needs.get-version.outputs.package_version }}
           dotnet pack ${{ matrix.proj }} -c Release -p:Version=$VERSION --output ./nupkg/runtime/${{ matrix.rid }}
 
+      - name: Validate Runtime Package Contents
+        shell: pwsh
+        run: |
+          $rid = '${{ matrix.rid }}'
+          $package = Get-ChildItem "./nupkg/runtime/$rid/*.nupkg" | Select-Object -First 1
+          if ($null -eq $package) {
+            throw "No package found under ./nupkg/runtime/$rid"
+          }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($package.FullName)
+          try {
+            $entries = $archive.Entries | ForEach-Object { $_.FullName }
+            $binaryName = if ($rid.StartsWith('win-')) { 'deno.exe' } else { 'deno' }
+
+            $expected = @(
+              "runtimes/$rid/native/$binaryName",
+              "runtimes/$rid/native/deno.metadata.json",
+              "runtimes/$rid/native/deno.metadata.sig"
+            )
+
+            foreach ($entry in $expected) {
+              if (-not ($entries -contains $entry)) {
+                throw "Package '$($package.Name)' is missing required entry: $entry"
+              }
+            }
+
+            Write-Host "Runtime package '$($package.Name)' contains all required security artifacts."
+          }
+          finally {
+            $archive.Dispose()
+          }
+
       - name: Upload Runtime Package
         uses: actions/upload-artifact@v7
         with:
@@ -308,6 +341,14 @@ jobs:
           path: ./nupkg/runtime
           merge-multiple: true
 
+      - name: Generate SHA-256 files for release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            sha256sum "$file" > "$file.sha256"
+          done < <(find ./nupkg -type f -name "*.nupkg" -print0)
+
       - name: Create GitHub Release with Auto-Generated Notes
         uses: softprops/action-gh-release@v3
         with:
@@ -320,4 +361,6 @@ jobs:
           generate_release_notes: true
           files: |
             ./nupkg/core/*.nupkg
+            ./nupkg/core/*.nupkg.sha256
             ./nupkg/runtime/**/*.nupkg
+            ./nupkg/runtime/**/*.nupkg.sha256
