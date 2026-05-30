@@ -1,25 +1,23 @@
 # Deno Download
 
-## via PowerShell
+The runtime projects now call a shared .NET CLI implementation:
 
-**For win-x64:**
+`DenoHost.Runtime.Downloader`
 
-```shell
-$filename = ".\\tools\\download-deno.ps1"
-$denoExecutable = ".\\DenoHost.Runtime.win-x64\\deno.exe"
-$denoDownloadFilename = "deno-x86_64-pc-windows-msvc.zip"
-$denoVersion = "2.5.6"
-pwsh -NoProfile -ExecutionPolicy Bypass -File $filename -ExecutablePath $DenoExecutable -DownloadFilename $denoDownloadFilename -DenoVersion $denoVersion
-```
+## Direct CLI Usage
 
-## via Bash
-
-**For linux-x64:**
+**Example for linux-x64:**
 
 ```shell
-FILENAME="./tools/download-deno.sh"
-DENO_EXECUTABLE_PATH="./DenoHost.Runtime.linux-x64/deno"
-DENO_DOWNLOAD_FILENAME="deno-x86_64-unknown-linux-gnu.zip"
-DENO_VERSION="2.5.6"
-bash $FILENAME $DENO_EXECUTABLE_PATH $DENO_DOWNLOAD_FILENAME $DENO_VERSION
+export DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM="$(cat ./keys/denohost-metadata-signing-private.pem)"
+
+dotnet ./DenoHost.Runtime.Downloader/bin/Debug/net9.0/DenoHost.Runtime.Downloader.dll \
+  --executable-path "./DenoHost.Runtime.linux-x64/deno" \
+  --download-filename "deno-x86_64-unknown-linux-gnu.zip" \
+  --deno-version "2.8.1" \
+  --runtime-rid "linux-x64"
 ```
+
+## Build Integration
+
+Each `DenoHost.Runtime.*` project builds the downloader CLI first and then executes it during `DownloadDenoIfMissing`.

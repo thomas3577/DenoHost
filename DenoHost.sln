@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DenoHost.Example", "DenoHos
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DenoHost.Tests", "DenoHost.Tests\DenoHost.Tests.csproj", "{32845160-9467-1836-F36F-760A3B7F86B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DenoHost.Runtime.Downloader", "DenoHost.Runtime.Downloader\DenoHost.Runtime.Downloader.csproj", "{D7B01848-5A11-4DD0-8C58-4F8A95C2C470}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Runtime Packages", "Runtime Packages", "{C1234567-8901-2345-6789-012345678901}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DenoHost.Runtime.win-x64", "DenoHost.Runtime.win-x64\DenoHost.Runtime.win-x64.csproj", "{4B648493-12D8-D319-4615-E81FB5FEB5E9}"
@@ -45,6 +47,10 @@ Global
 		{32845160-9467-1836-F36F-760A3B7F86B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{32845160-9467-1836-F36F-760A3B7F86B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{32845160-9467-1836-F36F-760A3B7F86B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7B01848-5A11-4DD0-8C58-4F8A95C2C470}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7B01848-5A11-4DD0-8C58-4F8A95C2C470}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7B01848-5A11-4DD0-8C58-4F8A95C2C470}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7B01848-5A11-4DD0-8C58-4F8A95C2C470}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4B648493-12D8-D319-4615-E81FB5FEB5E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4B648493-12D8-D319-4615-E81FB5FEB5E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4B648493-12D8-D319-4615-E81FB5FEB5E9}.Release|Any CPU.ActiveCfg = Release|Any CPU

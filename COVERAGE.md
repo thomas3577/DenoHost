@@ -1,22 +1,31 @@
 # Code Coverage Guide
 
-## PowerShell Script for Windows
-
-**Generate local coverage report:**
-
-```shell
-.\tools\run-coverage.ps1                    # With automatic browser opening
-.\tools\run-coverage.ps1 -OpenReport:$false # Generate report only
-```
-
-## Bash Script for Linux/macOS
+## Direct Commands (Cross-Platform)
 
 **Generate local coverage report:**
 
 ```bash
-chmod +x tools/run-coverage.sh
-./tools/run-coverage.sh                    # With automatic browser opening
-./tools/run-coverage.sh false              # Generate report only
+dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults
+reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Html;Badges;Cobertura;SonarQube"
+```
+
+Open the HTML report:
+
+```bash
+# Windows PowerShell
+Start-Process "coverage-report/index.html"
+
+# Linux
+xdg-open coverage-report/index.html
+
+# macOS
+open coverage-report/index.html
+```
+
+If `reportgenerator` is missing:
+
+```bash
+dotnet tool install -g dotnet-reportgenerator-globaltool
 ```
 
 ## Additional Coverage Options

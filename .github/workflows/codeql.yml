@@ -50,6 +50,7 @@ jobs:
     - name: Build C# project (only if manual)
       if: matrix.build-mode == 'manual'
       run: |
+        export DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM="$(openssl ecparam -name prime256v1 -genkey -noout)"
         dotnet --version
         dotnet restore
         dotnet build --no-incremental

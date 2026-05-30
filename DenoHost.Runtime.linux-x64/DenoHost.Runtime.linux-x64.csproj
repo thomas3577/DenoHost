@@ -8,6 +8,7 @@
     <!-- RID-specific settings -->
     <RuntimeRid>linux-x64</RuntimeRid>
     <DenoFileName>deno</DenoFileName>
+    <DenoDownloadFilename>deno-x86_64-unknown-linux-gnu.zip</DenoDownloadFilename>
   </PropertyGroup>
 
   <!-- Optional: pack README.md into package root -->
@@ -17,26 +18,6 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-
-  <!-- Downloads "deno" next to the .csproj if missing -->
-  <Target Name="DownloadDenoIfMissing" BeforeTargets="Build">
-    <PropertyGroup>
-      <!-- Paths to helper scripts -->
-      <DenoDownloadScriptPathPwsh>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\tools\download-deno.ps1'))</DenoDownloadScriptPathPwsh>
-      <DenoDownloadScriptPathBash>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../tools/download-deno.sh'))</DenoDownloadScriptPathBash>
-      <DenoExecutable>$(MSBuildThisFileDirectory)$(DenoFileName)</DenoExecutable>
-      <DenoDownloadFilename>deno-x86_64-unknown-linux-gnu.zip</DenoDownloadFilename>
-    </PropertyGroup>
-
-    <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
-
-    <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command='pwsh -NoProfile -ExecutionPolicy Bypass -File "$(DenoDownloadScriptPathPwsh)" -ExecutablePath "$(DenoExecutable)" -DownloadFilename "$(DenoDownloadFilename)" -DenoVersion "$(DenoVersion)" -RuntimeRid "$(RuntimeRid)"'
-          ContinueOnError="false" IgnoreExitCode="false" />
-    <Exec Condition="'$(OS)' != 'Windows_NT'"
-          Command='bash "$(DenoDownloadScriptPathBash)" "$(DenoExecutable)" "$(DenoDownloadFilename)" "$(DenoVersion)" "$(RuntimeRid)"'
-          ContinueOnError="false" IgnoreExitCode="false" />
-  </Target>
 
   <!-- Common copy/pack logic -->
   <Import Project="$(MSBuildThisFileDirectory)..\build\DenoRuntime.targets" />
