@@ -47,7 +47,19 @@ internal static class DownloaderVersion
 
       var stdoutTask = process.StandardOutput.ReadToEndAsync();
       var stderrTask = process.StandardError.ReadToEndAsync();
-      process.WaitForExit();
+      if (!process.WaitForExit((int)TimeSpan.FromSeconds(10).TotalMilliseconds))
+      {
+        try
+        {
+          process.Kill(entireProcessTree: true);
+        }
+        catch
+        {
+          // Best effort only.
+        }
+
+        return false;
+      }
       var output = stdoutTask.GetAwaiter().GetResult();
       _ = stderrTask.GetAwaiter().GetResult();
       if (process.ExitCode != 0)
