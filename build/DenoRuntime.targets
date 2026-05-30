@@ -1,7 +1,7 @@
 <Project>
   <Target Name="BuildDenoDownloaderTool" BeforeTargets="DownloadDenoIfMissing">
     <PropertyGroup>
-      <DenoDownloaderProjectPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\DenoHost.Runtime.Downloader\DenoHost.Runtime.Downloader.csproj'))</DenoDownloaderProjectPath>
+      <DenoDownloaderProjectPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../DenoHost.Runtime.Downloader/DenoHost.Runtime.Downloader.csproj'))</DenoDownloaderProjectPath>
     </PropertyGroup>
 
     <MSBuild Projects="$(DenoDownloaderProjectPath)"
@@ -11,8 +11,8 @@
 
   <Target Name="DownloadDenoIfMissing" BeforeTargets="Build" DependsOnTargets="BuildDenoDownloaderTool">
     <PropertyGroup>
-      <DenoDownloaderDllPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\DenoHost.Runtime.Downloader\bin\$(Configuration)\$(DenoDownloaderTargetFramework)\DenoHost.Runtime.Downloader.dll'))</DenoDownloaderDllPath>
-      <DenoExecutable>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(DenoFileName)'))</DenoExecutable>
+      <DenoDownloaderDllPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../DenoHost.Runtime.Downloader/bin/$(Configuration)/$(DenoDownloaderTargetFramework)/DenoHost.Runtime.Downloader.dll'))</DenoDownloaderDllPath>
+      <DenoExecutable>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/$(DenoFileName)'))</DenoExecutable>
     </PropertyGroup>
 
     <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
