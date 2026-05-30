@@ -129,7 +129,7 @@ internal static class DownloaderLogic
     {
       throw new InvalidOperationException("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is required because runtime metadata signatures are required by DenoHost.Core.");
     }
-    }
+
     var metadataBytes = File.ReadAllBytes(metadataPath);
     var base64 = SignMetadata(metadataBytes, privateKeyPem);
     File.WriteAllText(signaturePath, base64, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
