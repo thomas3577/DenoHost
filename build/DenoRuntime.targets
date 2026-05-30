@@ -5,7 +5,7 @@
     </PropertyGroup>
 
     <MSBuild Projects="$(DenoDownloaderProjectPath)"
-             Targets="Build"
+             Targets="Restore;Build"
              Properties="Configuration=$(Configuration)" />
   </Target>
 
