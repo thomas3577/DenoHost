@@ -6,7 +6,7 @@
 
     <MSBuild Projects="$(DenoDownloaderProjectPath)"
              Targets="Restore;Build"
-             Properties="Configuration=$(Configuration)" />
+             Properties="Configuration=$(Configuration);TargetFramework=$(DenoDownloaderTargetFramework)" />
   </Target>
 
   <Target Name="DownloadDenoIfMissing" BeforeTargets="Build" DependsOnTargets="BuildDenoDownloaderTool">
