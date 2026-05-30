@@ -28,6 +28,7 @@ internal static class DownloaderWorkflow
 
     var tempZip = Path.Combine(Path.GetTempPath(), $"deno-{Guid.NewGuid():N}.zip");
     var tempChecksum = $"{tempZip}.sha256sum";
+    var tempExtractDirectory = Path.Combine(Path.GetTempPath(), $"deno-extract-{Guid.NewGuid():N}");
 
     try
     {
@@ -44,11 +45,12 @@ internal static class DownloaderWorkflow
 
       Console.WriteLine($"Checksum verification passed for {options.DownloadFilename}");
 
-      Console.WriteLine($"Extracting to {extractDirectory}");
-      ZipFile.ExtractToDirectory(tempZip, extractDirectory, overwriteFiles: true);
+      Directory.CreateDirectory(tempExtractDirectory);
+      Console.WriteLine($"Extracting to {tempExtractDirectory}");
+      ZipFile.ExtractToDirectory(tempZip, tempExtractDirectory, overwriteFiles: true);
 
       // Archives sometimes contain extra files next to the binary; rename only the real executable.
-      var extractedBinary = DownloaderFiles.FindExtractedBinary(extractDirectory);
+      var extractedBinary = DownloaderFiles.FindExtractedBinary(tempExtractDirectory);
       if (extractedBinary is not null && !string.Equals(extractedBinary, options.ExecutablePath, StringComparison.OrdinalIgnoreCase))
       {
         DownloaderFiles.ReplaceExtractedBinary(extractedBinary, options.ExecutablePath);
@@ -66,6 +68,17 @@ internal static class DownloaderWorkflow
     {
       DownloaderFiles.TryDelete(tempZip);
       DownloaderFiles.TryDelete(tempChecksum);
+      try
+      {
+        if (Directory.Exists(tempExtractDirectory))
+        {
+          Directory.Delete(tempExtractDirectory, recursive: true);
+        }
+      }
+      catch (Exception ex)
+      {
+        Console.Error.WriteLine($"Warning: Could not remove temporary directory '{tempExtractDirectory}': {ex.Message}");
+      }
     }
 
     Console.WriteLine($"Deno setup complete at {options.ExecutablePath}");
