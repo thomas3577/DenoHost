@@ -123,14 +123,18 @@ internal static class DownloaderLogic
 
   private static void SignRuntimeMetadata(string metadataPath)
   {
+    var signaturePath = Path.Combine(Path.GetDirectoryName(metadataPath)!, "deno.metadata.sig");
     var privateKeyPem = Environment.GetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM");
     if (string.IsNullOrWhiteSpace(privateKeyPem))
     {
+      if (File.Exists(signaturePath))
+      {
+        File.Delete(signaturePath);
+      }
+
       Console.Error.WriteLine("Warning: DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is not set; skipping runtime metadata signature.");
       return;
     }
-
-    var signaturePath = Path.Combine(Path.GetDirectoryName(metadataPath)!, "deno.metadata.sig");
     var metadataBytes = File.ReadAllBytes(metadataPath);
     var base64 = SignMetadata(metadataBytes, privateKeyPem);
     File.WriteAllText(signaturePath, base64, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
