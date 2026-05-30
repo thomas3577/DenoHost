@@ -47,9 +47,10 @@ internal static class DownloaderLogic
   public static void FinalizeArtifacts(string executablePath, string denoVersion, string downloadFilename, string? runtimeRid, string baseUrl)
   {
     // Artifact generation is centralized so the version-matched and freshly-downloaded paths stay identical.
-    WriteExecutableChecksum(executablePath);
+    var executableSha256 = DownloaderChecksums.ComputeSha256(executablePath);
+    WriteExecutableChecksum(executablePath, executableSha256);
     var resolvedRid = ResolveRuntimeRid(executablePath, runtimeRid);
-    var metadataPath = WriteRuntimeMetadata(executablePath, denoVersion, resolvedRid, downloadFilename, baseUrl);
+    var metadataPath = WriteRuntimeMetadata(executablePath, denoVersion, resolvedRid, downloadFilename, baseUrl, executableSha256);
     SignRuntimeMetadata(metadataPath);
   }
 
@@ -90,27 +91,26 @@ internal static class DownloaderLogic
     return "unknown";
   }
 
-  private static void WriteExecutableChecksum(string executablePath)
+  private static void WriteExecutableChecksum(string executablePath, string executableSha256)
   {
     if (!File.Exists(executablePath))
     {
       throw new FileNotFoundException($"Executable not found at '{executablePath}'.");
     }
 
-    var hash = DownloaderChecksums.ComputeSha256(executablePath);
-    var line = $"{hash}  {Path.GetFileName(executablePath)}{Environment.NewLine}";
+    var line = $"{executableSha256}  {Path.GetFileName(executablePath)}{Environment.NewLine}";
     File.WriteAllText($"{executablePath}.sha256sum", line, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     Console.WriteLine($"Wrote executable checksum to {executablePath}.sha256sum");
   }
 
-  private static string WriteRuntimeMetadata(string executablePath, string denoVersion, string runtimeRid, string archiveName, string baseUrl)
+  private static string WriteRuntimeMetadata(string executablePath, string denoVersion, string runtimeRid, string archiveName, string baseUrl, string executableSha256)
   {
     var metadata = CreateRuntimeMetadata(
       executablePath,
       denoVersion,
       runtimeRid,
       archiveName,
-      DownloaderChecksums.ComputeSha256(executablePath),
+      executableSha256,
       DateTime.UtcNow.ToString("o"),
       baseUrl);
 

@@ -14,6 +14,7 @@
 
     <!-- Official Deno Version -->
     <DenoVersion>2.8.1</DenoVersion>
+    <DenoDownloaderTargetFramework>net9.0</DenoDownloaderTargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

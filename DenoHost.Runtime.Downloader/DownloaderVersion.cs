@@ -45,8 +45,11 @@ internal static class DownloaderVersion
         return false;
       }
 
-      var output = process.StandardOutput.ReadToEnd();
+      var stdoutTask = process.StandardOutput.ReadToEndAsync();
+      var stderrTask = process.StandardError.ReadToEndAsync();
       process.WaitForExit();
+      var output = stdoutTask.GetAwaiter().GetResult();
+      _ = stderrTask.GetAwaiter().GetResult();
       if (process.ExitCode != 0)
       {
         return false;

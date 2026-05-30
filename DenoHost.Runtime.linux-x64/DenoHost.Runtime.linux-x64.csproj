@@ -8,6 +8,7 @@
     <!-- RID-specific settings -->
     <RuntimeRid>linux-x64</RuntimeRid>
     <DenoFileName>deno</DenoFileName>
+    <DenoDownloadFilename>deno-x86_64-unknown-linux-gnu.zip</DenoDownloadFilename>
   </PropertyGroup>
 
   <!-- Optional: pack README.md into package root -->
@@ -17,30 +18,6 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-
-  <Target Name="BuildDenoDownloaderTool" BeforeTargets="DownloadDenoIfMissing">
-    <PropertyGroup>
-      <DenoDownloaderProjectPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\DenoHost.Runtime.Downloader\DenoHost.Runtime.Downloader.csproj'))</DenoDownloaderProjectPath>
-    </PropertyGroup>
-
-    <MSBuild Projects="$(DenoDownloaderProjectPath)"
-             Targets="Build"
-             Properties="Configuration=$(Configuration)" />
-  </Target>
-
-  <!-- Downloads "deno" next to the .csproj if missing -->
-  <Target Name="DownloadDenoIfMissing" BeforeTargets="Build" DependsOnTargets="BuildDenoDownloaderTool">
-    <PropertyGroup>
-      <DenoDownloaderDllPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\DenoHost.Runtime.Downloader\bin\$(Configuration)\net9.0\DenoHost.Runtime.Downloader.dll'))</DenoDownloaderDllPath>
-      <DenoExecutable>$(MSBuildThisFileDirectory)$(DenoFileName)</DenoExecutable>
-      <DenoDownloadFilename>deno-x86_64-unknown-linux-gnu.zip</DenoDownloadFilename>
-    </PropertyGroup>
-
-    <Message Text="DownloadFilename resolved to: $(DenoDownloadFilename)" Importance="High" />
-
-    <Exec Command='dotnet "$(DenoDownloaderDllPath)" --executable-path "$(DenoExecutable)" --download-filename "$(DenoDownloadFilename)" --deno-version "$(DenoVersion)" --runtime-rid "$(RuntimeRid)"'
-          ContinueOnError="false" IgnoreExitCode="false" />
-  </Target>
 
   <!-- Common copy/pack logic -->
   <Import Project="$(MSBuildThisFileDirectory)..\build\DenoRuntime.targets" />
