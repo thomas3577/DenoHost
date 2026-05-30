@@ -9,6 +9,8 @@ The runtime projects now call a shared .NET CLI implementation:
 **Example for linux-x64:**
 
 ```shell
+export DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM="$(cat ./keys/denohost-metadata-signing-private.pem)"
+
 dotnet ./DenoHost.Runtime.Downloader/bin/Debug/net9.0/DenoHost.Runtime.Downloader.dll \
   --executable-path "./DenoHost.Runtime.linux-x64/deno" \
   --download-filename "deno-x86_64-unknown-linux-gnu.zip" \
