@@ -89,20 +89,26 @@ jobs:
             throw 'Build requires DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM secret.'
           }
 
-          $privateKey = [System.Security.Cryptography.ECDsa]::Create()
-          $privateKey.ImportFromPem($env:DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM)
-          try {
-            $derivedBytes = $privateKey.ExportSubjectPublicKeyInfo()
-            $derivedBase64 = [Convert]::ToBase64String($derivedBytes, [Base64FormattingOptions]::InsertLineBreaks)
-            $derivedPublic = "-----BEGIN PUBLIC KEY-----`n$derivedBase64`n-----END PUBLIC KEY-----"
-            $repoPublic = (Get-Content ./Config/metadata-signing-public.pem -Raw).Trim()
+          $privatePem = $env:DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM
+          $repoPem = Get-Content ./Config/metadata-signing-public.pem -Raw
 
-            if ($derivedPublic -ne $repoPublic) {
+          $privateKey = [System.Security.Cryptography.ECDsa]::Create()
+          $privateKey.ImportFromPem($privatePem)
+
+          $repoKey = [System.Security.Cryptography.ECDsa]::Create()
+          $repoKey.ImportFromPem($repoPem)
+
+          try {
+            $fromPrivate = $privateKey.ExportSubjectPublicKeyInfo()
+            $fromRepo = $repoKey.ExportSubjectPublicKeyInfo()
+
+            if ($fromPrivate.Length -ne $fromRepo.Length -or -not [System.Linq.Enumerable]::SequenceEqual($fromPrivate, $fromRepo)) {
               throw 'The signing private key secret does not match Config/metadata-signing-public.pem.'
             }
           }
           finally {
             $privateKey.Dispose()
+            $repoKey.Dispose()
           }
 
       - name: Lint (dotnet format)
