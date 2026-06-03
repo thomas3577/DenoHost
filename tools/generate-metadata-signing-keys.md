@@ -31,12 +31,10 @@ pwsh -File .\tools\generate-metadata-signing-keys.ps1 -OutputDirectory .\keys -F
 Store file contents in repository secrets:
 
 - DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM <- content of denohost-metadata-signing-private.pem
-- DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM <- content of denohost-metadata-signing-public.pem
 
 ## Runtime / Build Variables
 
 - DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: used during runtime package build to create deno.metadata.sig.
-- DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: optional runtime override for signature verification key.
 
 Signing is skipped when DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is missing, but release/package builds should still provide the secret.
 
@@ -49,4 +47,4 @@ Signing is skipped when DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is missing, bu
 
 ## Next Step
 
-Update BuiltInMetadataSigningPublicKeyPem in DenoHost.Core/Helper.cs with your generated public key if you want verification to work without environment overrides.
+Commit denohost-metadata-signing-public.pem to Config/ and keep DenoHost.Core/Helper.cs embedding that file as the runtime verification source.

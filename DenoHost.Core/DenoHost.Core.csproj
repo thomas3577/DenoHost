@@ -19,6 +19,7 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+    <EmbeddedResource Include="..\Config\metadata-signing-public.pem" />
   </ItemGroup>
 
   <ItemGroup>

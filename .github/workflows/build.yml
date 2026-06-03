@@ -80,6 +80,31 @@ jobs:
             exit 1
           fi
 
+      - name: Verify Signing Key Pair
+        shell: pwsh
+        env:
+          DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM)) {
+            throw 'Build requires DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM secret.'
+          }
+
+          $privateKey = [System.Security.Cryptography.ECDsa]::Create()
+          $privateKey.ImportFromPem($env:DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM)
+          try {
+            $derivedBytes = $privateKey.ExportSubjectPublicKeyInfo()
+            $derivedBase64 = [Convert]::ToBase64String($derivedBytes, [Base64FormattingOptions]::InsertLineBreaks)
+            $derivedPublic = "-----BEGIN PUBLIC KEY-----`n$derivedBase64`n-----END PUBLIC KEY-----"
+            $repoPublic = (Get-Content ./Config/metadata-signing-public.pem -Raw).Trim()
+
+            if ($derivedPublic -ne $repoPublic) {
+              throw 'The signing private key secret does not match Config/metadata-signing-public.pem.'
+            }
+          }
+          finally {
+            $privateKey.Dispose()
+          }
+
       - name: Lint (dotnet format)
         run: dotnet format DenoHost.sln --verify-no-changes --severity warn
 
@@ -121,15 +146,9 @@ jobs:
         shell: bash
         env:
           DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM }}
-          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: |
           if [ -z "${DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM}" ]; then
             echo "::error::Build requires DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM secret."
-            exit 1
-          fi
-
-          if [ -z "${DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM}" ]; then
-            echo "::error::Build requires DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM secret."
             exit 1
           fi
 
@@ -224,7 +243,6 @@ jobs:
       - name: Build Test Project (Release, win-x64)
         env:
           DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM }}
-          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
 
       - name: Check deno.exe exists
@@ -232,8 +250,6 @@ jobs:
         run: test -f DenoHost.Tests/bin/Release/net9.0/win-x64/runtimes/win-x64/native/deno.exe
 
       - name: Run Unit Tests with Coverage
-        env:
-          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64 --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
 
       - name: Install ReportGenerator
@@ -266,7 +282,6 @@ jobs:
       - name: Build Test Project (Release, linux-x64)
         env:
           DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM }}
-          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet build DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64
 
       - name: Check deno exists
@@ -274,8 +289,6 @@ jobs:
         run: test -f DenoHost.Tests/bin/Release/net9.0/linux-x64/runtimes/linux-x64/native/deno
 
       - name: Run Unit Tests
-        env:
-          DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM: ${{ secrets.DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM }}
         run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64 --no-build
 
   publish-runtime:
