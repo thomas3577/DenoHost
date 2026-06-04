@@ -1,6 +1,10 @@
 using DenoHost.Core;
 using DenoHost.Core.Config;
+using System.Security;
+using System.Security.Cryptography;
+using System.Text;
 using System.Reflection;
+using System.Text.Json;
 
 namespace DenoHost.Tests;
 
@@ -390,5 +394,35 @@ public class HelperTests
       // This is the expected exception when deno is not found
       Assert.IsType<FileNotFoundException>(ex.InnerException);
     }
+  }
+
+  [Fact]
+  public void BuiltInMetadataPublicKey_FileMatchesEmbeddedResource()
+  {
+    var resource = typeof(Helper).Assembly.GetManifestResourceNames()
+      .Single(name => name.EndsWith("metadata-signing-public.pem", StringComparison.Ordinal));
+
+    using var stream = typeof(Helper).Assembly.GetManifestResourceStream(resource);
+    Assert.NotNull(stream);
+
+    using var reader = new StreamReader(stream);
+    var embeddedPem = reader.ReadToEnd().Trim();
+    var filePem = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "metadata-signing-public.pem")).Trim();
+
+    Assert.Equal(filePem, embeddedPem);
+  }
+
+  [Fact]
+  public void BuiltInMetadataPublicKey_IsLoadableWithoutOverride()
+  {
+    var pem = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "metadata-signing-public.pem"));
+    using var ecdsa = ECDsa.Create();
+    ecdsa.ImportFromPem(pem);
+
+    var method = typeof(Helper).GetMethod("GetMetadataPublicKeyPem", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var result = method.Invoke(null, null) as string;
+    Assert.Equal(pem.Trim(), result?.Trim());
   }
 }

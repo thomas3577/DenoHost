@@ -12,15 +12,7 @@ namespace DenoHost.Core;
 internal static class Helper
 {
   internal const string ChecksumBypassEnvVarName = "DENOHOST_ALLOW_CHECKSUM_BYPASS";
-  internal const string MetadataPublicKeyEnvVarName = "DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM";
-  private const string BuiltInMetadataSigningPublicKeyPem = """
------BEGIN PUBLIC KEY-----
-MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBRnj6ILWatyOt1WieU/cWoyLQwf6n
-oEw6eGbECClUd4f2XuBccjDSdgj2GPiQXOGKJ1I+Wh/sb0EC1SM1B2hjPBEBvozG
-q6+o54AUQ16b2iPzt3g7TumcfZB0qxr5XmhcWMnPtPvmc5fXgGtInEjlKAl3dr20
-XxGSOTFMItGfBKP0gKM=
------END PUBLIC KEY-----
-""";
+  private static readonly string? BuiltInMetadataSigningPublicKeyPem = LoadBuiltInMetadataSigningPublicKeyPem();
   private const string MetadataFileName = "deno.metadata.json";
   private const string MetadataSignatureFileName = "deno.metadata.sig";
 
@@ -251,8 +243,7 @@ XxGSOTFMItGfBKP0gKM=
     if (string.IsNullOrWhiteSpace(publicKeyPem))
     {
       throw new SecurityException(
-        $"Signed metadata was found for '{executablePath}', but no public key is configured. " +
-        $"Set {MetadataPublicKeyEnvVarName} or provide a built-in public key.");
+        $"Signed metadata was found for '{executablePath}', but no built-in public key is configured.");
     }
 
     using var ecdsa = ECDsa.Create();
@@ -291,13 +282,28 @@ XxGSOTFMItGfBKP0gKM=
 
   private static string? GetMetadataPublicKeyPem()
   {
-    var envValue = Environment.GetEnvironmentVariable(MetadataPublicKeyEnvVarName);
-    if (!string.IsNullOrWhiteSpace(envValue))
-      return envValue;
-
     return string.IsNullOrWhiteSpace(BuiltInMetadataSigningPublicKeyPem)
       ? null
       : BuiltInMetadataSigningPublicKeyPem;
+  }
+
+  private static string? LoadBuiltInMetadataSigningPublicKeyPem()
+  {
+    var assembly = typeof(Helper).Assembly;
+    var resourceName = Array.Find(
+      assembly.GetManifestResourceNames(),
+      static name => name.EndsWith("metadata-signing-public.pem", StringComparison.Ordinal));
+
+    if (resourceName is null)
+      return null;
+
+    using var stream = assembly.GetManifestResourceStream(resourceName);
+    if (stream is null)
+      return null;
+
+    using var reader = new StreamReader(stream);
+    var pem = reader.ReadToEnd().Trim();
+    return string.IsNullOrWhiteSpace(pem) ? null : pem;
   }
 
   private static string ReadExpectedChecksum(string checksumPath, string executableName)
