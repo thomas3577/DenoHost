@@ -5,7 +5,7 @@ Creates an ECDSA signing key pair (PEM format) for runtime metadata signing.
 Generated files:
 
 - denohost-metadata-signing-private.pem
-- denohost-metadata-signing-public.pem
+- denohost-metadata-signing-public.pem (copy to Config/metadata-signing-public.pem for version control)
 
 ## Usage
 
@@ -36,15 +36,15 @@ Store file contents in repository secrets:
 
 - DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM: used during runtime package build to create deno.metadata.sig.
 
-Signing is skipped when DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is missing, but release/package builds should still provide the secret.
+Signing is required for release/package builds; if DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is missing, the build fails instead of skipping signing.
 
 ## Security Notes
 
 - Never commit denohost-metadata-signing-private.pem.
 - Keep the private key only in secure secret stores (for example GitHub Actions Secrets).
-- Commit only the script and documentation, not generated key material.
+- Commit only the script and documentation, plus the verification key metadata-signing-public.pem in Config/ so DenoHost.Core/Helper.cs can embed it at runtime.
 - Rotate keys on a regular schedule and after any suspected exposure.
 
 ## Next Step
 
-Commit denohost-metadata-signing-public.pem to Config/ and keep DenoHost.Core/Helper.cs embedding that file as the runtime verification source.
+Commit metadata-signing-public.pem to Config/ and keep DenoHost.Core/Helper.cs embedding that file as the runtime verification source.
