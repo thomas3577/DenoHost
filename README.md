@@ -118,10 +118,10 @@ await denoProcess.StopAsync();
 ### Metadata Signing
 
 - Signing key input for build/runtime packaging: `DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM`
-- Verification key input for runtime validation: `DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM`
-- `DenoHost.Core` includes a built-in public key and can be overridden via `DENOHOST_METADATA_SIGNING_PUBLIC_KEY_PEM`.
+- Verification key is versioned in the repository as `Config/metadata-signing-public.pem` and embedded into `DenoHost.Core`.
+- Runtime signature verification uses the bundled public key only.
 
-If no signing private key is configured, runtime metadata signing is skipped. Release/package builds should still provide the signing secrets.
+Release/package builds must provide `DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM`; otherwise the workflow in `.github/workflows/build.yml` fails, and `DenoHost.Runtime.Downloader.DownloaderLogic` throws at runtime instead of silently skipping signing. The bundled verification key is `Config/metadata-signing-public.pem`, which is embedded into `DenoHost.Core`.
 
 ### Break-Glass (temporary bypass)
 
