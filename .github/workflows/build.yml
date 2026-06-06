@@ -395,6 +395,12 @@ jobs:
 
           var result = await Deno.Execute<string>("eval", new[] { "console.log('smoke-ok')" });
           Console.WriteLine(result);
+
+          if (string.IsNullOrWhiteSpace(result) || !result.Contains("smoke-ok", StringComparison.Ordinal))
+          {
+            Console.Error.WriteLine("Smoke test failed: expected output to contain 'smoke-ok'.");
+            Environment.Exit(1);
+          }
           EOF
           env -u DENOHOST_ALLOW_CHECKSUM_BYPASS dotnet run
 

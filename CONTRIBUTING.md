@@ -32,7 +32,7 @@ To avoid shipping broken NuGet packages, releases follow strict gates:
 1. Publish `vX.Y.Z-alpha.1` first.
 2. Validate CI, signing checks, and smoke test results for the alpha.
 3. Publish stable `vX.Y.Z` only from the exact same commit as `vX.Y.Z-alpha.1`.
-4. Never publish if runtime validation needs checksum bypass.
+4. Never publish if checksum bypass is enabled.
 5. Runtime and core package publishes must only happen through CI after all gates are green.
 
 ## Need help?
