@@ -33,7 +33,15 @@ jobs:
           if [[ "$GITHUB_REF" =~ ^refs/tags/v[0-9] ]]; then
             # Tagged release
             TAG_NAME="${GITHUB_REF#refs/tags/}"
-            PACKAGE_VERSION="${TAG_NAME#v}"
+            SEMVER_TAG="${TAG_NAME#v}"
+            SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+
+            if ! [[ "$SEMVER_TAG" =~ $SEMVER_REGEX ]]; then
+              echo "::error::Invalid tag '$TAG_NAME'. Expected format vX.Y.Z or vX.Y.Z-prerelease."
+              exit 1
+            fi
+
+            PACKAGE_VERSION="$SEMVER_TAG"
 
             # Any semver suffix indicates prerelease (e.g. -alpha.1, -hotfix.1)
             IS_PRERELEASE="false"
@@ -129,6 +137,12 @@ jobs:
         run: |
           set -euo pipefail
           TAG_NAME="${GITHUB_REF#refs/tags/v}"
+          SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+
+          if ! [[ "$TAG_NAME" =~ $SEMVER_REGEX ]]; then
+            echo "::error::Invalid tag 'v$TAG_NAME'. Expected format vX.Y.Z or vX.Y.Z-prerelease."
+            exit 1
+          fi
 
           if [[ "$TAG_NAME" == *-* ]]; then
             echo "Prerelease tag detected: v$TAG_NAME. Skipping stable alpha gate."
