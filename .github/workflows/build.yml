@@ -35,9 +35,9 @@ jobs:
             TAG_NAME="${GITHUB_REF#refs/tags/}"
             PACKAGE_VERSION="${TAG_NAME#v}"
 
-            # Check if this is a prerelease based on tag name
+            # Any semver suffix indicates prerelease (e.g. -alpha.1, -hotfix.1)
             IS_PRERELEASE="false"
-            if [[ "$TAG_NAME" =~ -(alpha|beta|rc|preview)\. ]]; then
+            if [[ "$TAG_NAME" == *-* ]]; then
               IS_PRERELEASE="true"
               echo "Detected prerelease tag: $TAG_NAME"
             fi
@@ -113,6 +113,47 @@ jobs:
 
       - name: Lint (dotnet format)
         run: dotnet format DenoHost.sln --verify-no-changes --severity warn
+
+  tag-validation:
+    name: Validate Stable Tag Source
+    needs: get-version
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify stable tag has matching alpha.1 on same commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_NAME="${GITHUB_REF#refs/tags/v}"
+
+          if [[ "$TAG_NAME" == *-* ]]; then
+            echo "Prerelease tag detected: v$TAG_NAME. Skipping stable alpha gate."
+            exit 0
+          fi
+
+          ALPHA_TAG="v${TAG_NAME}-alpha.1"
+          git fetch --tags --force
+
+          if ! git rev-parse "$ALPHA_TAG" >/dev/null 2>&1; then
+            echo "::error::Stable release v$TAG_NAME requires prerelease tag $ALPHA_TAG on the same commit."
+            exit 1
+          fi
+
+          ALPHA_SHA="$(git rev-list -n 1 "$ALPHA_TAG")"
+          STABLE_SHA="$(git rev-list -n 1 "$GITHUB_REF")"
+
+          if [[ "$ALPHA_SHA" != "$STABLE_SHA" ]]; then
+            echo "::error::Stable tag v$TAG_NAME must point to the same commit as $ALPHA_TAG."
+            echo "::error::alpha sha:  $ALPHA_SHA"
+            echo "::error::stable sha: $STABLE_SHA"
+            exit 1
+          fi
+
+          echo "Stable tag v$TAG_NAME is valid: matching alpha tag $ALPHA_TAG found on same commit."
 
   build-runtime:
     name: Build Runtime Packages
@@ -297,9 +338,69 @@ jobs:
       - name: Run Unit Tests
         run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64 --no-build
 
+  smoke-test-packaged:
+    name: Smoke Test Packaged Runtime
+    needs: [get-version, build-core, build-runtime]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+
+      - name: Download Core Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
+          path: ./nupkg/core
+
+      - name: Download Linux Runtime Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: DenoHost.Runtime.linux-x64.${{ needs.get-version.outputs.package_version }}
+          path: ./nupkg/runtime/linux-x64
+
+      - name: Verify bypass is not enabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${DENOHOST_ALLOW_CHECKSUM_BYPASS:-}" ]]; then
+            echo "::error::DENOHOST_ALLOW_CHECKSUM_BYPASS must not be set during release smoke tests."
+            exit 1
+          fi
+
+      - name: Create smoke test project and restore local packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf ./smoke-release
+          dotnet new console -n smoke-release -f net9.0
+          cd smoke-release
+          dotnet nuget add source ../nupkg/core --name local-core
+          dotnet nuget add source ../nupkg/runtime/linux-x64 --name local-runtime
+          dotnet add package DenoHost.Core --version "${{ needs.get-version.outputs.package_version }}" --source local-core
+          dotnet add package DenoHost.Runtime.linux-x64 --version "${{ needs.get-version.outputs.package_version }}" --source local-runtime
+
+      - name: Run runtime smoke test without checksum bypass
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd smoke-release
+          cat > Program.cs <<'EOF'
+          using DenoHost.Core;
+
+          var result = await Deno.Execute<string>("eval", new[] { "console.log('smoke-ok')" });
+          Console.WriteLine(result);
+          EOF
+          env -u DENOHOST_ALLOW_CHECKSUM_BYPASS dotnet run
+
   publish-runtime:
     name: Publish Runtime NuGet
-    needs: [get-version, build-runtime, test-on-linux, test-on-windows]
+    needs: [get-version, tag-validation, build-runtime, smoke-test-packaged, test-on-linux, test-on-windows]
     if: startsWith(github.ref, 'refs/tags/v')
     strategy:
       matrix:
@@ -313,6 +414,15 @@ jobs:
           name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime/${{ matrix.rid }}
 
+      - name: Ensure checksum bypass is disabled for publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${DENOHOST_ALLOW_CHECKSUM_BYPASS:-}" ]]; then
+            echo "::error::DENOHOST_ALLOW_CHECKSUM_BYPASS must not be set during publish."
+            exit 1
+          fi
+
       - name: Push Runtime Package to NuGet
         run: dotnet nuget push ./nupkg/runtime/${{ matrix.rid }}/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
@@ -321,7 +431,7 @@ jobs:
 
   publish-core:
     name: Publish Core NuGet
-    needs: [get-version, build-core, test-on-linux, test-on-windows]
+    needs: [get-version, tag-validation, build-core, smoke-test-packaged, test-on-linux, test-on-windows]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -329,6 +439,15 @@ jobs:
         with:
           name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core
+
+      - name: Ensure checksum bypass is disabled for publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${DENOHOST_ALLOW_CHECKSUM_BYPASS:-}" ]]; then
+            echo "::error::DENOHOST_ALLOW_CHECKSUM_BYPASS must not be set during publish."
+            exit 1
+          fi
 
       - name: Push Core Package to NuGet
         run: dotnet nuget push ./nupkg/core/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
