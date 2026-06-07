@@ -132,7 +132,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify stable tag has matching alpha.1 on same commit
+      - name: Verify stable tag has matching alpha.N on same commit
         shell: bash
         run: |
           set -euo pipefail
@@ -149,25 +149,20 @@ jobs:
             exit 0
           fi
 
-          ALPHA_TAG="v${TAG_NAME}-alpha.1"
           git fetch --tags --force
-
-          if ! git rev-parse "$ALPHA_TAG" >/dev/null 2>&1; then
-            echo "::error::Stable release v$TAG_NAME requires prerelease tag $ALPHA_TAG on the same commit."
-            exit 1
-          fi
-
-          ALPHA_SHA="$(git rev-list -n 1 "$ALPHA_TAG")"
           STABLE_SHA="$(git rev-list -n 1 "$GITHUB_REF")"
 
-          if [[ "$ALPHA_SHA" != "$STABLE_SHA" ]]; then
-            echo "::error::Stable tag v$TAG_NAME must point to the same commit as $ALPHA_TAG."
-            echo "::error::alpha sha:  $ALPHA_SHA"
+          ESCAPED_TAG_NAME="${TAG_NAME//./\\.}"
+          MATCHING_ALPHA_TAGS="$(git tag --points-at "$STABLE_SHA" --list "v${TAG_NAME}-alpha.*" | grep -E "^v${ESCAPED_TAG_NAME}-alpha\\.[0-9]+$" || true)"
+
+          if [[ -z "$MATCHING_ALPHA_TAGS" ]]; then
+            echo "::error::Stable release v$TAG_NAME requires a matching prerelease tag v$TAG_NAME-alpha.N on the same commit."
             echo "::error::stable sha: $STABLE_SHA"
             exit 1
           fi
 
-          echo "Stable tag v$TAG_NAME is valid: matching alpha tag $ALPHA_TAG found on same commit."
+          echo "Stable tag v$TAG_NAME is valid: matching alpha tag(s) found on same commit:"
+          echo "$MATCHING_ALPHA_TAGS"
 
   build-runtime:
     name: Build Runtime Packages

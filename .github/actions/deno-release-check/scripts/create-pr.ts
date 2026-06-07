@@ -148,8 +148,9 @@ This pull request updates DenoHost to use Deno v${denoVersion}.
 ## Next Steps
 1. Review the changes
 2. Test the new Deno version compatibility
-3. Merge when ready to create new DenoHost release
-4. Create tag manually: \`git tag v${denoVersion} && git push --tags\`
+3. Merge when ready to create a prerelease candidate
+4. Create prerelease tag (increment N if needed): \`git tag v${denoVersion}-alpha.N && git push --tags\`
+5. After prerelease validation succeeds, create stable tag from the same commit: \`git tag v${denoVersion} && git push --tags\`
 
 ---
 *This PR was created automatically by the Deno Release Check action.*`;

@@ -125,7 +125,7 @@ Release/package builds must provide `DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM`;
 
 ### Release Safety Gates
 
-- Stable tags (`vX.Y.Z`) are accepted only when a matching prerelease tag (`vX.Y.Z-alpha.1`) exists on the same commit.
+- Stable tags (`vX.Y.Z`) are accepted only when a matching prerelease tag (`vX.Y.Z-alpha.N`) exists on the same commit.
 - Packaged smoke tests must pass before NuGet publish.
 - Release publish is blocked if checksum bypass is enabled.
 
