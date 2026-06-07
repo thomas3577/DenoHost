@@ -27,13 +27,13 @@ submit pull requests.
 
 ## Release Safety Process
 
-To avoid shipping broken NuGet packages, releases follow strict gates:
+To avoid shipping broken NuGet packages, releases follow strict gates documented in [Release Safety](./.github/release-safety.md).
 
-1. Publish `vX.Y.Z-alpha.N` first (start with `.1`, increment if fixes are needed).
-2. Validate CI, signing checks, and smoke test results for the alpha.
-3. Publish stable `vX.Y.Z` only from the exact same commit as `vX.Y.Z-alpha.N`.
-4. Never publish if checksum bypass is enabled.
-5. Runtime and core package publishes must only happen through CI after all gates are green.
+In short:
+
+1. Publish `vX.Y.Z-alpha.N` first.
+2. Validate alpha CI checks and NuGet verification.
+3. Publish stable only from the exact same commit.
 
 ## Need help?
 
