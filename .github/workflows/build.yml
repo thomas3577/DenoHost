@@ -500,68 +500,10 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Wait for NuGet package propagation
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="${{ needs.get-version.outputs.package_version }}"
-          PACKAGES=("denohost.core" "denohost.runtime.linux-x64")
-          MAX_ATTEMPTS=10
-
-          wait_seconds() {
-            case "$1" in
-              1) echo 10 ;;
-              2) echo 20 ;;
-              3) echo 30 ;;
-              4) echo 45 ;;
-              *) echo 60 ;;
-            esac
-          }
-
-          for package in "${PACKAGES[@]}"; do
-            found="false"
-            url="https://api.nuget.org/v3-flatcontainer/${package}/${VERSION}/${package}.${VERSION}.nupkg"
-            echo "Waiting for $package $VERSION"
-
-            for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-              if curl --silent --show-error --location --fail --output /dev/null "$url"; then
-                echo "Found $package $VERSION on attempt $attempt"
-                found="true"
-                break
-              fi
-
-              delay="$(wait_seconds "$attempt")"
-              if [[ "$attempt" -lt "$MAX_ATTEMPTS" ]]; then
-                echo "$package $VERSION not visible yet (attempt $attempt/$MAX_ATTEMPTS). Retrying in ${delay}s..."
-                sleep "$delay"
-              fi
-            done
-
-            if [[ "$found" != "true" ]]; then
-              echo "::error::Package $package $VERSION did not appear on nuget.org within timeout."
-              exit 1
-            fi
-          done
-
-      - name: Restore verify project with alpha packages from nuget.org
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="${{ needs.get-version.outputs.package_version }}"
-          cd DenoHost.Verify
-          dotnet nuget locals all --clear
-          dotnet remove package DenoHost.Core || true
-          dotnet remove package DenoHost.Runtime.linux-x64 || true
-          dotnet add package DenoHost.Core --version "$VERSION" --source https://api.nuget.org/v3/index.json --no-restore
-          dotnet add package DenoHost.Runtime.linux-x64 --version "$VERSION" --source https://api.nuget.org/v3/index.json --no-restore
-          dotnet restore --source https://api.nuget.org/v3/index.json --force --no-cache
-
-      - name: Run alpha verification and assert Deno runtime version
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd DenoHost.Verify
-          env -u DENOHOST_ALLOW_CHECKSUM_BYPASS dotnet run -- "${{ needs.get-version.outputs.deno_version }}"
+      - uses: ./.github/actions/verify-alpha-nuget
+        with:
+          package-version: ${{ needs.get-version.outputs.package_version }}
+          deno-version: ${{ needs.get-version.outputs.deno_version }}
 
   create-release:
     name: Create GitHub Release
