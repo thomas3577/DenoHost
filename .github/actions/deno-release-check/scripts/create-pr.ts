@@ -150,7 +150,7 @@ This pull request updates DenoHost to use Deno v${denoVersion}.
 2. Test the new Deno version compatibility
 3. Merge when ready to create a prerelease candidate
 4. Create prerelease tag (increment N if needed): \`git tag v${denoVersion}-alpha.N && git push --tags\`
-5. Wait for alpha verification from \`nuget.org\` to pass (\`DenoHost.Verify\` job).
+5. Wait for alpha verification from \`nuget.org\` to pass (\`verify-alpha-from-nuget\` workflow job).
 6. After prerelease verification succeeds, create stable tag from the same commit: \`git tag v${denoVersion} && git push --tags\`
 
 ---
