@@ -320,7 +320,7 @@ jobs:
         run: reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Cobertura;Badges"
 
       - name: Upload Coverage Reports to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage-report/Cobertura.xml
           flags: unittests
