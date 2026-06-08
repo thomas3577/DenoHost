@@ -1,5 +1,6 @@
 const DEFAULT_PACKAGES = ['DenoHost.Core', 'DenoHost.Runtime.linux-x64'];
 const MAX_ATTEMPTS = 10;
+const REQUEST_TIMEOUT_MS = 30_000;
 
 export interface WaitOptions {
   packageVersion: string;
@@ -8,6 +9,7 @@ export interface WaitOptions {
   fetchImpl?: typeof fetch;
   sleepImpl?: (delayMs: number) => Promise<void>;
   logger?: Pick<Console, 'log' | 'error'>;
+  requestTimeoutMs?: number;
 }
 
 export interface WaitResult {
@@ -41,6 +43,7 @@ async function waitForPackageAvailability(options: WaitOptions): Promise<WaitRes
   const sleepImpl = options.sleepImpl ?? ((delayMs: number) => new Promise((resolve) => setTimeout(resolve, delayMs)));
   const logger = options.logger ?? console;
   const baseUrl = options.baseUrl ?? 'https://api.nuget.org/v3-flatcontainer';
+  const requestTimeoutMs = options.requestTimeoutMs ?? REQUEST_TIMEOUT_MS;
   const results: WaitResult[] = [];
 
   for (const packageId of options.packageIds) {
@@ -49,8 +52,35 @@ async function waitForPackageAvailability(options: WaitOptions): Promise<WaitRes
 
     let found = false;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const response = await fetchImpl(url);
-      if (response.ok) {
+      let response: Response | undefined;
+
+      try {
+        const controller = new AbortController();
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+        try {
+          const timeoutPromise = new Promise<Response>((_, reject) => {
+            timeoutId = setTimeout(() => {
+              controller.abort();
+              reject(new Error(`Request timed out after ${requestTimeoutMs}ms.`));
+            }, requestTimeoutMs);
+          });
+
+          response = await Promise.race([
+            fetchImpl(url, { signal: controller.signal }),
+            timeoutPromise,
+          ]);
+        } finally {
+          if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+          }
+          controller.abort();
+        }
+      } catch (error) {
+        logger.error(`Failed to check ${packageId} ${options.packageVersion} on attempt ${attempt}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+
+      if (response?.ok) {
         logger.log(`Found ${packageId} ${options.packageVersion} on attempt ${attempt}`);
         results.push({ packageId, url, attempts: attempt });
         found = true;

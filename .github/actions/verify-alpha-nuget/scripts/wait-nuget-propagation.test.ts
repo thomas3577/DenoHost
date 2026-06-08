@@ -80,3 +80,71 @@ Deno.test('waitForPackageAvailability fails after exhausting retries', async () 
 
   assertEquals(sleeps, [10000, 20000, 30000, 45000, 60000, 60000, 60000, 60000, 60000]);
 });
+
+Deno.test('waitForPackageAvailability retries when fetch throws', async () => {
+  const sleeps: number[] = [];
+  const errors: string[] = [];
+  let attempts = 0;
+
+  const result = await waitForPackageAvailability({
+    packageVersion: '2.3.0-alpha.1',
+    packageIds: ['DenoHost.Core'],
+    baseUrl: 'https://example.test/v3-flatcontainer',
+    fetchImpl: async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw new Error('temporary network error');
+      }
+
+      return new Response(null, { status: 200 });
+    },
+    sleepImpl: async (delayMs) => {
+      sleeps.push(delayMs);
+    },
+    logger: {
+      log: () => {},
+      error: (message) => {
+        errors.push(message);
+      },
+    },
+    requestTimeoutMs: 10,
+  });
+
+  assertEquals(result[0]?.attempts, 2);
+  assertEquals(sleeps, [10000]);
+  assertEquals(errors, ['Failed to check DenoHost.Core 2.3.0-alpha.1 on attempt 1: temporary network error']);
+});
+
+Deno.test('waitForPackageAvailability retries when fetch times out', async () => {
+  const sleeps: number[] = [];
+  const errors: string[] = [];
+  let attempts = 0;
+
+  const result = await waitForPackageAvailability({
+    packageVersion: '2.3.0-alpha.1',
+    packageIds: ['DenoHost.Core'],
+    baseUrl: 'https://example.test/v3-flatcontainer',
+    fetchImpl: async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        return await new Promise<Response>(() => {});
+      }
+
+      return new Response(null, { status: 200 });
+    },
+    sleepImpl: async (delayMs) => {
+      sleeps.push(delayMs);
+    },
+    logger: {
+      log: () => {},
+      error: (message) => {
+        errors.push(message);
+      },
+    },
+    requestTimeoutMs: 10,
+  });
+
+  assertEquals(result[0]?.attempts, 2);
+  assertEquals(sleeps, [10000]);
+  assertEquals(errors, ['Failed to check DenoHost.Core 2.3.0-alpha.1 on attempt 1: Request timed out after 10ms.']);
+});
