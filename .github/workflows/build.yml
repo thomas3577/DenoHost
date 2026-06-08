@@ -491,7 +491,7 @@ jobs:
   verify-alpha-from-nuget:
     name: Verify Alpha Package From NuGet
     needs: [get-version, publish-runtime, publish-core]
-    if: startsWith(github.ref, 'refs/tags/v') && needs.get-version.outputs.is_prerelease == 'true' && contains(needs.get-version.outputs.tag_name, '-alpha.')
+    if: startsWith(github.ref, 'refs/tags/v') && needs.get-version.outputs.is_prerelease == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
