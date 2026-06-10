@@ -1,8 +1,7 @@
 name: Build and Publish NuGet Package
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 on:
   push:
@@ -71,8 +70,6 @@ jobs:
     name: Quality Checks
     needs: get-version
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
@@ -85,7 +82,14 @@ jobs:
             9.0.x
             10.0.x
 
+      - name: Restore Solution
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet restore DenoHost.sln
+
       - name: Check for Vulnerable Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           OUTPUT=$(dotnet list DenoHost.sln package --vulnerable --include-transitive --format json)
           echo "$OUTPUT"
@@ -126,7 +130,7 @@ jobs:
           }
 
       - name: Lint (dotnet format)
-        run: dotnet format DenoHost.sln --verify-no-changes --severity warn
+        run: dotnet format DenoHost.sln --no-restore --verify-no-changes --severity warn
 
   tag-validation:
     name: Validate Stable Tag Source
@@ -442,6 +446,9 @@ jobs:
         test-on-windows,
       ]
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+      packages: write
     strategy:
       matrix:
         rid: [win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64]
@@ -481,6 +488,9 @@ jobs:
         test-on-windows,
       ]
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8
