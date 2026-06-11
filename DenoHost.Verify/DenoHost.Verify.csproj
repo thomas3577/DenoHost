@@ -8,8 +8,4 @@
     <RestoreSources>https://api.nuget.org/v3/index.json</RestoreSources>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DenoHost.Core" Version="$(DenoVersion)" />
-  </ItemGroup>
-
 </Project>
