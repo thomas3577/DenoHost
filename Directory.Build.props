@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/thomas3577/DenoHost.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Description>Run JavaScript/TypeScript from .NET using Deno.</Description>
-    <Copyright>Copyright © 2025 Thomas Huber</Copyright>
+    <Copyright>Copyright © 2025-2026 Thomas Huber</Copyright>
 
     <!-- Official Deno Version -->
     <DenoVersion>2.8.3</DenoVersion>
