@@ -7,6 +7,16 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+$repoRoot = Split-Path -Parent $PSScriptRoot
+
+if (-not [System.IO.Path]::IsPathRooted($Project)) {
+  $Project = [System.IO.Path]::GetFullPath($Project, $repoRoot)
+}
+
+if (-not [System.IO.Path]::IsPathRooted($KeyFile)) {
+  $KeyFile = [System.IO.Path]::GetFullPath($KeyFile, $repoRoot)
+}
+
 if (-not (Test-Path $Project)) {
   throw "Project not found: $Project"
 }

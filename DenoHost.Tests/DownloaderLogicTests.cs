@@ -5,6 +5,12 @@ using System.Text.Json;
 
 namespace DenoHost.Tests;
 
+[CollectionDefinition(nameof(DownloaderLogicTestsNonParallelCollection), DisableParallelization = true)]
+public sealed class DownloaderLogicTestsNonParallelCollection
+{
+}
+
+[Collection(nameof(DownloaderLogicTestsNonParallelCollection))]
 public sealed class DownloaderLogicTests
 {
   [Fact]
