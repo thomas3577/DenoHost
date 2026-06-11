@@ -115,29 +115,7 @@ await denoProcess.StopAsync();
 - Runtime packages can additionally ship `deno.metadata.json` and `deno.metadata.sig`.
 - `DenoHost.Core` requires signed metadata verification (signature + binary hash) before process start.
 
-### Metadata Signing
-
-- Signing key input for build/runtime packaging: `DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM`
-- Verification key is versioned in the repository as `Config/metadata-signing-public.pem` and embedded into `DenoHost.Core`.
-- Runtime signature verification uses the bundled public key only.
-
-Release/package builds must provide `DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM`; otherwise the workflow in `.github/workflows/build.yml` fails, and `DenoHost.Runtime.Downloader.DownloaderLogic` throws at runtime instead of silently skipping signing. The bundled verification key is `Config/metadata-signing-public.pem`, which is embedded into `DenoHost.Core`.
-
-### Release Safety Gates
-
-- Stable tags (`vX.Y.Z`) are accepted only when a matching prerelease tag (`vX.Y.Z-alpha.1`) exists on the same commit.
-- Packaged smoke tests must pass before NuGet publish.
-- Release publish is blocked if checksum bypass is enabled.
-
-### Break-Glass (temporary bypass)
-
-For incident mitigation only, checksum validation can be bypassed by setting:
-
-```bash
-DENOHOST_ALLOW_CHECKSUM_BYPASS=true
-```
-
-Use this only as a short-term emergency workaround. Keep it disabled in normal operation.
+Maintainer-only details for signing keys, release gates, alpha verification, and emergency bypass are documented in [Release Safety](./.github/release-safety.md).
 
 ## Feedback
 

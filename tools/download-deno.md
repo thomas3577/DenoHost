@@ -21,3 +21,16 @@ dotnet ./DenoHost.Runtime.Downloader/bin/Debug/net9.0/DenoHost.Runtime.Downloade
 ## Build Integration
 
 Each `DenoHost.Runtime.*` project builds the downloader CLI first and then executes it during `DownloadDenoIfMissing`.
+
+## Local Build Helper (PowerShell)
+
+For local builds that require metadata signing, use the helper script:
+
+```powershell
+pwsh -File .\tools\build-runtime-local.ps1 \
+  -Project .\DenoHost.Runtime.win-x64\DenoHost.Runtime.win-x64.csproj \
+  -Configuration Debug \
+  -KeyFile .\keys\denohost-metadata-signing-private.pem
+```
+
+The script sets `DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM` only for the current process, runs `dotnet build`, and then restores the previous process value.

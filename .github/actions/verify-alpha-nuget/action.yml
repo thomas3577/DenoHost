@@ -1,0 +1,52 @@
+name: 'Verify Alpha NuGet'
+description: 'Wait for alpha NuGet packages to propagate and verify the published Deno runtime version'
+inputs:
+  package-version:
+    description: 'Alpha package version to verify'
+    required: true
+  deno-version:
+    description: 'Expected Deno runtime version'
+    required: true
+  runtime-package-id:
+    description: 'Runtime package id to verify'
+    required: false
+    default: 'DenoHost.Runtime.linux-x64'
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Deno
+      uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb
+
+    - name: Wait for NuGet package propagation
+      shell: bash
+      env:
+        PACKAGE_VERSION: ${{ inputs.package-version }}
+        CORE_PACKAGE_ID: DenoHost.Core
+        RUNTIME_PACKAGE_ID: ${{ inputs.runtime-package-id }}
+      run: deno run --allow-net --allow-env $GITHUB_ACTION_PATH/scripts/wait-nuget-propagation.ts
+
+    - name: Restore verify project with alpha packages from nuget.org
+      shell: bash
+      env:
+        PACKAGE_VERSION: ${{ inputs.package-version }}
+        NUGET_SOURCE: https://api.nuget.org/v3/index.json
+        CORE_PACKAGE_ID: DenoHost.Core
+        RUNTIME_PACKAGE_ID: ${{ inputs.runtime-package-id }}
+      run: |
+        set -euo pipefail
+        cd "$GITHUB_WORKSPACE/DenoHost.Verify"
+        dotnet nuget locals all --clear
+        dotnet remove package "$CORE_PACKAGE_ID" || true
+        dotnet remove package "$RUNTIME_PACKAGE_ID" || true
+        dotnet add package "$CORE_PACKAGE_ID" --version "$PACKAGE_VERSION" --source "$NUGET_SOURCE" --no-restore
+        dotnet add package "$RUNTIME_PACKAGE_ID" --version "$PACKAGE_VERSION" --source "$NUGET_SOURCE" --no-restore
+        dotnet restore --source "$NUGET_SOURCE" --force --no-cache
+
+    - name: Run alpha verification and assert Deno runtime version
+      shell: bash
+      env:
+        DENO_VERSION: ${{ inputs.deno-version }}
+      run: |
+        set -euo pipefail
+        cd "$GITHUB_WORKSPACE/DenoHost.Verify"
+        env -u DENOHOST_ALLOW_CHECKSUM_BYPASS dotnet run -- "$DENO_VERSION"
