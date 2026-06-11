@@ -15,6 +15,9 @@
     <!-- Official Deno Version -->
     <DenoVersion>2.8.2</DenoVersion>
     <DenoDownloaderTargetFramework>net9.0</DenoDownloaderTargetFramework>
+
+    <!-- Prevent generated files in artifacts folders from being auto-included as source files. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/artifacts/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

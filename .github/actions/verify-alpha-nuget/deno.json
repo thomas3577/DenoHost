@@ -7,8 +7,7 @@
     "update": "deno outdated --update --latest"
   },
   "imports": {
-    "@std/assert": "jsr:@std/assert@^1.0.19",
-    "@std/testing/mock": "jsr:@std/testing@^1.0.19/mock"
+    "@std/assert": "jsr:@std/assert@^1.0.19"
   },
   "lint": {
     "rules": {

@@ -1,8 +1,7 @@
 name: Build and Publish NuGet Package
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 on:
   push:
@@ -21,7 +20,9 @@ jobs:
       is_prerelease: ${{ steps.extract.outputs.is_prerelease }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
 
       - name: Extract Version
         id: extract
@@ -70,16 +71,25 @@ jobs:
     needs: get-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2
         with:
           dotnet-version: |
             9.0.x
             10.0.x
 
+      - name: Restore Solution
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet restore DenoHost.sln
+
       - name: Check for Vulnerable Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           OUTPUT=$(dotnet list DenoHost.sln package --vulnerable --include-transitive --format json)
           echo "$OUTPUT"
@@ -120,7 +130,7 @@ jobs:
           }
 
       - name: Lint (dotnet format)
-        run: dotnet format DenoHost.sln --verify-no-changes --severity warn
+        run: dotnet format DenoHost.sln --no-restore --verify-no-changes --severity warn
 
   tag-validation:
     name: Validate Stable Tag Source
@@ -128,11 +138,12 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
+          persist-credentials: false
           fetch-depth: 0
 
-      - name: Verify stable tag has matching alpha.1 on same commit
+      - name: Verify stable tag has matching alpha.N on same commit
         shell: bash
         run: |
           set -euo pipefail
@@ -149,25 +160,20 @@ jobs:
             exit 0
           fi
 
-          ALPHA_TAG="v${TAG_NAME}-alpha.1"
           git fetch --tags --force
-
-          if ! git rev-parse "$ALPHA_TAG" >/dev/null 2>&1; then
-            echo "::error::Stable release v$TAG_NAME requires prerelease tag $ALPHA_TAG on the same commit."
-            exit 1
-          fi
-
-          ALPHA_SHA="$(git rev-list -n 1 "$ALPHA_TAG")"
           STABLE_SHA="$(git rev-list -n 1 "$GITHUB_REF")"
 
-          if [[ "$ALPHA_SHA" != "$STABLE_SHA" ]]; then
-            echo "::error::Stable tag v$TAG_NAME must point to the same commit as $ALPHA_TAG."
-            echo "::error::alpha sha:  $ALPHA_SHA"
+          ESCAPED_TAG_NAME="${TAG_NAME//./\\.}"
+          MATCHING_ALPHA_TAGS="$(git tag --points-at "$STABLE_SHA" --list "v${TAG_NAME}-alpha.*" | grep -E "^v${ESCAPED_TAG_NAME}-alpha\\.[0-9]+$" || true)"
+
+          if [[ -z "$MATCHING_ALPHA_TAGS" ]]; then
+            echo "::error::Stable release v$TAG_NAME requires a matching prerelease tag v$TAG_NAME-alpha.N on the same commit."
             echo "::error::stable sha: $STABLE_SHA"
             exit 1
           fi
 
-          echo "Stable tag v$TAG_NAME is valid: matching alpha tag $ALPHA_TAG found on same commit."
+          echo "Stable tag v$TAG_NAME is valid: matching alpha tag(s) found on same commit:"
+          echo "$MATCHING_ALPHA_TAGS"
 
   build-runtime:
     name: Build Runtime Packages
@@ -197,9 +203,11 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2
         with:
           dotnet-version: 10.0.x
 
@@ -258,13 +266,15 @@ jobs:
 
   build-core:
     name: Build Core Package
-    needs: [get-version, build-runtime]
+    needs: [get-version, quality-checks]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2
         with:
           dotnet-version: |
             9.0.x
@@ -293,9 +303,11 @@ jobs:
     needs: [build-core, build-runtime]
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2
         with:
           dotnet-version: |
             9.0.x
@@ -320,7 +332,7 @@ jobs:
         run: reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Cobertura;Badges"
 
       - name: Upload Coverage Reports to Codecov
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@a99c28d3f0da835de33ff2feb2e15691c7b9641f
         with:
           files: ./coverage-report/Cobertura.xml
           flags: unittests
@@ -332,9 +344,11 @@ jobs:
     needs: [build-core, build-runtime]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2
         with:
           dotnet-version: |
             9.0.x
@@ -358,9 +372,11 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2
         with:
           dotnet-version: |
             9.0.x
@@ -420,8 +436,18 @@ jobs:
 
   publish-runtime:
     name: Publish Runtime NuGet
-    needs: [get-version, tag-validation, build-runtime, smoke-test-packaged, test-on-linux, test-on-windows]
+    needs:
+      [
+        get-version,
+        tag-validation,
+        build-runtime,
+        smoke-test-packaged,
+        test-on-linux,
+        test-on-windows,
+      ]
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
     strategy:
       matrix:
         rid: [win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64]
@@ -434,25 +460,23 @@ jobs:
           name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime/${{ matrix.rid }}
 
-      - name: Ensure checksum bypass is disabled for publish
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ -n "${DENOHOST_ALLOW_CHECKSUM_BYPASS:-}" ]]; then
-            echo "::error::DENOHOST_ALLOW_CHECKSUM_BYPASS must not be set during publish."
-            exit 1
-          fi
-
       - name: Push Runtime Package to NuGet
         run: dotnet nuget push ./nupkg/runtime/${{ matrix.rid }}/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
-      - name: Push Runtime Package to GitHub Packages
-        run: dotnet nuget push ./nupkg/runtime/${{ matrix.rid }}/*.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
-
   publish-core:
     name: Publish Core NuGet
-    needs: [get-version, tag-validation, build-core, smoke-test-packaged, test-on-linux, test-on-windows]
+    needs:
+      [
+        get-version,
+        tag-validation,
+        build-core,
+        smoke-test-packaged,
+        test-on-linux,
+        test-on-windows,
+      ]
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8
@@ -460,25 +484,34 @@ jobs:
           name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core
 
-      - name: Ensure checksum bypass is disabled for publish
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ -n "${DENOHOST_ALLOW_CHECKSUM_BYPASS:-}" ]]; then
-            echo "::error::DENOHOST_ALLOW_CHECKSUM_BYPASS must not be set during publish."
-            exit 1
-          fi
-
       - name: Push Core Package to NuGet
         run: dotnet nuget push ./nupkg/core/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
-      - name: Push Core Package to GitHub Packages
-        run: dotnet nuget push ./nupkg/core/*.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }}
+  verify-alpha-from-nuget:
+    name: Verify Alpha Package From NuGet
+    needs: [get-version, publish-runtime, publish-core]
+    if: startsWith(github.ref, 'refs/tags/v') && needs.get-version.outputs.is_prerelease == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+
+      - uses: ./.github/actions/verify-alpha-nuget
+        with:
+          package-version: ${{ needs.get-version.outputs.package_version }}
+          deno-version: ${{ needs.get-version.outputs.deno_version }}
 
   create-release:
     name: Create GitHub Release
-    needs: [get-version, publish-runtime, publish-core]
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [get-version, publish-runtime, publish-core, verify-alpha-from-nuget]
+    if: startsWith(github.ref, 'refs/tags/v') && (needs.get-version.outputs.is_prerelease != 'true' || needs.verify-alpha-from-nuget.result == 'success')
     runs-on: ubuntu-latest
     steps:
       # Download all artifacts to attach to release

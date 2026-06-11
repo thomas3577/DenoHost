@@ -1,9 +1,16 @@
 using DenoHost.Runtime.Downloader;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace DenoHost.Tests;
 
+[CollectionDefinition(nameof(DownloaderLogicTestsNonParallelCollection), DisableParallelization = true)]
+public sealed class DownloaderLogicTestsNonParallelCollection
+{
+}
+
+[Collection(nameof(DownloaderLogicTestsNonParallelCollection))]
 public sealed class DownloaderLogicTests
 {
   [Fact]
@@ -98,6 +105,33 @@ public sealed class DownloaderLogicTests
     var signatureBytes = Convert.FromBase64String(signatureBase64);
 
     Assert.True(ecdsa.VerifyData(metadataBytes, signatureBytes, HashAlgorithmName.SHA256));
+  }
+
+  [Fact]
+  public void FinalizeArtifacts_WithoutSigningKey_ThrowsWhenArtifactsMissing()
+  {
+    var originalKey = Environment.GetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM");
+    Environment.SetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM", null);
+
+    try
+    {
+      var tempDir = Path.Combine(Path.GetTempPath(), $"denohost-tests-{Guid.NewGuid():N}");
+      Directory.CreateDirectory(tempDir);
+
+      var executablePath = Path.Combine(tempDir, "deno");
+      File.WriteAllText(executablePath, "fake-deno", new UTF8Encoding(false));
+
+      var ex = Assert.Throws<InvalidOperationException>(() =>
+        DownloaderLogic.FinalizeArtifacts(executablePath, "2.8.2", "deno-x86_64-unknown-linux-gnu.zip", "linux-x64", DownloaderWorkflow.BaseUrlForTests));
+
+      Assert.Contains("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM", ex.Message, StringComparison.Ordinal);
+
+      Directory.Delete(tempDir, recursive: true);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM", originalKey);
+    }
   }
 
   private static string ExportPemPrivateKey(ECDsa ecdsa)

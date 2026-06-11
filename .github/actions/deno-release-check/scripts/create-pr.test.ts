@@ -26,8 +26,10 @@ This pull request updates DenoHost to use Deno v${denoVersion}.
 ## Next Steps
 1. Review the changes
 2. Test the new Deno version compatibility
-3. Merge when ready to create new DenoHost release
-4. Create tag manually: \`git tag v${denoVersion} && git push --tags\`
+3. Merge when ready to create a prerelease candidate
+4. Create prerelease tag (increment N if needed): \`git tag v${denoVersion}-alpha.N && git push --tags\`
+5. Wait for alpha verification from \`nuget.org\` to pass (\`verify-alpha-from-nuget\` workflow job).
+6. After prerelease verification succeeds, create stable tag from the same commit: \`git tag v${denoVersion} && git push --tags\`
 
 ---
 *This PR was created automatically by the Deno Release Check action.*`;
@@ -139,6 +141,8 @@ Deno.test('createPullRequest - generates correct title and body', async () => {
     const body = capturedRequestBody.body as string;
     assertEquals(body.includes('Deno v1.45.0'), true);
     assertEquals(body.includes('This will create a new release when merged'), true);
+    assertEquals(body.includes('git tag v1.45.0-alpha.N && git push --tags'), true);
+    assertEquals(body.includes('alpha verification from `nuget.org`'), true);
     assertEquals(body.includes('git tag v1.45.0 && git push --tags'), true);
     assertEquals(body.includes('automatically by the Deno Release Check'), true);
   } finally {
