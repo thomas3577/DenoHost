@@ -78,7 +78,7 @@ Deno.test('waitForPackageAvailability fails after exhausting retries', async () 
     'Package DenoHost.Core 2.3.0-alpha.1 did not appear on nuget.org within timeout.',
   );
 
-  assertEquals(sleeps, [10000, 20000, 30000, 45000, 60000, 60000, 60000, 60000, 60000]);
+  assertEquals(sleeps, [10000, 20000, 30000, 45000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000]);
 });
 
 Deno.test('waitForPackageAvailability retries when fetch throws', async () => {

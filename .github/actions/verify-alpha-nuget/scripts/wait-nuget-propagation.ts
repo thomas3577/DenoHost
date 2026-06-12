@@ -1,5 +1,5 @@
 const DEFAULT_PACKAGES = ['DenoHost.Core', 'DenoHost.Runtime.linux-x64'];
-const MAX_ATTEMPTS = 10;
+const MAX_ATTEMPTS = 20;
 const REQUEST_TIMEOUT_MS = 30_000;
 
 export interface WaitOptions {
