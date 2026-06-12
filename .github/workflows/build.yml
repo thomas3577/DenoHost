@@ -431,17 +431,17 @@ jobs:
             exit 1
           fi
 
-          mkdir -p ./nupkg/local-feed/core ./nupkg/local-feed/runtime/linux-x64
-          cp "$core_pkg" ./nupkg/local-feed/core/
-          cp "$runtime_pkg" ./nupkg/local-feed/runtime/linux-x64/
+          mkdir -p ./nupkg/local-feed
+          dotnet nuget push "$core_pkg" --source ./nupkg/local-feed --skip-duplicate
+          dotnet nuget push "$runtime_pkg" --source ./nupkg/local-feed --skip-duplicate
 
           dotnet new console -n smoke-release -f net9.0
           cd smoke-release
-          dotnet nuget add source ../nupkg/local-feed/core --name local-core
-          dotnet nuget add source ../nupkg/local-feed/runtime/linux-x64 --name local-runtime
+          dotnet nuget add source ../nupkg/local-feed --name local-smoke-feed
           dotnet add package DenoHost.Core --version "${{ needs.get-version.outputs.package_version }}" --no-restore
           dotnet add package DenoHost.Runtime.linux-x64 --version "${{ needs.get-version.outputs.package_version }}" --no-restore
-          dotnet restore --source ../nupkg/local-feed/core --source ../nupkg/local-feed/runtime/linux-x64 --source https://api.nuget.org/v3/index.json
+          find ../nupkg/local-feed -maxdepth 5 -type f -name "*.nupkg" -print
+          dotnet restore --source ../nupkg/local-feed --source https://api.nuget.org/v3/index.json
 
       - name: Run runtime smoke test without checksum bypass
         shell: bash
