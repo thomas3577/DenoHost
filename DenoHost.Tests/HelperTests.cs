@@ -397,6 +397,36 @@ public class HelperTests
   }
 
   [Fact]
+  public void ValidateExecutableFile_OnUnix_SetsExecuteBitsWhenMissing()
+  {
+    if (OperatingSystem.IsWindows())
+      return;
+
+    var tempFile = Path.Combine(Path.GetTempPath(), $"deno_exec_{Guid.NewGuid():N}");
+    File.WriteAllText(tempFile, "#!/bin/sh\necho test\n");
+
+    var method = typeof(Helper).GetMethod("ValidateExecutableFile", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    try
+    {
+      File.SetUnixFileMode(tempFile, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+
+      method.Invoke(null, [tempFile]);
+
+      var mode = File.GetUnixFileMode(tempFile);
+      Assert.True((mode & UnixFileMode.UserExecute) != 0);
+      Assert.True((mode & UnixFileMode.GroupExecute) != 0);
+      Assert.True((mode & UnixFileMode.OtherExecute) != 0);
+    }
+    finally
+    {
+      if (File.Exists(tempFile))
+        File.Delete(tempFile);
+    }
+  }
+
+  [Fact]
   public void BuiltInMetadataPublicKey_FileMatchesEmbeddedResource()
   {
     var resource = typeof(Helper).Assembly.GetManifestResourceNames()

@@ -186,11 +186,42 @@ internal static class Helper
         // This is a basic check - in a production environment you might want more sophisticated validation
         if (fileInfo.Length == 0)
           throw new InvalidOperationException("Deno executable file is empty.");
+
+        EnsureUnixExecutablePermissions(filePath);
       }
     }
     catch (UnauthorizedAccessException ex)
     {
       throw new UnauthorizedAccessException($"Cannot access Deno executable at {filePath}. Check file permissions.", ex);
+    }
+  }
+
+  private static void EnsureUnixExecutablePermissions(string filePath)
+  {
+    if (OperatingSystem.IsWindows())
+      return;
+
+    try
+    {
+      var mode = File.GetUnixFileMode(filePath);
+      var requiredExecuteMode = UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
+
+      if ((mode & requiredExecuteMode) == requiredExecuteMode)
+        return;
+
+      File.SetUnixFileMode(filePath, mode | requiredExecuteMode);
+    }
+    catch (UnauthorizedAccessException ex)
+    {
+      throw new UnauthorizedAccessException(
+        $"Cannot set execute permissions for Deno executable at {filePath}.",
+        ex);
+    }
+    catch (IOException ex)
+    {
+      throw new InvalidOperationException(
+        $"Failed to update execute permissions for Deno executable at {filePath}.",
+        ex);
     }
   }
 

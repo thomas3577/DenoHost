@@ -423,6 +423,7 @@ jobs:
           dotnet add reference ../DenoHost.Core/DenoHost.Core.csproj
           mkdir -p ./runtime-extract
           unzip -q "$runtime_pkg_abs" -d ./runtime-extract
+          chmod +x ./runtime-extract/runtimes/linux-x64/native/deno
           find ./runtime-extract/runtimes -maxdepth 5 -type f -print
 
       - name: Run runtime smoke test without checksum bypass
@@ -445,6 +446,7 @@ jobs:
           dotnet build
           mkdir -p ./bin/Debug/net9.0/runtimes/linux-x64/native
           cp -R ./runtime-extract/runtimes/linux-x64/native/. ./bin/Debug/net9.0/runtimes/linux-x64/native/
+          chmod +x ./bin/Debug/net9.0/runtimes/linux-x64/native/deno
           env -u DENOHOST_ALLOW_CHECKSUM_BYPASS dotnet run --no-build
 
   publish-runtime:
