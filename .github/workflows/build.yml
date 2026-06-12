@@ -418,8 +418,8 @@ jobs:
           cd smoke-release
           dotnet nuget add source ../nupkg/core --name local-core
           dotnet nuget add source ../nupkg/runtime/linux-x64 --name local-runtime
-          dotnet add package DenoHost.Core --version "${{ needs.get-version.outputs.package_version }}" --source local-core
-          dotnet add package DenoHost.Runtime.linux-x64 --version "${{ needs.get-version.outputs.package_version }}" --source local-runtime
+          dotnet add package DenoHost.Core --version "${{ needs.get-version.outputs.package_version }}" --source ../nupkg/core
+          dotnet add package DenoHost.Runtime.linux-x64 --version "${{ needs.get-version.outputs.package_version }}" --source ../nupkg/runtime/linux-x64
 
       - name: Run runtime smoke test without checksum bypass
         shell: bash
