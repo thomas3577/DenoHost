@@ -414,13 +414,34 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf ./smoke-release
+          rm -rf ./nupkg/local-feed
+
+          core_pkg="$(find ./nupkg/core -type f -name 'DenoHost.Core*.nupkg' | head -n 1 || true)"
+          runtime_pkg="$(find ./nupkg/runtime/linux-x64 -type f -name 'DenoHost.Runtime.linux-x64*.nupkg' | head -n 1 || true)"
+
+          if [[ -z "$core_pkg" ]]; then
+            echo "::error::No DenoHost.Core package found under ./nupkg/core"
+            find ./nupkg/core -maxdepth 5 -type f -print || true
+            exit 1
+          fi
+
+          if [[ -z "$runtime_pkg" ]]; then
+            echo "::error::No DenoHost.Runtime.linux-x64 package found under ./nupkg/runtime/linux-x64"
+            find ./nupkg/runtime/linux-x64 -maxdepth 6 -type f -print || true
+            exit 1
+          fi
+
+          mkdir -p ./nupkg/local-feed/core ./nupkg/local-feed/runtime/linux-x64
+          cp "$core_pkg" ./nupkg/local-feed/core/
+          cp "$runtime_pkg" ./nupkg/local-feed/runtime/linux-x64/
+
           dotnet new console -n smoke-release -f net9.0
           cd smoke-release
-          dotnet nuget add source ../nupkg/core --name local-core
-          dotnet nuget add source ../nupkg/runtime/linux-x64 --name local-runtime
+          dotnet nuget add source ../nupkg/local-feed/core --name local-core
+          dotnet nuget add source ../nupkg/local-feed/runtime/linux-x64 --name local-runtime
           dotnet add package DenoHost.Core --version "${{ needs.get-version.outputs.package_version }}" --no-restore
           dotnet add package DenoHost.Runtime.linux-x64 --version "${{ needs.get-version.outputs.package_version }}" --no-restore
-          dotnet restore --source ../nupkg/core --source ../nupkg/runtime/linux-x64 --source https://api.nuget.org/v3/index.json
+          dotnet restore --source ../nupkg/local-feed/core --source ../nupkg/local-feed/runtime/linux-x64 --source https://api.nuget.org/v3/index.json
 
       - name: Run runtime smoke test without checksum bypass
         shell: bash
