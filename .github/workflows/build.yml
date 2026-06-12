@@ -416,11 +416,13 @@ jobs:
             exit 1
           fi
 
+          runtime_pkg_abs="$(realpath "$runtime_pkg")"
+
           dotnet new console -n smoke-release -f net9.0
           cd smoke-release
           dotnet add reference ../DenoHost.Core/DenoHost.Core.csproj
           mkdir -p ./runtime-extract
-          unzip -q "$runtime_pkg" -d ./runtime-extract
+          unzip -q "$runtime_pkg_abs" -d ./runtime-extract
           find ./runtime-extract/runtimes -maxdepth 5 -type f -print
 
       - name: Run runtime smoke test without checksum bypass
