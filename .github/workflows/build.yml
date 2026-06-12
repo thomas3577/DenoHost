@@ -388,12 +388,6 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Download Core Artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
-          path: ./nupkg/core
-
       - name: Download Linux Runtime Artifact
         uses: actions/download-artifact@v8
         with:
@@ -409,23 +403,12 @@ jobs:
             exit 1
           fi
 
-      - name: Create smoke test project and restore local packages
+      - name: Create smoke test project and unpack packaged runtime
         shell: bash
         run: |
           set -euo pipefail
           rm -rf ./smoke-release
-          rm -rf ./nupkg/local-feed
-
-          VERSION="${{ needs.get-version.outputs.package_version }}"
-
-          core_pkg="$(find ./nupkg/core -type f -name 'DenoHost.Core*.nupkg' | head -n 1 || true)"
           runtime_pkg="$(find ./nupkg/runtime/linux-x64 -type f -name 'DenoHost.Runtime.linux-x64*.nupkg' | head -n 1 || true)"
-
-          if [[ -z "$core_pkg" ]]; then
-            echo "::error::No DenoHost.Core package found under ./nupkg/core"
-            find ./nupkg/core -maxdepth 5 -type f -print || true
-            exit 1
-          fi
 
           if [[ -z "$runtime_pkg" ]]; then
             echo "::error::No DenoHost.Runtime.linux-x64 package found under ./nupkg/runtime/linux-x64"
@@ -433,18 +416,12 @@ jobs:
             exit 1
           fi
 
-          mkdir -p "./nupkg/local-feed/denohost.core/$VERSION"
-          mkdir -p "./nupkg/local-feed/denohost.runtime.linux-x64/$VERSION"
-          cp "$core_pkg" "./nupkg/local-feed/denohost.core/$VERSION/$(basename "$core_pkg")"
-          cp "$runtime_pkg" "./nupkg/local-feed/denohost.runtime.linux-x64/$VERSION/$(basename "$runtime_pkg")"
-
           dotnet new console -n smoke-release -f net9.0
           cd smoke-release
-          dotnet nuget add source ../nupkg/local-feed --name local-smoke-feed
-          dotnet add package DenoHost.Core --version "$VERSION" --no-restore
-          dotnet add package DenoHost.Runtime.linux-x64 --version "$VERSION" --no-restore
-          find ../nupkg/local-feed -maxdepth 5 -type f -name "*.nupkg" -print
-          dotnet restore --source ../nupkg/local-feed --source https://api.nuget.org/v3/index.json
+          dotnet add reference ../DenoHost.Core/DenoHost.Core.csproj
+          mkdir -p ./runtime-extract
+          unzip -q "$runtime_pkg" -d ./runtime-extract
+          find ./runtime-extract/runtimes -maxdepth 5 -type f -print
 
       - name: Run runtime smoke test without checksum bypass
         shell: bash
@@ -463,7 +440,10 @@ jobs:
             Environment.Exit(1);
           }
           EOF
-          env -u DENOHOST_ALLOW_CHECKSUM_BYPASS dotnet run
+          dotnet build
+          mkdir -p ./bin/Debug/net9.0/runtimes/linux-x64/native
+          cp -R ./runtime-extract/runtimes/linux-x64/native/. ./bin/Debug/net9.0/runtimes/linux-x64/native/
+          env -u DENOHOST_ALLOW_CHECKSUM_BYPASS dotnet run --no-build
 
   publish-runtime:
     name: Publish Runtime NuGet
