@@ -8,6 +8,15 @@ using System.Text.Json;
 
 namespace DenoHost.Tests;
 
+/// <summary>
+/// Collection to prevent parallel execution of tests that manipulate environment variables.
+/// </summary>
+[CollectionDefinition(nameof(EnvironmentVariableTestsNonParallelCollection), DisableParallelization = true)]
+public class EnvironmentVariableTestsNonParallelCollection
+{
+}
+
+[Collection(nameof(EnvironmentVariableTestsNonParallelCollection))]
 public class HelperTests
 {
   [Fact]
