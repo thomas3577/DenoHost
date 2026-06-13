@@ -5,6 +5,7 @@ using DenoHost.Core.Config;
 
 namespace DenoHost.Tests;
 
+[Collection(nameof(EnvironmentVariableTestsNonParallelCollection))]
 public class DenoProcessTests
 {
   private readonly ILogger _logger;

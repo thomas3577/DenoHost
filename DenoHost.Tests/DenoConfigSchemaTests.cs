@@ -7,6 +7,7 @@ namespace DenoHost.Tests;
 /// <summary>
 /// Tests to validate that DenoConfig matches the official Deno JSON schema
 /// </summary>
+[Collection(nameof(EnvironmentVariableTestsNonParallelCollection))]
 public class DenoConfigSchemaTests
 {
   // Dynamically determine the Deno version from the Deno binary (cross-platform)
