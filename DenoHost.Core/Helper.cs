@@ -240,6 +240,14 @@ internal static class Helper
 
     if (bypassRequested && strictModeEnabled)
     {
+      if (Deno.Logger != null)
+      {
+        Microsoft.Extensions.Logging.LoggerExtensions.LogError(Deno.Logger,
+          LogEvents.StrictModeBypassBlocked,
+          "Checksum bypass via {BypassEnvVar} was blocked because {StrictEnvVar} is enabled.",
+          ChecksumBypassEnvVarName, StrictModeEnvVarName);
+      }
+
       throw new SecurityException(
         $"Checksum bypass via {ChecksumBypassEnvVarName} is blocked because {StrictModeEnvVarName} is enabled. Remove the bypass variable or disable strict mode.");
     }
