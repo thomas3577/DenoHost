@@ -30,7 +30,10 @@ For incident mitigation only, checksum validation can be bypassed by setting:
 
 ```bash
 DENOHOST_ALLOW_CHECKSUM_BYPASS=true
+DENOHOST_BYPASS_REASON="Incident #456 - metadata corruption after CI migration"
 ```
+
+**Both variables are required.** The bypass reason creates an audit trail for post-incident reviews and compliance documentation.
 
 Use this only as a short-term emergency workaround. Keep it disabled in normal operation.
 

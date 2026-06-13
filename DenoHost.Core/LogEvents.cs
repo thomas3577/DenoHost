@@ -16,4 +16,5 @@ internal static class LogEvents
   public static readonly EventId HashMismatchDetected = new(2002, "HashMismatchDetected");
   public static readonly EventId MetadataMissing = new(2003, "MetadataMissing");
   public static readonly EventId StrictModeBypassBlocked = new(2004, "StrictModeBypassBlocked");
+  public static readonly EventId SecurityBypassUsed = new(2005, "SecurityBypassUsed");
 }
