@@ -36,6 +36,10 @@
     <ProjectReference Include="..\DenoHost.Runtime.win-x64\DenoHost.Runtime.win-x64.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="scripts\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
     <PropertyGroup>
       <DenoFile Condition="'$(OS)' == 'Windows_NT'">deno.exe</DenoFile>
