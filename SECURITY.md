@@ -27,6 +27,14 @@ For emergency incident mitigation, this check can be bypassed temporarily by set
 
 This bypass is intended as break-glass only and should be removed as soon as the incident is resolved.
 
+### Production Strict Mode
+
+In production environments, you can enforce that the bypass cannot be used by setting:
+
+`DENOHOST_STRICT_MODE=true`
+
+When strict mode is enabled, any attempt to use `DENOHOST_ALLOW_CHECKSUM_BYPASS` will throw a `SecurityException` immediately. This prevents accidental or unauthorized bypasses in production deployments.
+
 ## Reporting a Vulnerability
 
 Please report vulnerabilities privately:

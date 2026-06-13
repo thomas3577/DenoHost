@@ -114,6 +114,7 @@ await denoProcess.StopAsync();
 - A SHA-256 checksum file is generated for the bundled executable and shipped with each runtime package.
 - Runtime packages can additionally ship `deno.metadata.json` and `deno.metadata.sig`.
 - `DenoHost.Core` requires signed metadata verification (signature + binary hash) before process start.
+- Production deployments can enable strict mode (`DENOHOST_STRICT_MODE=true`) to block emergency bypasses.
 
 Maintainer-only details for signing keys, release gates, alpha verification, and emergency bypass are documented in [Release Safety](./.github/release-safety.md).
 

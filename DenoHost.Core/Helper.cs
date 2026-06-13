@@ -12,6 +12,7 @@ namespace DenoHost.Core;
 internal static class Helper
 {
   internal const string ChecksumBypassEnvVarName = "DENOHOST_ALLOW_CHECKSUM_BYPASS";
+  internal const string StrictModeEnvVarName = "DENOHOST_STRICT_MODE";
   private static readonly string? BuiltInMetadataSigningPublicKeyPem = LoadBuiltInMetadataSigningPublicKeyPem();
   private const string MetadataFileName = "deno.metadata.json";
   private const string MetadataSignatureFileName = "deno.metadata.sig";
@@ -140,6 +141,12 @@ internal static class Helper
     return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
   }
 
+  internal static bool IsStrictModeEnabled()
+  {
+    var value = Environment.GetEnvironmentVariable(StrictModeEnvVarName);
+    return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+  }
+
   internal static string GetRuntimeId()
   {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -227,7 +234,16 @@ internal static class Helper
 
   private static void ValidateExecutableIntegrity(string executablePath)
   {
-    if (IsChecksumBypassEnabled())
+    var bypassRequested = IsChecksumBypassEnabled();
+    var strictModeEnabled = IsStrictModeEnabled();
+
+    if (bypassRequested && strictModeEnabled)
+    {
+      throw new SecurityException(
+        $"Checksum bypass via {ChecksumBypassEnvVarName} is blocked because {StrictModeEnvVarName} is enabled. Remove the bypass variable or disable strict mode.");
+    }
+
+    if (bypassRequested)
       return;
 
     var executableDirectory = Path.GetDirectoryName(executablePath)
