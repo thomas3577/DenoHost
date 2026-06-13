@@ -12,7 +12,10 @@ builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsProduction())
+{
+  app.UseHttpsRedirection();
+}
 
 // Original endpoint
 app.MapGet("/", static async (HttpContext context) =>
