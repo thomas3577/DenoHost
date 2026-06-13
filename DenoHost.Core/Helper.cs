@@ -257,9 +257,15 @@ internal static class Helper
       }
 
       // Audit log: Record security bypass event for monitoring/SIEM integration
-      Trace.TraceWarning(
-        $"[SECURITY AUDIT] Checksum validation bypassed. Reason: {bypassReason} | " +
-        $"Executable: {executablePath} | EnvVar: {BypassReasonEnvVarName}");
+      var safeBypassReason = bypassReason.Replace("\r", "\\r").Replace("\n", "\\n").Replace("\"", "\\\"");
+
+      if (Deno.Logger != null)
+      {
+        Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(Deno.Logger,
+          LogEvents.SecurityBypassUsed,
+          "Checksum validation bypassed via {BypassEnvVar}. Reason: {Reason} | Executable: {ExecutablePath}",
+          ChecksumBypassEnvVarName, safeBypassReason, executablePath);
+      }
       return;
     }
 
