@@ -113,6 +113,7 @@ public class TempFileFixture : IDisposable
   }
 }
 
+[Collection(nameof(EnvironmentVariableTestsNonParallelCollection))]
 public class DenoTests(TempFileFixture tempFileFixture) : IClassFixture<TempFileFixture>
 {
   private readonly TempFileFixture _tempFileFixture = tempFileFixture;

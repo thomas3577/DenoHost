@@ -23,9 +23,22 @@ Because we ship native and third-party binaries, older packages are **not** patc
 
 For emergency incident mitigation, this check can be bypassed temporarily by setting:
 
-`DENOHOST_ALLOW_CHECKSUM_BYPASS=true`
+```bash
+DENOHOST_ALLOW_CHECKSUM_BYPASS=true
+DENOHOST_BYPASS_REASON="GitHub Issue #123 - hash mismatch in v1.2.3"
+```
+
+**Both variables are required.** The bypass reason provides an audit trail for security monitoring and compliance.
 
 This bypass is intended as break-glass only and should be removed as soon as the incident is resolved.
+
+### Production Strict Mode
+
+In production environments, you can enforce that the bypass cannot be used by setting:
+
+`DENOHOST_STRICT_MODE=true`
+
+When strict mode is enabled, any attempt to use `DENOHOST_ALLOW_CHECKSUM_BYPASS` will throw a `SecurityException` immediately. This prevents accidental or unauthorized bypasses in production deployments.
 
 ## Reporting a Vulnerability
 

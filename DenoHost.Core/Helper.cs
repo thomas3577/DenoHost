@@ -12,6 +12,8 @@ namespace DenoHost.Core;
 internal static class Helper
 {
   internal const string ChecksumBypassEnvVarName = "DENOHOST_ALLOW_CHECKSUM_BYPASS";
+  internal const string StrictModeEnvVarName = "DENOHOST_STRICT_MODE";
+  internal const string BypassReasonEnvVarName = "DENOHOST_BYPASS_REASON";
   private static readonly string? BuiltInMetadataSigningPublicKeyPem = LoadBuiltInMetadataSigningPublicKeyPem();
   private const string MetadataFileName = "deno.metadata.json";
   private const string MetadataSignatureFileName = "deno.metadata.sig";
@@ -140,6 +142,12 @@ internal static class Helper
     return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
   }
 
+  internal static bool IsStrictModeEnabled()
+  {
+    var value = Environment.GetEnvironmentVariable(StrictModeEnvVarName);
+    return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+  }
+
   internal static string GetRuntimeId()
   {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -227,8 +235,46 @@ internal static class Helper
 
   private static void ValidateExecutableIntegrity(string executablePath)
   {
-    if (IsChecksumBypassEnabled())
+    var bypassRequested = IsChecksumBypassEnabled();
+    var strictModeEnabled = IsStrictModeEnabled();
+
+    if (bypassRequested && strictModeEnabled)
+    {
+      if (Deno.Logger != null)
+      {
+        Microsoft.Extensions.Logging.LoggerExtensions.LogError(Deno.Logger,
+          LogEvents.StrictModeBypassBlocked,
+          "Checksum bypass via {BypassEnvVar} was blocked because {StrictEnvVar} is enabled.",
+          ChecksumBypassEnvVarName, StrictModeEnvVarName);
+      }
+
+      throw new SecurityException(
+        $"Checksum bypass via {ChecksumBypassEnvVarName} is blocked because {StrictModeEnvVarName} is enabled. Remove the bypass variable or disable strict mode.");
+    }
+
+    if (bypassRequested)
+    {
+      // Audit-Trail: Require explicit justification for bypass usage
+      var bypassReason = Environment.GetEnvironmentVariable(BypassReasonEnvVarName);
+      if (string.IsNullOrWhiteSpace(bypassReason))
+      {
+        throw new SecurityException(
+          $"Checksum bypass requires justification via {BypassReasonEnvVarName} environment variable. " +
+          $"Example: {BypassReasonEnvVarName}='GitHub Issue #123 - hash mismatch in v1.2.3'");
+      }
+
+      // Audit log: Record security bypass event for monitoring/SIEM integration
+      var safeBypassReason = bypassReason.Replace("\r", "\\r").Replace("\n", "\\n").Replace("\"", "\\\"");
+
+      if (Deno.Logger != null)
+      {
+        Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(Deno.Logger,
+          LogEvents.SecurityBypassUsed,
+          "Checksum validation bypassed via {BypassEnvVar}. Reason: {Reason} | Executable: {ExecutablePath}",
+          ChecksumBypassEnvVarName, safeBypassReason, executablePath);
+      }
       return;
+    }
 
     var executableDirectory = Path.GetDirectoryName(executablePath)
       ?? throw new InvalidOperationException($"Unable to resolve executable directory for '{executablePath}'.");

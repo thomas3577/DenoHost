@@ -8,6 +8,15 @@ using System.Text.Json;
 
 namespace DenoHost.Tests;
 
+/// <summary>
+/// Collection to prevent parallel execution of tests that manipulate environment variables.
+/// </summary>
+[CollectionDefinition(nameof(EnvironmentVariableTestsNonParallelCollection), DisableParallelization = true)]
+public class EnvironmentVariableTestsNonParallelCollection
+{
+}
+
+[Collection(nameof(EnvironmentVariableTestsNonParallelCollection))]
 public class HelperTests
 {
   [Fact]
@@ -369,6 +378,128 @@ public class HelperTests
     finally
     {
       Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", original);
+    }
+  }
+
+  [Fact]
+  public void IsStrictModeEnabled_WithTrueValue_ReturnsTrue()
+  {
+    var method = typeof(Helper).GetMethod("IsStrictModeEnabled", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var original = Environment.GetEnvironmentVariable("DENOHOST_STRICT_MODE");
+    try
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", "true");
+      Assert.True((bool)method.Invoke(null, null)!);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", original);
+    }
+  }
+
+  [Fact]
+  public void IsStrictModeEnabled_WithMissingOrFalseValue_ReturnsFalse()
+  {
+    var method = typeof(Helper).GetMethod("IsStrictModeEnabled", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var original = Environment.GetEnvironmentVariable("DENOHOST_STRICT_MODE");
+    try
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", null);
+      Assert.False((bool)method.Invoke(null, null)!);
+
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", "false");
+      Assert.False((bool)method.Invoke(null, null)!);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", original);
+    }
+  }
+
+  [Fact]
+  public void ValidateExecutableIntegrity_WithStrictModeAndBypass_ThrowsSecurityException()
+  {
+    var method = typeof(Helper).GetMethod("ValidateExecutableIntegrity", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var originalBypass = Environment.GetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS");
+    var originalStrict = Environment.GetEnvironmentVariable("DENOHOST_STRICT_MODE");
+
+    try
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", "true");
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", "true");
+
+      var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { "/fake/path/deno" }));
+      Assert.IsType<SecurityException>(ex.InnerException);
+      Assert.Contains("DENOHOST_STRICT_MODE", ex.InnerException.Message);
+      Assert.Contains("blocked", ex.InnerException.Message, StringComparison.OrdinalIgnoreCase);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", originalBypass);
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", originalStrict);
+    }
+  }
+
+  [Fact]
+  public void ValidateExecutableIntegrity_WithBypassWithoutReason_ThrowsSecurityException()
+  {
+    var method = typeof(Helper).GetMethod("ValidateExecutableIntegrity", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var originalBypass = Environment.GetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS");
+    var originalReason = Environment.GetEnvironmentVariable("DENOHOST_BYPASS_REASON");
+    var originalStrict = Environment.GetEnvironmentVariable("DENOHOST_STRICT_MODE");
+
+    try
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", "true");
+      Environment.SetEnvironmentVariable("DENOHOST_BYPASS_REASON", null);
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", null);
+
+      var ex = Assert.Throws<TargetInvocationException>(() => method.Invoke(null, new object[] { "/fake/path/deno" }));
+      Assert.IsType<SecurityException>(ex.InnerException);
+      Assert.Contains("DENOHOST_BYPASS_REASON", ex.InnerException.Message);
+      Assert.Contains("justification", ex.InnerException.Message, StringComparison.OrdinalIgnoreCase);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", originalBypass);
+      Environment.SetEnvironmentVariable("DENOHOST_BYPASS_REASON", originalReason);
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", originalStrict);
+    }
+  }
+
+  [Fact]
+  public void ValidateExecutableIntegrity_WithBypassWithReason_DoesNotThrow()
+  {
+    var method = typeof(Helper).GetMethod("ValidateExecutableIntegrity", BindingFlags.NonPublic | BindingFlags.Static);
+    Assert.NotNull(method);
+
+    var originalBypass = Environment.GetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS");
+    var originalReason = Environment.GetEnvironmentVariable("DENOHOST_BYPASS_REASON");
+    var originalStrict = Environment.GetEnvironmentVariable("DENOHOST_STRICT_MODE");
+
+    try
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", "true");
+      Environment.SetEnvironmentVariable("DENOHOST_BYPASS_REASON", "GitHub Issue #123 - test scenario");
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", null);
+
+      // Should not throw because bypass has a reason
+      var exception = Record.Exception(() => method.Invoke(null, new object[] { "/fake/path/deno" }));
+      Assert.Null(exception);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_ALLOW_CHECKSUM_BYPASS", originalBypass);
+      Environment.SetEnvironmentVariable("DENOHOST_BYPASS_REASON", originalReason);
+      Environment.SetEnvironmentVariable("DENOHOST_STRICT_MODE", originalStrict);
     }
   }
 

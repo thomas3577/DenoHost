@@ -30,8 +30,21 @@ For incident mitigation only, checksum validation can be bypassed by setting:
 
 ```bash
 DENOHOST_ALLOW_CHECKSUM_BYPASS=true
+DENOHOST_BYPASS_REASON="Incident #456 - metadata corruption after CI migration"
 ```
+
+**Both variables are required.** The bypass reason creates an audit trail for post-incident reviews and compliance documentation.
 
 Use this only as a short-term emergency workaround. Keep it disabled in normal operation.
 
 Release paths in CI explicitly block publish when this variable is set.
+
+### Production Strict Mode
+
+To prevent unauthorized or accidental bypasses in production deployments, set:
+
+```bash
+DENOHOST_STRICT_MODE=true
+```
+
+With strict mode enabled, `DenoHost.Core` will throw a `SecurityException` if `DENOHOST_ALLOW_CHECKSUM_BYPASS` is also set, blocking process startup entirely. This enforces policy compliance in production environments.
