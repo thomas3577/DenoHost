@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -255,8 +256,10 @@ internal static class Helper
           $"Example: {BypassReasonEnvVarName}='GitHub Issue #123 - hash mismatch in v1.2.3'");
       }
 
-      // Note: Logger may be null in some contexts, logging is best-effort
-      // In production, consider integrating with centralized logging/SIEM
+      // Audit log: Record security bypass event for monitoring/SIEM integration
+      Trace.TraceWarning(
+        $"[SECURITY AUDIT] Checksum validation bypassed. Reason: {bypassReason} | " +
+        $"Executable: {executablePath} | EnvVar: {BypassReasonEnvVarName}");
       return;
     }
 
