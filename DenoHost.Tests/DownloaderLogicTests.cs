@@ -134,6 +134,39 @@ public sealed class DownloaderLogicTests
     }
   }
 
+  [Fact]
+  public void FinalizeArtifacts_WithoutSigningKey_UsesExistingSignature()
+  {
+    var originalKey = Environment.GetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM");
+    Environment.SetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM", null);
+
+    try
+    {
+      var tempDir = Path.Combine(Path.GetTempPath(), $"denohost-tests-{Guid.NewGuid():N}");
+      Directory.CreateDirectory(tempDir);
+
+      var executablePath = Path.Combine(tempDir, "deno");
+      File.WriteAllText(executablePath, "fake-deno", new UTF8Encoding(false));
+
+      // Pre-create a signature file (simulating checked-in artifacts for PR builds)
+      var signaturePath = Path.Combine(tempDir, "deno.metadata.sig");
+      File.WriteAllText(signaturePath, "existing-signature", new UTF8Encoding(false));
+
+      // Should not throw when signature already exists
+      DownloaderLogic.FinalizeArtifacts(executablePath, "2.8.2", "deno-x86_64-unknown-linux-gnu.zip", "linux-x64", DownloaderWorkflow.BaseUrlForTests);
+
+      // Verify existing signature was preserved
+      Assert.True(File.Exists(signaturePath));
+      Assert.Equal("existing-signature", File.ReadAllText(signaturePath));
+
+      Directory.Delete(tempDir, recursive: true);
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM", originalKey);
+    }
+  }
+
   private static string ExportPemPrivateKey(ECDsa ecdsa)
   {
     var pkcs8 = ecdsa.ExportPkcs8PrivateKey();
