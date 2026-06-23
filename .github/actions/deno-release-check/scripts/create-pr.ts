@@ -193,7 +193,7 @@ async function pushBranch(branchName: string, denoVersion: string): Promise<void
 
   // Commit the changes
   await runCommand(['git', 'commit', '-m', `chore: update Deno to v${denoVersion}`]);
-  await runCommand(['git', 'push', '--force', 'origin', branchName]);
+  await runCommand(['git', 'push', '--force-with-lease', 'origin', branchName]);
 }
 
 async function main() {
