@@ -127,13 +127,6 @@ internal static class DownloaderLogic
     var privateKeyPem = Environment.GetEnvironmentVariable("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM");
     if (string.IsNullOrWhiteSpace(privateKeyPem))
     {
-      // Allow PR/non-tag builds to use checked-in signature files; fail only when no signature is present.
-      if (File.Exists(signaturePath))
-      {
-        Console.WriteLine($"DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM not set; using existing signature at {signaturePath}");
-        return;
-      }
-
       throw new InvalidOperationException("DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM is required because runtime metadata signatures are required by DenoHost.Core.");
     }
 
