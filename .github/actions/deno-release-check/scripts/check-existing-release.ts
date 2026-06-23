@@ -31,7 +31,7 @@ async function fetchExistingPRs(): Promise<GitHubPR[]> {
       headers['Authorization'] = `token ${githubToken}`;
     }
 
-    const response = await fetch(`https://api.github.com/repos/${repository}/pulls?state=open`, {
+    const response = await fetch(`https://api.github.com/repos/${repository}/pulls?state=open&per_page=100`, {
       headers,
     });
 
@@ -65,7 +65,7 @@ async function fetchExistingBranches(): Promise<string[]> {
       headers['Authorization'] = `token ${githubToken}`;
     }
 
-    const response = await fetch(`https://api.github.com/repos/${repository}/branches`, {
+    const response = await fetch(`https://api.github.com/repos/${repository}/branches?per_page=100`, {
       headers,
     });
 
