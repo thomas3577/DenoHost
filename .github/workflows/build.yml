@@ -179,7 +179,7 @@ jobs:
   build-runtime:
     name: Build Runtime Packages
     needs: [get-version, quality-checks]
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name != 'pull_request' || (github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false))
     strategy:
       matrix:
         include:
