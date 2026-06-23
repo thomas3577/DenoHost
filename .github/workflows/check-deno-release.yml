@@ -11,6 +11,7 @@ permissions:
 jobs:
   check_new_deno:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write

@@ -51,7 +51,7 @@ jobs:
               echo "Detected prerelease tag: $TAG_NAME"
             fi
           else
-            # Development build (main branch)
+            # Development build (non-tagged push)
             PACKAGE_VERSION="${DENO_VERSION}-dev"
             TAG_NAME="v${DENO_VERSION}-dev"
             IS_PRERELEASE="true"
