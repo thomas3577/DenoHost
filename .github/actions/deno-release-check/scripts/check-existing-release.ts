@@ -18,6 +18,10 @@ async function fetchExistingPRs(): Promise<GitHubPR[]> {
 
   try {
     const githubToken = Deno.env.get('GH_TOKEN');
+    const repository = Deno.env.get('GITHUB_REPOSITORY');
+    if (!repository) {
+      throw new Error('GITHUB_REPOSITORY environment variable not set');
+    }
     const headers: Record<string, string> = {
       'Accept': 'application/vnd.github.v3+json',
       'User-Agent': 'DenoHost-Release-Check',
@@ -27,7 +31,7 @@ async function fetchExistingPRs(): Promise<GitHubPR[]> {
       headers['Authorization'] = `token ${githubToken}`;
     }
 
-    const response = await fetch('https://api.github.com/repos/thomas3577/DenoHost/pulls?state=open', {
+    const response = await fetch(`https://api.github.com/repos/${repository}/pulls?state=open&per_page=100`, {
       headers,
     });
 
@@ -48,6 +52,10 @@ async function fetchExistingBranches(): Promise<string[]> {
 
   try {
     const githubToken = Deno.env.get('GH_TOKEN');
+    const repository = Deno.env.get('GITHUB_REPOSITORY');
+    if (!repository) {
+      throw new Error('GITHUB_REPOSITORY environment variable not set');
+    }
     const headers: Record<string, string> = {
       'Accept': 'application/vnd.github.v3+json',
       'User-Agent': 'DenoHost-Release-Check',
@@ -57,7 +65,7 @@ async function fetchExistingBranches(): Promise<string[]> {
       headers['Authorization'] = `token ${githubToken}`;
     }
 
-    const response = await fetch('https://api.github.com/repos/thomas3577/DenoHost/branches', {
+    const response = await fetch(`https://api.github.com/repos/${repository}/branches?per_page=100`, {
       headers,
     });
 

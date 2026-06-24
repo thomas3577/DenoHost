@@ -6,15 +6,18 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   check_new_deno:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: Check Deno release and create tag
         id: deno-check
@@ -27,5 +30,5 @@ jobs:
           if [[ "${{ steps.deno-check.outputs.already-exists }}" == "true" ]]; then
             echo "Tag already exists, no action needed"
           else
-            echo "Created new tag: ${{ steps.deno-check.outputs.created-tag }}"
+            echo "Created PR #${{ steps.deno-check.outputs.pr-number }} on branch ${{ steps.deno-check.outputs.branch-name }}"
           fi

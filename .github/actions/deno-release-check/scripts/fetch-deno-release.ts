@@ -41,41 +41,11 @@ async function fetchLatestDenoReleaseFromGitHub(): Promise<string | null> {
   }
 }
 
-async function fetchLatestDenoReleaseFromDeno(): Promise<string | null> {
-  try {
-    console.log('Trying to get version from installed Deno...');
-
-    const versionOutput = await new Deno.Command('deno', {
-      args: ['--version'],
-      stdout: 'piped',
-      stderr: 'piped',
-    }).output();
-
-    if (versionOutput.success) {
-      const versionText = new TextDecoder().decode(versionOutput.stdout);
-      const match = versionText.match(/deno (\d+\.\d+\.\d+)/);
-      if (match) {
-        console.log(`Found installed Deno version: v${match[1]}`);
-        return `v${match[1]}`;
-      }
-    }
-  } catch (fallbackError) {
-    console.error(`Failed to get version from deno command: ${fallbackError}`);
-  }
-  return null;
-}
-
 async function fetchLatestDenoRelease(): Promise<string> {
-  // Try GitHub API first
-  let version = await fetchLatestDenoReleaseFromGitHub();
-
-  // If GitHub API fails, try getting version from installed deno
-  if (!version) {
-    version = await fetchLatestDenoReleaseFromDeno();
-  }
+  const version = await fetchLatestDenoReleaseFromGitHub();
 
   if (!version) {
-    console.error('All methods to fetch Deno version failed');
+    console.error('Failed to fetch latest Deno release from GitHub API');
     Deno.exit(1);
   }
 
