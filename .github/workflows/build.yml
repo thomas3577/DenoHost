@@ -526,7 +526,12 @@ jobs:
   create-release:
     name: Create GitHub Release
     needs: [get-version, publish-runtime, publish-core, verify-alpha-from-nuget]
-    if: startsWith(github.ref, 'refs/tags/v') && (needs.get-version.outputs.is_prerelease != 'true' || needs.verify-alpha-from-nuget.result == 'success')
+    if: |
+      always() &&
+      startsWith(github.ref, 'refs/tags/v') &&
+      needs.publish-runtime.result == 'success' &&
+      needs.publish-core.result == 'success' &&
+      (needs.get-version.outputs.is_prerelease != 'true' || needs.verify-alpha-from-nuget.result == 'success')
     permissions:
       contents: write
     runs-on: ubuntu-latest
