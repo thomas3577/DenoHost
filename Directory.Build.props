@@ -13,7 +13,7 @@
     <Copyright>Copyright © 2025-2026 Thomas Huber</Copyright>
 
     <!-- Official Deno Version -->
-    <DenoVersion>2.8.3</DenoVersion>
+    <DenoVersion>2.9.0</DenoVersion>
     <DenoDownloaderTargetFramework>net9.0</DenoDownloaderTargetFramework>
 
     <!-- Prevent generated files in artifacts folders from being auto-included as source files. -->
