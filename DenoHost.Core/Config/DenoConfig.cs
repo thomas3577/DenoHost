@@ -110,6 +110,18 @@ public class DenoConfig
   [JsonPropertyName("catalogs")]
   public Dictionary<string, Dictionary<string, string>>? Catalogs { get; set; }
 
+  [JsonPropertyName("coverage")]
+  public object? Coverage { get; set; }
+
+  [JsonPropertyName("desktop")]
+  public object? Desktop { get; set; }
+
+  [JsonPropertyName("jsrDepsInNodeModules")]
+  public bool? JsrDepsInNodeModules { get; set; }
+
+  [JsonPropertyName("preferPackageJson")]
+  public bool? PreferPackageJson { get; set; }
+
   /// <summary>
   /// Captures any additional properties not explicitly defined.
   /// This ensures forward compatibility when Deno adds new configuration options.
