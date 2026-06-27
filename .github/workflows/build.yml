@@ -463,6 +463,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: read
+      id-token: write # Required for NuGet trusted publishing (OIDC)
     strategy:
       matrix:
         rid: [win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64]
@@ -475,8 +476,14 @@ jobs:
           name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime/${{ matrix.rid }}
 
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push Runtime Package to NuGet
-        run: dotnet nuget push ./nupkg/runtime/${{ matrix.rid }}/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push ./nupkg/runtime/${{ matrix.rid }}/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
 
   publish-core:
     name: Publish Core NuGet
@@ -492,6 +499,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: read
+      id-token: write # Required for NuGet trusted publishing (OIDC)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8
@@ -499,8 +507,14 @@ jobs:
           name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core
 
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push Core Package to NuGet
-        run: dotnet nuget push ./nupkg/core/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push ./nupkg/core/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
 
   verify-alpha-from-nuget:
     name: Verify Alpha Package From NuGet
