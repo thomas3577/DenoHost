@@ -84,4 +84,23 @@ app.MapGet("/demo/interactive", static async (HttpContext context) =>
   }
 });
 
+// Endpoint to get Deno runtime version
+app.MapGet("/version", static async (HttpContext context) =>
+{
+  try
+  {
+    var command = "--version";
+    var options = new DenoExecuteBaseOptions();
+    var version = await Deno.Execute<string>(command, options);
+
+    return Results.Text(version);
+  }
+  catch (Exception ex)
+  {
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "Error retrieving Deno version");
+    return Results.Problem("Error occurred while retrieving Deno version.");
+  }
+});
+
 app.Run();
