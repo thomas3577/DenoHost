@@ -1,0 +1,23 @@
+{
+  "tasks": {
+    "generate": "deno run --allow-run --allow-read --allow-write --allow-net generate.ts",
+    "generate:offline": "deno run --allow-run --allow-read --allow-write generate.ts --offline",
+    "test": "deno test generate.test.ts",
+    "test:watch": "deno test --watch generate.test.ts"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 120,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": true
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.19"
+  }
+}

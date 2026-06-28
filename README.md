@@ -44,9 +44,67 @@ dotnet add package DenoHost.Core
 
 ---
 
-## Deno.Execute Example
+## Typed Command API
 
-For simple script execution with immediate results:
+Each Deno subcommand has a dedicated method with strongly-typed options:
+
+```csharp
+using DenoHost.Core;
+using DenoHost.Core.Commands;
+
+// Run a script with permissions
+await Deno.Run("app.ts", new RunOptions
+{
+    AllowRead = ["./data"],
+    AllowNet  = [],          // empty = allow all
+    Watch     = true,
+});
+
+// Evaluate TypeScript and capture JSON output
+var result = await Deno.Eval<MyResult>("console.log(JSON.stringify({ ok: true }))");
+
+// Run tests
+await Deno.Test(options: new TestOptions { Filter = "my-suite" });
+
+// Format and lint
+await Deno.Fmt();
+await Deno.Lint(options: new LintOptions { NoCache = true });
+
+// Type-check
+await Deno.Check(["src/main.ts"]);
+
+// Compile to a standalone executable
+await Deno.Compile("app.ts", new CompileOptions { Output = "dist/app" });
+
+// Run a task from deno.json
+await Deno.Task("build");
+
+// Manage dependencies
+await Deno.Add(["jsr:@std/fs"]);
+await Deno.Remove(["jsr:@std/fs"]);
+```
+
+All methods accept an optional `DenoExecuteBaseOptions` to set the working directory or logger:
+
+```csharp
+var base = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
+await Deno.Run("app.ts", baseOptions: base);
+```
+
+### Cancellation
+
+Pass a `CancellationToken` as the last parameter to any command. Cancellation throws `OperationCanceledException` and terminates the underlying Deno process.
+
+```csharp
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+await Deno.Test(cancellationToken: cts.Token);
+```
+
+---
+
+## Deno.Execute — Low-Level API
+
+For cases not covered by the typed API, use `Deno.Execute` directly:
 
 ```csharp
 using DenoHost.Core;
@@ -55,19 +113,6 @@ var options = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
 string[] args = ["run", "app.ts"];
 
 await Deno.Execute(options, args);
-```
-
-### Cancellation
-
-You can cancel execution via a `CancellationToken`. Cancellation throws an `OperationCanceledException` and terminates the underlying Deno process.
-
-```csharp
-using DenoHost.Core;
-
-using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-
-var options = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
-await Deno.Execute(options, ["run", "long-running.ts"], cts.Token);
 ```
 
 ### Arguments and quoting

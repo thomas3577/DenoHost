@@ -9,7 +9,7 @@ namespace DenoHost.Core;
 /// <summary>
 /// Provides methods to execute Deno commands.
 /// </summary>
-public static class Deno
+public static partial class Deno
 {
   /// <summary>
   /// Optional logger for Deno operations. Set this to enable logging.
