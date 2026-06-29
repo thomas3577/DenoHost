@@ -1,7 +1,6 @@
 {
   "tasks": {
     "generate": "deno run --allow-run --allow-read --allow-write --allow-net generate.ts",
-    "generate:offline": "deno run --allow-run --allow-read --allow-write generate.ts --offline",
     "test": "deno test generate.test.ts",
     "test:watch": "deno test --watch generate.test.ts",
     "update": "deno outdated --update --latest"

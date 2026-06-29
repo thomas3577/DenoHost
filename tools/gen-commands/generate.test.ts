@@ -1,5 +1,5 @@
 import { assertEquals, assertMatch, assertStrictEquals } from '@std/assert';
-import { inferProperty, renderToArgsLine, toPascalCase } from './generate.ts';
+import { argStyleToCsType, inferProperty, renderToArgsLine, toPascalCase } from './generate.ts';
 
 // ─── toPascalCase ─────────────────────────────────────────────────────────────
 
@@ -90,6 +90,66 @@ Deno.test('inferProperty: heading preserved', () => {
 Deno.test('inferProperty: null heading defaults to General', () => {
   const prop = inferProperty(arg('cert', '--cert <FILE>'));
   assertEquals(prop?.heading, 'General');
+});
+
+// ─── ARG_STYLE_OVERRIDES ──────────────────────────────────────────────────────
+
+Deno.test('inferProperty: override — port is intvalue despite <PORT> hint', () => {
+  const prop = inferProperty(arg('port', '--port <PORT>'));
+  assertEquals(prop?.csType, 'int?');
+  assertEquals(prop?.argStyle, 'intvalue');
+});
+
+Deno.test('inferProperty: override — line-width is intvalue', () => {
+  const prop = inferProperty(arg('line-width', '--line-width <n>'));
+  assertEquals(prop?.csType, 'int?');
+  assertEquals(prop?.argStyle, 'intvalue');
+});
+
+Deno.test('inferProperty: override — indent-width is intvalue', () => {
+  const prop = inferProperty(arg('indent-width', '--indent-width <n>'));
+  assertEquals(prop?.csType, 'int?');
+  assertEquals(prop?.argStyle, 'intvalue');
+});
+
+Deno.test('inferProperty: override — use-tabs is boolopt', () => {
+  const prop = inferProperty(arg('use-tabs', '--use-tabs[=<true|false>]'));
+  assertEquals(prop?.csType, 'bool?');
+  assertEquals(prop?.argStyle, 'boolopt');
+});
+
+Deno.test('inferProperty: override — single-quote is boolopt', () => {
+  const prop = inferProperty(arg('single-quote', '--single-quote[=<true|false>]'));
+  assertEquals(prop?.csType, 'bool?');
+  assertEquals(prop?.argStyle, 'boolopt');
+});
+
+Deno.test('inferProperty: override — no-semicolons is boolopt', () => {
+  const prop = inferProperty(arg('no-semicolons', '--no-semicolons[=<true|false>]'));
+  assertEquals(prop?.csType, 'bool?');
+  assertEquals(prop?.argStyle, 'boolopt');
+});
+
+// ─── argStyleToCsType ─────────────────────────────────────────────────────────
+
+Deno.test('argStyleToCsType: flag and boolopt → bool?', () => {
+  assertEquals(argStyleToCsType('flag'), 'bool?');
+  assertEquals(argStyleToCsType('boolopt'), 'bool?');
+});
+
+Deno.test('argStyleToCsType: intvalue → int?, longvalue → long?', () => {
+  assertEquals(argStyleToCsType('intvalue'), 'int?');
+  assertEquals(argStyleToCsType('longvalue'), 'long?');
+});
+
+Deno.test('argStyleToCsType: array and optarray → string[]?', () => {
+  assertEquals(argStyleToCsType('array'), 'string[]?');
+  assertEquals(argStyleToCsType('optarray'), 'string[]?');
+});
+
+Deno.test('argStyleToCsType: value and optvalue → string?', () => {
+  assertEquals(argStyleToCsType('value'), 'string?');
+  assertEquals(argStyleToCsType('optvalue'), 'string?');
 });
 
 // ─── renderToArgsLine ─────────────────────────────────────────────────────────

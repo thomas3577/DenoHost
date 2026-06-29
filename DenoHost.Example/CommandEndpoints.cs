@@ -281,7 +281,7 @@ public static class CommandEndpoints
       try
       {
         await Deno.Serve("serve_handler.ts",
-          options: new ServeOptions { Port = "18080", AllowNet = [] },
+          options: new ServeOptions { Port = 18080, AllowNet = [] },
           baseOptions: baseOpts,
           cancellationToken: cts.Token);
       }

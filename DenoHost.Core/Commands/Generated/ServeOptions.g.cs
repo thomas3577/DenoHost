@@ -204,7 +204,7 @@ public sealed class ServeOptions
   public string? Require { get; set; }
 
   /// <summary>The TCP port to serve on. Pass 0 to pick a random free port [38;5;245m[default: 8000][39m</summary>
-  public string? Port { get; set; }
+  public int? Port { get; set; }
 
   /// <summary>The TCP address to serve on, defaulting to 0.0.0.0 (all interfaces)</summary>
   public string? Host { get; set; }
@@ -319,7 +319,7 @@ public sealed class ServeOptions
     if (Seed.HasValue) { args.Add("--seed"); args.Add(Seed.Value.ToString()); }
     if (Preload is not null) { args.Add("--preload"); args.Add(Preload); }
     if (Require is not null) { args.Add("--require"); args.Add(Require); }
-    if (Port is not null) { args.Add("--port"); args.Add(Port); }
+    if (Port.HasValue) { args.Add("--port"); args.Add(Port.Value.ToString()); }
     if (Host is not null) { args.Add("--host"); args.Add(Host); }
     if (Open == true) args.Add("--open");
     if (Parallel == true) args.Add("--parallel");

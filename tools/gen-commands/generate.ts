@@ -8,8 +8,6 @@ const REPO_ROOT = join(SCRIPT_DIR, '..', '..');
 const OUTPUT_DIR = join(REPO_ROOT, 'DenoHost.Core', 'Commands', 'Generated');
 const SNAPSHOT_FILE = join(SCRIPT_DIR, 'deno_reference.snapshot.json');
 
-const OFFLINE = Deno.args.includes('--offline');
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface DenoArg {
@@ -146,20 +144,6 @@ function buildPermissionSupplement(permTypes: PermissionType[]): DenoArg[] {
   return args;
 }
 
-// Fallback when --offline: hardcoded based on Deno 2.x stable permission set
-function builtinPermissionTypes(): PermissionType[] {
-  return [
-    { name: 'read', hasIgnore: true },
-    { name: 'write', hasIgnore: false },
-    { name: 'import', hasIgnore: false },
-    { name: 'env', hasIgnore: true },
-    { name: 'net', hasIgnore: false },
-    { name: 'run', hasIgnore: false },
-    { name: 'ffi', hasIgnore: false },
-    { name: 'sys', hasIgnore: false },
-  ];
-}
-
 // ─── Type inference ────────────────────────────────────────────────────────────
 
 type ArgStyle = 'flag' | 'boolopt' | 'value' | 'intvalue' | 'longvalue' | 'optvalue' | 'array' | 'optarray';
@@ -181,40 +165,67 @@ export function escapeXml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+export function argStyleToCsType(style: ArgStyle): string {
+  switch (style) {
+    case 'flag':
+    case 'boolopt':   return 'bool?';
+    case 'intvalue':  return 'int?';
+    case 'longvalue': return 'long?';
+    case 'array':
+    case 'optarray':  return 'string[]?';
+    default:          return 'string?';
+  }
+}
+
+// Explicit overrides for flags whose usage hint doesn't match the heuristic.
+// Keyed by the long flag name (without --).
+const ARG_STYLE_OVERRIDES: Partial<Record<string, ArgStyle>> = {
+  'port':          'intvalue',  // <PORT> hint doesn't match NUMBER heuristic
+  'line-width':    'intvalue',  // usage uses a non-NUMBER placeholder
+  'indent-width':  'intvalue',  // same
+  'use-tabs':      'boolopt',   // usage uses [=<true|false>] not [=<BOOLEAN>]
+  'single-quote':  'boolopt',
+  'no-semicolons': 'boolopt',
+};
+
 export function inferProperty(arg: DenoArg): Property | null {
   if (!arg.long) return null;
+
+  const overrideStyle = ARG_STYLE_OVERRIDES[arg.long];
+  if (overrideStyle !== undefined) {
+    return {
+      csName: toPascalCase(arg.long),
+      csType: argStyleToCsType(overrideStyle),
+      argStyle: overrideStyle,
+      flagName: `--${arg.long}`,
+      xmlDoc: arg.help ? escapeXml(arg.help.split('\n')[0]) : '',
+      heading: arg.help_heading ?? 'General',
+    };
+  }
+
   const usage = arg.usage;
   const upper = usage.toUpperCase();
 
-  let csType: string;
   let argStyle: ArgStyle;
-
   if (upper.includes('BOOLEAN')) {
-    csType = 'bool?';
     argStyle = 'boolopt';
   } else if (!usage.includes('<') && !usage.includes('[=')) {
-    csType = 'bool?';
     argStyle = 'flag';
   } else if (upper.includes('MICROSECOND')) {
-    csType = 'long?';
     argStyle = 'longvalue';
   } else if (upper.includes('NUMBER') || upper.includes('PERCENT') || upper.includes('INDEX/COUNT')) {
-    csType = 'int?';
     argStyle = 'intvalue';
   } else if (usage.includes('...')) {
-    csType = 'string[]?';
     argStyle = /\[=?</.test(usage) ? 'optarray' : 'array';
   } else if (/\[=?</.test(usage)) {
-    csType = 'string?';
     argStyle = 'optvalue';
   } else {
-    csType = 'string?';
     argStyle = 'value';
   }
 
   return {
     csName: toPascalCase(arg.long),
-    csType,
+    csType: argStyleToCsType(argStyle),
     argStyle,
     flagName: `--${arg.long}`,
     xmlDoc: arg.help ? escapeXml(arg.help.split('\n')[0]) : '',
@@ -482,14 +493,8 @@ async function main() {
   if (!success) throw new Error('deno json_reference failed');
   const ref: DenoReference = JSON.parse(new TextDecoder().decode(refOut));
 
-  // 3. Get permission types from JSON schema (or fallback)
-  let permTypes: PermissionType[];
-  if (OFFLINE) {
-    console.log('Offline mode: using built-in permission types.');
-    permTypes = builtinPermissionTypes();
-  } else {
-    permTypes = await fetchPermissionTypes(denoVersion);
-  }
+  // 3. Get permission types from JSON schema
+  const permTypes = await fetchPermissionTypes(denoVersion);
   console.log(`Permission types: ${permTypes.map((p) => p.name + (p.hasIgnore ? '+ignore' : '')).join(', ')}`);
   const permSupplement = buildPermissionSupplement(permTypes);
 
