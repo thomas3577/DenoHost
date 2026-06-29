@@ -40,6 +40,11 @@
     <None Include="scripts\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.*" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.16.6" />
+  </ItemGroup>
+
   <Target Name="CopyDenoFromRuntime" AfterTargets="Build">
     <PropertyGroup>
       <DenoFile Condition="'$(OS)' == 'Windows_NT'">deno.exe</DenoFile>
@@ -56,25 +61,13 @@
 
     <MakeDir Directories="$(TargetRuntimeDir)" />
 
-    <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoFile)')"
-      SourceFiles="$(RuntimeOutputDir)\$(DenoFile)"
-      DestinationFiles="$(TargetRuntimeDir)\$(DenoFile)"
-      SkipUnchangedFiles="true" />
+    <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoFile)')" SourceFiles="$(RuntimeOutputDir)\$(DenoFile)" DestinationFiles="$(TargetRuntimeDir)\$(DenoFile)" SkipUnchangedFiles="true" />
 
-    <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoChecksumFile)')"
-      SourceFiles="$(RuntimeOutputDir)\$(DenoChecksumFile)"
-      DestinationFiles="$(TargetRuntimeDir)\$(DenoChecksumFile)"
-      SkipUnchangedFiles="true" />
+    <Copy Condition="Exists('$(RuntimeOutputDir)\$(DenoChecksumFile)')" SourceFiles="$(RuntimeOutputDir)\$(DenoChecksumFile)" DestinationFiles="$(TargetRuntimeDir)\$(DenoChecksumFile)" SkipUnchangedFiles="true" />
 
-    <Copy Condition="Exists('$(RuntimeOutputDir)\deno.metadata.json')"
-      SourceFiles="$(RuntimeOutputDir)\deno.metadata.json"
-      DestinationFiles="$(TargetRuntimeDir)\deno.metadata.json"
-      SkipUnchangedFiles="true" />
+    <Copy Condition="Exists('$(RuntimeOutputDir)\deno.metadata.json')" SourceFiles="$(RuntimeOutputDir)\deno.metadata.json" DestinationFiles="$(TargetRuntimeDir)\deno.metadata.json" SkipUnchangedFiles="true" />
 
-    <Copy Condition="Exists('$(RuntimeOutputDir)\deno.metadata.sig')"
-      SourceFiles="$(RuntimeOutputDir)\deno.metadata.sig"
-      DestinationFiles="$(TargetRuntimeDir)\deno.metadata.sig"
-      SkipUnchangedFiles="true" />
+    <Copy Condition="Exists('$(RuntimeOutputDir)\deno.metadata.sig')" SourceFiles="$(RuntimeOutputDir)\deno.metadata.sig" DestinationFiles="$(TargetRuntimeDir)\deno.metadata.sig" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
