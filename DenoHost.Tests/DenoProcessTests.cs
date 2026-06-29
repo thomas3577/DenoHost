@@ -1220,7 +1220,7 @@ public class DenoProcessTests
     var scriptPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".ts");
     try
     {
-      await File.WriteAllTextAsync(scriptPath, "Deno.exit(0);");
+      await File.WriteAllTextAsync(scriptPath, "Deno.exit(0);", TestContext.Current.CancellationToken);
       using var process = DenoProcess.Run(scriptPath, new RunOptions { NoPrompt = true });
       await process.StartAsync(TestContext.Current.CancellationToken);
       var exitCode = await process.WaitForExitAsync(TestContext.Current.CancellationToken);
