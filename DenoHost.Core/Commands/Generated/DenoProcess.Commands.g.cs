@@ -24,18 +24,6 @@ public partial class DenoProcess
       : new DenoProcess([.. args]);
   }
 
-  /// <summary>Creates a <see cref="DenoProcess"/> for <c>deno serve</c>.</summary>
-  public static DenoProcess Serve(string script, ServeOptions? options = null, DenoExecuteBaseOptions? baseOptions = null)
-  {
-    ArgumentException.ThrowIfNullOrWhiteSpace(script);
-    var args = new List<string> { "serve" };
-    if (options != null) args.AddRange(options.ToArgs());
-    args.Add(script);
-    return baseOptions != null
-      ? new DenoProcess(baseOptions, [.. args])
-      : new DenoProcess([.. args]);
-  }
-
   /// <summary>Creates a <see cref="DenoProcess"/> for <c>deno task</c>.</summary>
   public static DenoProcess Task(string taskName, TaskOptions? options = null, DenoExecuteBaseOptions? baseOptions = null)
   {
@@ -43,6 +31,18 @@ public partial class DenoProcess
     var args = new List<string> { "task" };
     if (options != null) args.AddRange(options.ToArgs());
     args.Add(taskName);
+    return baseOptions != null
+      ? new DenoProcess(baseOptions, [.. args])
+      : new DenoProcess([.. args]);
+  }
+
+  /// <summary>Creates a <see cref="DenoProcess"/> for <c>deno serve</c>.</summary>
+  public static DenoProcess Serve(string script, ServeOptions? options = null, DenoExecuteBaseOptions? baseOptions = null)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(script);
+    var args = new List<string> { "serve" };
+    if (options != null) args.AddRange(options.ToArgs());
+    args.Add(script);
     return baseOptions != null
       ? new DenoProcess(baseOptions, [.. args])
       : new DenoProcess([.. args]);
