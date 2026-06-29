@@ -123,28 +123,62 @@ DenoHost passes arguments via `ProcessStartInfo.ArgumentList`. Pass each argumen
 await Deno.Execute("eval", ["console.log('hello world')"]);
 ```
 
-## DenoProcess Example
+## DenoProcess — Long-Running Processes
 
-For long-running processes with interactive communication:
+`DenoProcess` manages a Deno process you control over time: start, send input, stop, restart, and subscribe to output events.
+It mirrors the typed command API with static factory methods for the three long-running commands:
 
 ```csharp
 using DenoHost.Core;
+using DenoHost.Core.Commands;
 
-// Create a managed Deno process
-using var denoProcess = new DenoProcess(
-  command: "run",
-  args: ["--allow-read", "server.ts"],
-  workingDirectory: "./scripts"
-);
+// HTTP server (deno serve)
+using var server = DenoProcess.Serve("server.ts", new ServeOptions
+{
+    AllowNet = [],
+    AllowRead = ["./public"],
+});
 
-// Start the process
-await denoProcess.StartAsync();
+server.OutputDataReceived += (_, e) => Console.WriteLine(e.Data);
+server.ErrorDataReceived  += (_, e) => Console.Error.WriteLine(e.Data);
+server.ProcessExited      += (_, e) => Console.WriteLine($"Exited: {e.ExitCode}");
 
-// Send input to the process
+await server.StartAsync();
+// … keep the server running …
+await server.StopAsync();
+
+// Script with watch mode (deno run)
+using var watcher = DenoProcess.Run("worker.ts", new RunOptions
+{
+    AllowNet  = [],
+    AllowRead = ["./"],
+    Watch     = [],          // empty = watch all
+});
+await watcher.StartAsync();
+
+// Deno task from deno.json (deno task)
+using var task = DenoProcess.Task("dev", baseOptions: new DenoExecuteBaseOptions
+{
+    WorkingDirectory = "./app",
+});
+await task.StartAsync();
+await task.WaitForExitAsync();
+```
+
+`DenoProcess` also supports interactive stdin and graceful restart:
+
+```csharp
 await denoProcess.SendInputAsync("hello");
+await denoProcess.RestartAsync();
+await denoProcess.StopAsync(timeout: TimeSpan.FromSeconds(5));
+```
 
-// Stop gracefully when done
-await denoProcess.StopAsync();
+For cases that need full control over the argument list, the constructor accepts raw args:
+
+```csharp
+using var process = new DenoProcess("run", ["--allow-read", "server.ts"],
+    workingDirectory: "./scripts");
+await process.StartAsync();
 ```
 
 ## Requirements

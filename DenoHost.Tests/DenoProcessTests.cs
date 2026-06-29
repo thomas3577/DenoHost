@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using DenoHost.Core;
+using DenoHost.Core.Commands;
 using DenoHost.Core.Config;
 
 namespace DenoHost.Tests;
@@ -1125,6 +1126,110 @@ public class DenoProcessTests
     }
 
     Assert.True(true); // If we get here, no deadlocks occurred
+  }
+
+  #endregion
+
+  #region Factory Method Tests
+
+  [Fact]
+  public void Run_WithScript_CreatesUnstartedProcess()
+  {
+    using var process = DenoProcess.Run("script.ts");
+    Assert.NotNull(process);
+    Assert.False(process.IsRunning);
+    Assert.Null(process.ExitCode);
+  }
+
+  [Fact]
+  public void Run_WithOptions_CreatesUnstartedProcess()
+  {
+    using var process = DenoProcess.Run("script.ts", new RunOptions { AllowNet = [], AllowRead = ["./"] });
+    Assert.NotNull(process);
+    Assert.False(process.IsRunning);
+  }
+
+  [Fact]
+  public void Run_WithBaseOptions_CreatesUnstartedProcess()
+  {
+    var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = Path.GetTempPath(), Logger = _logger };
+    using var process = DenoProcess.Run("script.ts", baseOptions: baseOptions);
+    Assert.NotNull(process);
+    Assert.False(process.IsRunning);
+  }
+
+  [Theory]
+  [InlineData("")]
+  [InlineData("   ")]
+  public void Run_WithBlankScript_Throws(string script)
+  {
+    Assert.Throws<ArgumentException>(() => DenoProcess.Run(script));
+  }
+
+  [Fact]
+  public void Serve_WithScript_CreatesUnstartedProcess()
+  {
+    using var process = DenoProcess.Serve("server.ts");
+    Assert.NotNull(process);
+    Assert.False(process.IsRunning);
+  }
+
+  [Fact]
+  public void Serve_WithOptions_CreatesUnstartedProcess()
+  {
+    using var process = DenoProcess.Serve("server.ts", new ServeOptions { AllowNet = [] });
+    Assert.NotNull(process);
+    Assert.False(process.IsRunning);
+  }
+
+  [Theory]
+  [InlineData("")]
+  [InlineData("   ")]
+  public void Serve_WithBlankScript_Throws(string script)
+  {
+    Assert.Throws<ArgumentException>(() => DenoProcess.Serve(script));
+  }
+
+  [Fact]
+  public void Task_WithTaskName_CreatesUnstartedProcess()
+  {
+    using var process = DenoProcess.Task("build");
+    Assert.NotNull(process);
+    Assert.False(process.IsRunning);
+  }
+
+  [Fact]
+  public void Task_WithOptions_CreatesUnstartedProcess()
+  {
+    using var process = DenoProcess.Task("build", new TaskOptions { UnstableKv = true });
+    Assert.NotNull(process);
+    Assert.False(process.IsRunning);
+  }
+
+  [Theory]
+  [InlineData("")]
+  [InlineData("   ")]
+  public void Task_WithBlankTaskName_Throws(string taskName)
+  {
+    Assert.Throws<ArgumentException>(() => DenoProcess.Task(taskName));
+  }
+
+  [Fact]
+  public async Task Run_WhenStarted_ExecutesScriptCorrectly()
+  {
+    var scriptPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".ts");
+    try
+    {
+      await File.WriteAllTextAsync(scriptPath, "Deno.exit(0);");
+      using var process = DenoProcess.Run(scriptPath, new RunOptions { NoPrompt = true });
+      await process.StartAsync(TestContext.Current.CancellationToken);
+      var exitCode = await process.WaitForExitAsync(TestContext.Current.CancellationToken);
+      Assert.Equal(0, exitCode);
+    }
+    finally
+    {
+      File.Delete(scriptPath);
+    }
   }
 
   #endregion

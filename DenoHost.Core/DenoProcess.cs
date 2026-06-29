@@ -13,7 +13,7 @@ namespace DenoHost.Core;
 /// Represents a managed Deno process that can be started, controlled, and stopped.
 /// Unlike the static Deno class, this provides a long-running process that can be interacted with over time.
 /// </summary>
-public class DenoProcess : IDisposable
+public partial class DenoProcess : IDisposable
 {
   private readonly string _workingDirectory;
   private readonly string[] _args;
@@ -405,7 +405,7 @@ public class DenoProcess : IDisposable
       _logger?.LogInformation("Deno process started successfully with PID {ProcessId}", process.Id);
 
       // Give the process a moment to initialize
-      await Task.Delay(100, cancellationToken);
+      await System.Threading.Tasks.Task.Delay(100, cancellationToken);
 
       // Check if the process is still running after initialization
       // Note: For processes that are meant to exit quickly (like eval scripts),

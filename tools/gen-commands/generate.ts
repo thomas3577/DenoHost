@@ -1,7 +1,7 @@
 // Generates C# options classes and Deno method overloads from `deno json_reference` + the Deno JSON schema.
 // Run: deno task generate
 
-import { join, dirname } from 'jsr:@std/path';
+import { join, dirname } from '@std/path';
 
 const SCRIPT_DIR = dirname(import.meta.filename!);
 const REPO_ROOT = join(SCRIPT_DIR, '..', '..');
@@ -59,19 +59,19 @@ interface CommandConfig {
 }
 
 const COMMANDS: CommandConfig[] = [
-  { name: 'run',     positional: [{ csParam: 'string script',           append: 'args.Add(script);' }],              hasPermissions: true },
-  { name: 'eval',    positional: [{ csParam: 'string code',             append: 'args.Add(code);' }],                hasPermissions: true },
-  { name: 'test',    positional: [{ csParam: 'string[]? files = null',  append: 'if (files != null) args.AddRange(files);' }], hasPermissions: true },
-  { name: 'bench',   positional: [{ csParam: 'string[]? files = null',  append: 'if (files != null) args.AddRange(files);' }], hasPermissions: true },
-  { name: 'fmt',     positional: [{ csParam: 'string[]? files = null',  append: 'if (files != null) args.AddRange(files);' }], hasPermissions: false },
-  { name: 'lint',    positional: [{ csParam: 'string[]? files = null',  append: 'if (files != null) args.AddRange(files);' }], hasPermissions: false },
-  { name: 'check',   positional: [{ csParam: 'string[]? files = null',  append: 'if (files != null) args.AddRange(files);' }], hasPermissions: false },
-  { name: 'compile', positional: [{ csParam: 'string script',           append: 'args.Add(script);' }],              hasPermissions: true },
-  { name: 'task',    positional: [{ csParam: 'string taskName',         append: 'args.Add(taskName);' }],            hasPermissions: false },
-  { name: 'serve',   positional: [{ csParam: 'string script',           append: 'args.Add(script);' }],              hasPermissions: true },
-  { name: 'cache',   positional: [{ csParam: 'string[] files',          append: 'args.AddRange(files);' }],          hasPermissions: false },
-  { name: 'add',     positional: [{ csParam: 'string[] packages',       append: 'args.AddRange(packages);' }],       hasPermissions: false },
-  { name: 'remove',  positional: [{ csParam: 'string[] packages',       append: 'args.AddRange(packages);' }],       hasPermissions: false },
+  { name: 'run', positional: [{ csParam: 'string script', append: 'args.Add(script);' }], hasPermissions: true },
+  { name: 'eval', positional: [{ csParam: 'string code', append: 'args.Add(code);' }], hasPermissions: true },
+  { name: 'test', positional: [{ csParam: 'string[]? files = null', append: 'if (files != null) args.AddRange(files);' }], hasPermissions: true },
+  { name: 'bench', positional: [{ csParam: 'string[]? files = null', append: 'if (files != null) args.AddRange(files);' }], hasPermissions: true },
+  { name: 'fmt', positional: [{ csParam: 'string[]? files = null', append: 'if (files != null) args.AddRange(files);' }], hasPermissions: false },
+  { name: 'lint', positional: [{ csParam: 'string[]? files = null', append: 'if (files != null) args.AddRange(files);' }], hasPermissions: false },
+  { name: 'check', positional: [{ csParam: 'string[]? files = null', append: 'if (files != null) args.AddRange(files);' }], hasPermissions: false },
+  { name: 'compile', positional: [{ csParam: 'string script', append: 'args.Add(script);' }], hasPermissions: true },
+  { name: 'task', positional: [{ csParam: 'string taskName', append: 'args.Add(taskName);' }], hasPermissions: false },
+  { name: 'serve', positional: [{ csParam: 'string script', append: 'args.Add(script);' }], hasPermissions: true },
+  { name: 'cache', positional: [{ csParam: 'string[] files', append: 'args.AddRange(files);' }], hasPermissions: false },
+  { name: 'add', positional: [{ csParam: 'string[] packages', append: 'args.AddRange(packages);' }], hasPermissions: false },
+  { name: 'remove', positional: [{ csParam: 'string[] packages', append: 'args.AddRange(packages);' }], hasPermissions: false },
 ];
 
 // ─── Permission derivation from JSON schema ───────────────────────────────────
@@ -149,14 +149,14 @@ function buildPermissionSupplement(permTypes: PermissionType[]): DenoArg[] {
 // Fallback when --offline: hardcoded based on Deno 2.x stable permission set
 function builtinPermissionTypes(): PermissionType[] {
   return [
-    { name: 'read',   hasIgnore: true },
-    { name: 'write',  hasIgnore: false },
+    { name: 'read', hasIgnore: true },
+    { name: 'write', hasIgnore: false },
     { name: 'import', hasIgnore: false },
-    { name: 'env',    hasIgnore: true },
-    { name: 'net',    hasIgnore: false },
-    { name: 'run',    hasIgnore: false },
-    { name: 'ffi',    hasIgnore: false },
-    { name: 'sys',    hasIgnore: false },
+    { name: 'env', hasIgnore: true },
+    { name: 'net', hasIgnore: false },
+    { name: 'run', hasIgnore: false },
+    { name: 'ffi', hasIgnore: false },
+    { name: 'sys', hasIgnore: false },
   ];
 }
 
@@ -235,14 +235,14 @@ export function renderToArgsLine(prop: Property): string {
   const n = prop.csName;
   const f = prop.flagName;
   switch (prop.argStyle) {
-    case 'flag':      return `    if (${n} == true) args.Add("${f}");`;
-    case 'boolopt':   return `    if (${n}.HasValue) args.Add(${n}.Value ? "${f}" : "${f}=false");`;
-    case 'value':     return `    if (${n} is not null) { args.Add("${f}"); args.Add(${n}); }`;
+    case 'flag': return `    if (${n} == true) args.Add("${f}");`;
+    case 'boolopt': return `    if (${n}.HasValue) args.Add(${n}.Value ? "${f}" : "${f}=false");`;
+    case 'value': return `    if (${n} is not null) { args.Add("${f}"); args.Add(${n}); }`;
     case 'intvalue':
     case 'longvalue': return `    if (${n}.HasValue) { args.Add("${f}"); args.Add(${n}.Value.ToString()); }`;
-    case 'optvalue':  return `    if (${n} is not null) { if (${n}.Length == 0) args.Add("${f}"); else args.Add(string.Concat("${f}=", ${n})); }`;
-    case 'array':     return `    if (${n} is { Length: > 0 }) { args.Add("${f}"); args.Add(string.Join(",", ${n})); }`;
-    case 'optarray':  return `    if (${n} is not null) { if (${n}.Length == 0) args.Add("${f}"); else { args.Add("${f}"); args.Add(string.Join(",", ${n})); } }`;
+    case 'optvalue': return `    if (${n} is not null) { if (${n}.Length == 0) args.Add("${f}"); else args.Add(string.Concat("${f}=", ${n})); }`;
+    case 'array': return `    if (${n} is { Length: > 0 }) { args.Add("${f}"); args.Add(string.Join(",", ${n})); }`;
+    case 'optarray': return `    if (${n} is not null) { if (${n}.Length == 0) args.Add("${f}"); else { args.Add("${f}"); args.Add(string.Join(",", ${n})); } }`;
   }
 }
 
@@ -393,6 +393,66 @@ function generateDenoCommandsPartial(ref: DenoReference, denoVersion: string): s
   return lines.join('\n');
 }
 
+// Commands for which DenoProcess factory methods are generated (long-running only)
+const PROCESS_COMMAND_NAMES = new Set(['run', 'serve', 'task']);
+
+function generateDenoProcessCommandsPartial(denoVersion: string): string {
+  const processCommands = COMMANDS.filter((c) => PROCESS_COMMAND_NAMES.has(c.name));
+
+  const lines: string[] = [];
+  lines.push('// <auto-generated/>');
+  lines.push('// Generated by tools/gen-commands/generate.ts');
+  lines.push(`// Source: \`deno json_reference\` (Deno ${denoVersion})`);
+  lines.push('// Do not edit manually — run `deno task generate` in tools/gen-commands/ to regenerate.');
+  lines.push('#nullable enable');
+  lines.push('');
+  lines.push('using System;');
+  lines.push('using System.Collections.Generic;');
+  lines.push('using DenoHost.Core.Commands;');
+  lines.push('');
+  lines.push('namespace DenoHost.Core;');
+  lines.push('');
+  lines.push('public partial class DenoProcess');
+  lines.push('{');
+
+  for (const cmd of processCommands) {
+    const methodName = toPascalCase(cmd.name);
+    const optClass = `${methodName}Options`;
+
+    const positionalParams = cmd.positional.map((p) => p.csParam).join(', ');
+    const allParamStr = [positionalParams, `${optClass}? options = null`, 'DenoExecuteBaseOptions? baseOptions = null']
+      .filter(Boolean)
+      .join(', ');
+
+    const nullChecks = cmd.positional
+      .filter((p) => !p.csParam.includes('?') && !p.csParam.includes('[]?'))
+      .map((p) => {
+        const varName = p.csParam.split(' ').at(-1)!;
+        return p.csParam.startsWith('string[]')
+          ? `    ArgumentNullException.ThrowIfNull(${varName});`
+          : `    ArgumentException.ThrowIfNullOrWhiteSpace(${varName});`;
+      });
+
+    const positionalAppends = cmd.positional.map((p) => `    ${p.append}`).join('\n');
+
+    lines.push(`  /// <summary>Creates a <see cref="DenoProcess"/> for <c>deno ${cmd.name}</c>.</summary>`);
+    lines.push(`  public static DenoProcess ${methodName}(${allParamStr})`);
+    lines.push('  {');
+    if (nullChecks.length > 0) lines.push(nullChecks.join('\n'));
+    lines.push(`    var args = new List<string> { "${cmd.name}" };`);
+    lines.push('    if (options != null) args.AddRange(options.ToArgs());');
+    lines.push(positionalAppends);
+    lines.push('    return baseOptions != null');
+    lines.push('      ? new DenoProcess(baseOptions, [.. args])');
+    lines.push('      : new DenoProcess([.. args]);');
+    lines.push('  }');
+    lines.push('');
+  }
+
+  lines.push('}');
+  return lines.join('\n');
+}
+
 function generateSnapshot(ref: DenoReference): string {
   // Reduced snapshot: only the commands we care about, only flag names
   // Used by DenoCommandsSchemaTests to detect when deno json_reference diverges from what was generated.
@@ -455,7 +515,12 @@ async function main() {
   await Deno.writeTextFile(join(OUTPUT_DIR, 'Deno.Commands.g.cs'), denoCommandsContent + '\n');
   console.log('  Generated Deno.Commands.g.cs');
 
-  // 7. Save snapshot (for test validation)
+  // 7. Generate DenoProcess.Commands.g.cs
+  const denoProcessCommandsContent = generateDenoProcessCommandsPartial(denoVersion);
+  await Deno.writeTextFile(join(OUTPUT_DIR, 'DenoProcess.Commands.g.cs'), denoProcessCommandsContent + '\n');
+  console.log('  Generated DenoProcess.Commands.g.cs');
+
+  // 8. Save snapshot (for test validation)
   const snapshotContent = generateSnapshot(ref);
   await Deno.writeTextFile(SNAPSHOT_FILE, snapshotContent + '\n');
   console.log(`  Snapshot saved → ${SNAPSHOT_FILE}`);
