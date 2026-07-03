@@ -300,6 +300,7 @@
       "doc",
       "doc-only",
       "check-js",
+      "desktop",
       "allow-import",
       "deny-import",
       "v8-flags",
