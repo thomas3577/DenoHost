@@ -157,6 +157,8 @@ public static partial class Deno
   public static Task<T> Cache<T>(string[] files, CacheOptions? options = null, DenoExecuteBaseOptions? baseOptions = null, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(files);
+    if (files.Length == 0) throw new ArgumentException("At least one value is required.", nameof(files));
+    if (Array.Exists(files, string.IsNullOrWhiteSpace)) throw new ArgumentException("Values cannot be null or whitespace.", nameof(files));
     var args = new List<string>();
     if (options != null) args.AddRange(options.ToArgs());
     args.AddRange(files);
@@ -171,6 +173,8 @@ public static partial class Deno
   public static Task<T> Add<T>(string[] packages, AddOptions? options = null, DenoExecuteBaseOptions? baseOptions = null, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(packages);
+    if (packages.Length == 0) throw new ArgumentException("At least one value is required.", nameof(packages));
+    if (Array.Exists(packages, string.IsNullOrWhiteSpace)) throw new ArgumentException("Values cannot be null or whitespace.", nameof(packages));
     var args = new List<string>();
     if (options != null) args.AddRange(options.ToArgs());
     args.AddRange(packages);
@@ -185,6 +189,8 @@ public static partial class Deno
   public static Task<T> Remove<T>(string[] packages, RemoveOptions? options = null, DenoExecuteBaseOptions? baseOptions = null, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(packages);
+    if (packages.Length == 0) throw new ArgumentException("At least one value is required.", nameof(packages));
+    if (Array.Exists(packages, string.IsNullOrWhiteSpace)) throw new ArgumentException("Values cannot be null or whitespace.", nameof(packages));
     var args = new List<string>();
     if (options != null) args.AddRange(options.ToArgs());
     args.AddRange(packages);

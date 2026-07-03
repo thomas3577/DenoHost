@@ -5,6 +5,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace DenoHost.Core.Commands;
 
@@ -295,7 +296,7 @@ public sealed class BenchOptions
     if (CachedOnly == true) args.Add("--cached-only");
     if (Location is not null) { args.Add("--location"); args.Add(Location); }
     if (V8Flags is not null) { if (V8Flags.Length == 0) args.Add("--v8-flags"); else { args.Add("--v8-flags"); args.Add(string.Join(",", V8Flags)); } }
-    if (Seed.HasValue) { args.Add("--seed"); args.Add(Seed.Value.ToString()); }
+    if (Seed.HasValue) { args.Add("--seed"); args.Add(Seed.Value.ToString(CultureInfo.InvariantCulture)); }
     if (Preload is not null) { args.Add("--preload"); args.Add(Preload); }
     if (Require is not null) { args.Add("--require"); args.Add(Require); }
     if (Check is not null) { if (Check.Length == 0) args.Add("--check"); else args.Add(string.Concat("--check=", Check)); }

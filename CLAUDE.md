@@ -45,9 +45,8 @@ The typed command methods (`Deno.Run`, `Deno.Test`, etc.) and their options clas
 
 ```bash
 cd tools/gen-commands
-deno task generate          # requires network (fetches Deno JSON schema for permissions)
-deno task generate:offline  # uses built-in permission list instead
-deno task test              # unit-tests the pure generator functions
+deno task generate  # requires network (fetches Deno JSON schema for permissions)
+deno task test      # unit-tests the pure generator functions
 ```
 
 Two sources feed the generator:

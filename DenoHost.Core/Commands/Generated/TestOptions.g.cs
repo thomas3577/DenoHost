@@ -5,6 +5,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace DenoHost.Core.Commands;
 
@@ -356,7 +357,7 @@ public sealed class TestOptions
     if (CachedOnly == true) args.Add("--cached-only");
     if (Location is not null) { args.Add("--location"); args.Add(Location); }
     if (V8Flags is not null) { if (V8Flags.Length == 0) args.Add("--v8-flags"); else { args.Add("--v8-flags"); args.Add(string.Join(",", V8Flags)); } }
-    if (Seed.HasValue) { args.Add("--seed"); args.Add(Seed.Value.ToString()); }
+    if (Seed.HasValue) { args.Add("--seed"); args.Add(Seed.Value.ToString(CultureInfo.InvariantCulture)); }
     if (Preload is not null) { args.Add("--preload"); args.Add(Preload); }
     if (Require is not null) { args.Add("--require"); args.Add(Require); }
     if (Check is not null) { if (Check.Length == 0) args.Add("--check"); else args.Add(string.Concat("--check=", Check)); }
@@ -369,13 +370,13 @@ public sealed class TestOptions
     if (FailFast is not null) { if (FailFast.Length == 0) args.Add("--fail-fast"); else args.Add(string.Concat("--fail-fast=", FailFast)); }
     if (PermitNoFiles == true) args.Add("--permit-no-files");
     if (Filter is not null) { args.Add("--filter"); args.Add(Filter); }
-    if (Shuffle.HasValue) { args.Add("--shuffle"); args.Add(Shuffle.Value.ToString()); }
-    if (Retry.HasValue) { args.Add("--retry"); args.Add(Retry.Value.ToString()); }
-    if (Repeats.HasValue) { args.Add("--repeats"); args.Add(Repeats.Value.ToString()); }
-    if (Shard.HasValue) { args.Add("--shard"); args.Add(Shard.Value.ToString()); }
+    if (Shuffle.HasValue) { args.Add("--shuffle"); args.Add(Shuffle.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (Retry.HasValue) { args.Add("--retry"); args.Add(Retry.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (Repeats.HasValue) { args.Add("--repeats"); args.Add(Repeats.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (Shard.HasValue) { args.Add("--shard"); args.Add(Shard.Value.ToString(CultureInfo.InvariantCulture)); }
     if (Coverage is not null) { if (Coverage.Length == 0) args.Add("--coverage"); else args.Add(string.Concat("--coverage=", Coverage)); }
     if (CoverageRawDataOnly == true) args.Add("--coverage-raw-data-only");
-    if (CoverageThreshold.HasValue) { args.Add("--coverage-threshold"); args.Add(CoverageThreshold.Value.ToString()); }
+    if (CoverageThreshold.HasValue) { args.Add("--coverage-threshold"); args.Add(CoverageThreshold.Value.ToString(CultureInfo.InvariantCulture)); }
     if (Clean == true) args.Add("--clean");
     if (Parallel == true) args.Add("--parallel");
     if (Changed is not null) { if (Changed.Length == 0) args.Add("--changed"); else args.Add(string.Concat("--changed=", Changed)); }

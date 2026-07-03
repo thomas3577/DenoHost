@@ -23,9 +23,6 @@ Run from this directory:
 # Requires network (fetches Deno JSON schema for permission types)
 deno task generate
 
-# Offline fallback — uses a hardcoded permission list instead
-deno task generate:offline
-
 # Unit-test the pure generator functions
 deno task test
 ```
@@ -58,7 +55,7 @@ CI does **not** run the generator automatically. New Deno releases follow this s
 
    ```bash
    cd tools/gen-commands
-   deno task generate     # or generate:offline if no network
+   deno task generate
    ```
 
    Commit the updated `*.g.cs` files and `deno_reference.snapshot.json`.

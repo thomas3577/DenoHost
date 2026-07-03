@@ -87,8 +87,8 @@ await Deno.Remove(["jsr:@std/fs"]);
 All methods accept an optional `DenoExecuteBaseOptions` to set the working directory or logger:
 
 ```csharp
-var base = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
-await Deno.Run("app.ts", baseOptions: base);
+var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
+await Deno.Run("app.ts", baseOptions: baseOptions);
 ```
 
 ### Cancellation
@@ -168,6 +168,9 @@ await task.WaitForExitAsync();
 `DenoProcess` also supports interactive stdin and graceful restart:
 
 ```csharp
+using var denoProcess = DenoProcess.Run("worker.ts", new RunOptions { Watch = [] });
+await denoProcess.StartAsync();
+
 await denoProcess.SendInputAsync("hello");
 await denoProcess.RestartAsync();
 await denoProcess.StopAsync(timeout: TimeSpan.FromSeconds(5));

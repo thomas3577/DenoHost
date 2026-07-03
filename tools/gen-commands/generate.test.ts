@@ -178,13 +178,13 @@ Deno.test('renderToArgsLine: value', () => {
 Deno.test('renderToArgsLine: intvalue', () => {
   const line = renderToArgsLine(prop('Seed', 'int?', 'intvalue', '--seed'));
   assertMatch(line, /HasValue/);
-  assertMatch(line, /\.ToString\(\)/);
+  assertMatch(line, /\.ToString\(CultureInfo\.InvariantCulture\)/);
 });
 
 Deno.test('renderToArgsLine: longvalue', () => {
   const line = renderToArgsLine(prop('CpuProfInterval', 'long?', 'longvalue', '--cpu-prof-interval'));
   assertMatch(line, /HasValue/);
-  assertMatch(line, /\.ToString\(\)/);
+  assertMatch(line, /\.ToString\(CultureInfo\.InvariantCulture\)/);
 });
 
 Deno.test('renderToArgsLine: optvalue uses string.Concat for =value form', () => {

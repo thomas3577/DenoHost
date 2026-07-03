@@ -19,11 +19,14 @@ if (!app.Environment.IsProduction())
   app.UseHttpsRedirection();
 }
 
-app.MapOpenApi();
-app.MapScalarApiReference();
+if (!app.Environment.IsProduction())
+{
+  app.MapOpenApi();
+  app.MapScalarApiReference();
 
-app.MapGet("/", () => Results.Redirect("/scalar/v1"))
-  .ExcludeFromDescription();
+  app.MapGet("/", () => Results.Redirect("/scalar/v1"))
+    .ExcludeFromDescription();
+}
 
 app.MapGet("/run-app", static async (HttpContext context) =>
 {

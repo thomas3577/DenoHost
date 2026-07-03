@@ -5,6 +5,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace DenoHost.Core.Commands;
 
@@ -288,7 +289,7 @@ public sealed class EvalOptions
     if (CachedOnly == true) args.Add("--cached-only");
     if (Location is not null) { args.Add("--location"); args.Add(Location); }
     if (V8Flags is not null) { if (V8Flags.Length == 0) args.Add("--v8-flags"); else { args.Add("--v8-flags"); args.Add(string.Join(",", V8Flags)); } }
-    if (Seed.HasValue) { args.Add("--seed"); args.Add(Seed.Value.ToString()); }
+    if (Seed.HasValue) { args.Add("--seed"); args.Add(Seed.Value.ToString(CultureInfo.InvariantCulture)); }
     if (Preload is not null) { args.Add("--preload"); args.Add(Preload); }
     if (Require is not null) { args.Add("--require"); args.Add(Require); }
     if (Check is not null) { if (Check.Length == 0) args.Add("--check"); else args.Add(string.Concat("--check=", Check)); }
@@ -298,7 +299,7 @@ public sealed class EvalOptions
     if (CpuProf == true) args.Add("--cpu-prof");
     if (CpuProfDir is not null) { args.Add("--cpu-prof-dir"); args.Add(CpuProfDir); }
     if (CpuProfName is not null) { args.Add("--cpu-prof-name"); args.Add(CpuProfName); }
-    if (CpuProfInterval.HasValue) { args.Add("--cpu-prof-interval"); args.Add(CpuProfInterval.Value.ToString()); }
+    if (CpuProfInterval.HasValue) { args.Add("--cpu-prof-interval"); args.Add(CpuProfInterval.Value.ToString(CultureInfo.InvariantCulture)); }
     if (CpuProfMd == true) args.Add("--cpu-prof-md");
     if (CpuProfFlamegraph == true) args.Add("--cpu-prof-flamegraph");
     if (Unstable == true) args.Add("--unstable");

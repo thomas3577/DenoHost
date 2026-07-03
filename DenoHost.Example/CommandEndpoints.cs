@@ -285,7 +285,7 @@ public static class CommandEndpoints
           baseOptions: baseOpts,
           cancellationToken: cts.Token);
       }
-      catch (Exception) when (cts.IsCancellationRequested) { }
+      catch (OperationCanceledException) when (cts.IsCancellationRequested) { }
       return Results.Text("deno serve started and was stopped after 2 s (long-running by design).");
     })
     .WithName("CommandServe")

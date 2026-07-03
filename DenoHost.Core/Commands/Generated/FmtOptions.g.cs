@@ -5,6 +5,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace DenoHost.Core.Commands;
 
@@ -86,8 +87,8 @@ public sealed class FmtOptions
     if (WatchExclude is not null) { if (WatchExclude.Length == 0) args.Add("--watch-exclude"); else { args.Add("--watch-exclude"); args.Add(string.Join(",", WatchExclude)); } }
     if (NoClearScreen == true) args.Add("--no-clear-screen");
     if (UseTabs.HasValue) args.Add(UseTabs.Value ? "--use-tabs" : "--use-tabs=false");
-    if (LineWidth.HasValue) { args.Add("--line-width"); args.Add(LineWidth.Value.ToString()); }
-    if (IndentWidth.HasValue) { args.Add("--indent-width"); args.Add(IndentWidth.Value.ToString()); }
+    if (LineWidth.HasValue) { args.Add("--line-width"); args.Add(LineWidth.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (IndentWidth.HasValue) { args.Add("--indent-width"); args.Add(IndentWidth.Value.ToString(CultureInfo.InvariantCulture)); }
     if (SingleQuote.HasValue) args.Add(SingleQuote.Value ? "--single-quote" : "--single-quote=false");
     if (ProseWrap is not null) { args.Add("--prose-wrap"); args.Add(ProseWrap); }
     if (NoSemicolons.HasValue) args.Add(NoSemicolons.Value ? "--no-semicolons" : "--no-semicolons=false");

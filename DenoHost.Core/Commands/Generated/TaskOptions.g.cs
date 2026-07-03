@@ -5,6 +5,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace DenoHost.Core.Commands;
 
@@ -136,7 +137,7 @@ public sealed class TaskOptions
     if (Filter is not null) { args.Add("--filter"); args.Add(Filter); }
     if (Eval == true) args.Add("--eval");
     if (NoPrefix == true) args.Add("--no-prefix");
-    if (Jobs.HasValue) { args.Add("--jobs"); args.Add(Jobs.Value.ToString()); }
+    if (Jobs.HasValue) { args.Add("--jobs"); args.Add(Jobs.Value.ToString(CultureInfo.InvariantCulture)); }
     if (IfPresent == true) args.Add("--if-present");
     if (EnvFile is not null) { if (EnvFile.Length == 0) args.Add("--env-file"); else args.Add(string.Concat("--env-file=", EnvFile)); }
     if (NodeModulesDir is not null) { if (NodeModulesDir.Length == 0) args.Add("--node-modules-dir"); else args.Add(string.Concat("--node-modules-dir=", NodeModulesDir)); }
