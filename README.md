@@ -44,9 +44,67 @@ dotnet add package DenoHost.Core
 
 ---
 
-## Deno.Execute Example
+## Typed Command API
 
-For simple script execution with immediate results:
+Each Deno subcommand has a dedicated method with strongly-typed options:
+
+```csharp
+using DenoHost.Core;
+using DenoHost.Core.Commands;
+
+// Run a script with permissions
+await Deno.Run("app.ts", new RunOptions
+{
+    AllowRead = ["./data"],
+    AllowNet  = [],          // empty = allow all
+    Watch     = true,
+});
+
+// Evaluate TypeScript and capture JSON output
+var result = await Deno.Eval<MyResult>("console.log(JSON.stringify({ ok: true }))");
+
+// Run tests
+await Deno.Test(options: new TestOptions { Filter = "my-suite" });
+
+// Format and lint
+await Deno.Fmt();
+await Deno.Lint(options: new LintOptions { NoCache = true });
+
+// Type-check
+await Deno.Check(["src/main.ts"]);
+
+// Compile to a standalone executable
+await Deno.Compile("app.ts", new CompileOptions { Output = "dist/app" });
+
+// Run a task from deno.json
+await Deno.Task("build");
+
+// Manage dependencies
+await Deno.Add(["jsr:@std/fs"]);
+await Deno.Remove(["jsr:@std/fs"]);
+```
+
+All methods accept an optional `DenoExecuteBaseOptions` to set the working directory or logger:
+
+```csharp
+var baseOptions = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
+await Deno.Run("app.ts", baseOptions: baseOptions);
+```
+
+### Cancellation
+
+Pass a `CancellationToken` as the last parameter to any command. Cancellation throws `OperationCanceledException` and terminates the underlying Deno process.
+
+```csharp
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+await Deno.Test(cancellationToken: cts.Token);
+```
+
+---
+
+## Deno.Execute — Low-Level API
+
+For cases not covered by the typed API, use `Deno.Execute` directly:
 
 ```csharp
 using DenoHost.Core;
@@ -57,19 +115,6 @@ string[] args = ["run", "app.ts"];
 await Deno.Execute(options, args);
 ```
 
-### Cancellation
-
-You can cancel execution via a `CancellationToken`. Cancellation throws an `OperationCanceledException` and terminates the underlying Deno process.
-
-```csharp
-using DenoHost.Core;
-
-using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-
-var options = new DenoExecuteBaseOptions { WorkingDirectory = "./scripts" };
-await Deno.Execute(options, ["run", "long-running.ts"], cts.Token);
-```
-
 ### Arguments and quoting
 
 DenoHost passes arguments via `ProcessStartInfo.ArgumentList`. Pass each argument as its own string (avoid adding shell-style quotes inside argument strings).
@@ -78,28 +123,65 @@ DenoHost passes arguments via `ProcessStartInfo.ArgumentList`. Pass each argumen
 await Deno.Execute("eval", ["console.log('hello world')"]);
 ```
 
-## DenoProcess Example
+## DenoProcess — Long-Running Processes
 
-For long-running processes with interactive communication:
+`DenoProcess` manages a Deno process you control over time: start, send input, stop, restart, and subscribe to output events.
+It mirrors the typed command API with static factory methods for the three long-running commands:
 
 ```csharp
 using DenoHost.Core;
+using DenoHost.Core.Commands;
 
-// Create a managed Deno process
-using var denoProcess = new DenoProcess(
-  command: "run",
-  args: ["--allow-read", "server.ts"],
-  workingDirectory: "./scripts"
-);
+// HTTP server (deno serve)
+using var server = DenoProcess.Serve("server.ts", new ServeOptions
+{
+    AllowNet = [],
+    AllowRead = ["./public"],
+});
 
-// Start the process
+server.OutputDataReceived += (_, e) => Console.WriteLine(e.Data);
+server.ErrorDataReceived  += (_, e) => Console.Error.WriteLine(e.Data);
+server.ProcessExited      += (_, e) => Console.WriteLine($"Exited: {e.ExitCode}");
+
+await server.StartAsync();
+// … keep the server running …
+await server.StopAsync();
+
+// Script with watch mode (deno run)
+using var watcher = DenoProcess.Run("worker.ts", new RunOptions
+{
+    AllowNet  = [],
+    AllowRead = ["./"],
+    Watch     = [],          // empty = watch all
+});
+await watcher.StartAsync();
+
+// Deno task from deno.json (deno task)
+using var task = DenoProcess.Task("dev", baseOptions: new DenoExecuteBaseOptions
+{
+    WorkingDirectory = "./app",
+});
+await task.StartAsync();
+await task.WaitForExitAsync();
+```
+
+`DenoProcess` also supports interactive stdin and graceful restart:
+
+```csharp
+using var denoProcess = DenoProcess.Run("worker.ts", new RunOptions { Watch = [] });
 await denoProcess.StartAsync();
 
-// Send input to the process
 await denoProcess.SendInputAsync("hello");
+await denoProcess.RestartAsync();
+await denoProcess.StopAsync(timeout: TimeSpan.FromSeconds(5));
+```
 
-// Stop gracefully when done
-await denoProcess.StopAsync();
+For cases that need full control over the argument list, the constructor accepts raw args:
+
+```csharp
+using var process = new DenoProcess("run", ["--allow-read", "server.ts"],
+    workingDirectory: "./scripts");
+await process.StartAsync();
 ```
 
 ## Requirements

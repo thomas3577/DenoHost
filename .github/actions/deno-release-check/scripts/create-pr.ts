@@ -78,6 +78,23 @@ async function createBranch(branchName: string): Promise<void> {
   console.log(`Currently on branch: ${currentBranch}`);
 }
 
+async function regenerateCommands(workspace: string): Promise<void> {
+  console.log('Regenerating typed command API from new Deno binary...');
+  const genDir = `${workspace}/tools/gen-commands`;
+  const proc = new Deno.Command('deno', {
+    args: ['task', 'generate'],
+    cwd: genDir,
+    stdout: 'inherit',
+    stderr: 'inherit',
+  });
+  const { code } = await proc.output();
+  if (code !== 0) throw new Error('deno task generate failed');
+
+  await runCommand(['git', 'add', `${workspace}/DenoHost.Core/Commands/Generated/`]);
+  await runCommand(['git', 'add', `${workspace}/tools/gen-commands/deno_reference.snapshot.json`]);
+  console.log('Staged regenerated command files.');
+}
+
 async function updateDenoVersion(newVersion: string): Promise<void> {
   console.log(`Updating Directory.Build.props to Deno version ${newVersion}`);
 
@@ -221,7 +238,9 @@ async function main() {
     console.log(`Expected new tag after merge: ${expectedTag}`);
 
     await createBranch(branchName);
+    const workspace = Deno.env.get('GITHUB_WORKSPACE') || Deno.cwd();
     await updateDenoVersion(denoVersion);
+    await regenerateCommands(workspace);
     await pushBranch(branchName, denoVersion);
 
     const prNumber = await createPullRequest(branchName, denoVersion);

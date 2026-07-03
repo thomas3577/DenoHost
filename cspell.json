@@ -34,10 +34,11 @@
   "words": [
     "denoland",
     "msvc",
+    "nupkgs",
     "snupkg",
     "SonarQube",
+    "tsgo",
     "uuidgen",
-    "nupkgs",
     "xunit"
   ]
 }

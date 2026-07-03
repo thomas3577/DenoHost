@@ -37,6 +37,25 @@ After every code change run build and full test suite before finishing. If build
 - Add or update tests for any new or modified public API, bug fix, or behavior change; skip for pure refactors, comments, or formatting
 - TypeScript in CI scripts: single quotes, 2-space indent, semicolons (see `.github/actions/deno-release-check/deno.json`)
 
+## Typed Command API — Code Generator
+
+The typed command methods (`Deno.Run`, `Deno.Test`, etc.) and their options classes are **auto-generated**. Never edit `*.g.cs` files in `DenoHost.Core/Commands/Generated/` manually.
+
+**When to regenerate:** After every Deno version bump (`DenoCommandsSchemaTests` fails when the snapshot is stale).
+
+```bash
+cd tools/gen-commands
+deno task generate  # requires network (fetches Deno JSON schema for permissions)
+deno task test      # unit-tests the pure generator functions
+```
+
+Two sources feed the generator:
+
+- `deno json_reference` → all CLI flags per subcommand (types inferred from `usage` patterns)
+- Deno JSON schema → permission types (`read`, `write`, `net`, …) and which support `--ignore-*`
+
+`tools/gen-commands/deno_reference.snapshot.json` is committed alongside the generated files. `DenoCommandsSchemaTests` compares it against the live binary on every test run and reports exactly which flags were added or removed.
+
 ## Architecture Notes
 
 - **Metadata signing:** Runtime packages ship `deno.metadata.json` + `deno.metadata.sig` (ECDSA). The public key lives in `Config/metadata-signing-public.pem`. Tagged builds require the `DENOHOST_METADATA_SIGNING_PRIVATE_KEY_PEM` secret.
