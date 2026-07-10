@@ -1,0 +1,67 @@
+name: Backfill GitHub Packages
+
+# One-off workflow: republishes stable releases that were built and pushed to
+# NuGet.org while GitHub Packages publishing was disabled (see PR #120), by
+# downloading the already-published .nupkg files from NuGet.org and pushing
+# those exact bytes to GitHub Packages. Safe to re-run: uses --skip-duplicate.
+# Delete this workflow once the backfill has completed successfully.
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: 'Comma-separated stable versions to backfill'
+        required: true
+        default: '2.8.3,2.9.0,2.9.1,2.9.2'
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    name: Backfill Packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download and push packages
+        shell: bash
+        env:
+          VERSIONS: ${{ inputs.versions }}
+        run: |
+          set -euo pipefail
+
+          IDS=(
+            DenoHost.Core
+            DenoHost.Runtime.win-x64
+            DenoHost.Runtime.win-arm64
+            DenoHost.Runtime.linux-x64
+            DenoHost.Runtime.linux-arm64
+            DenoHost.Runtime.osx-x64
+            DenoHost.Runtime.osx-arm64
+          )
+
+          IFS=',' read -ra VERSION_LIST <<< "$VERSIONS"
+
+          for VERSION in "${VERSION_LIST[@]}"; do
+            for ID in "${IDS[@]}"; do
+              LOWER_ID="$(echo "$ID" | tr '[:upper:]' '[:lower:]')"
+              LOWER_VERSION="$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')"
+              URL="https://api.nuget.org/v3-flatcontainer/${LOWER_ID}/${LOWER_VERSION}/${LOWER_ID}.${LOWER_VERSION}.nupkg"
+              FILE="./${LOWER_ID}.${LOWER_VERSION}.nupkg"
+
+              echo "::group::${ID} ${VERSION}"
+              curl -sSfL -o "$FILE" "$URL"
+              dotnet nuget push "$FILE" \
+                --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+                --api-key "${{ secrets.GITHUB_TOKEN }}" \
+                --skip-duplicate
+              rm -f "$FILE"
+              echo "::endgroup::"
+            done
+          done
