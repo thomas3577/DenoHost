@@ -605,6 +605,8 @@
     ],
     "add": [
       "dev",
+      "save-optional",
+      "no-save",
       "allow-scripts",
       "allow-import",
       "deny-import",
