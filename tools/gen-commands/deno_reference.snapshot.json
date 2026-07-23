@@ -618,7 +618,8 @@
       "jsr",
       "save-exact",
       "package-json",
-      "env-file"
+      "env-file",
+      "minimum-dependency-age"
     ],
     "remove": [
       "root",
@@ -627,7 +628,8 @@
       "no-lock",
       "frozen",
       "lockfile-only",
-      "package-json"
+      "package-json",
+      "minimum-dependency-age"
     ]
   }
 }
