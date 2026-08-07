@@ -452,6 +452,7 @@
       "exclude",
       "output",
       "target",
+      "engine",
       "no-code-cache",
       "no-terminal",
       "icon",
@@ -488,6 +489,7 @@
       "frozen",
       "cwd",
       "recursive",
+      "members",
       "filter",
       "eval",
       "no-prefix",
@@ -617,6 +619,7 @@
       "npm",
       "jsr",
       "save-exact",
+      "unscoped",
       "package-json",
       "env-file",
       "minimum-dependency-age"
