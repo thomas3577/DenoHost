@@ -1,0 +1,21 @@
+#!/usr/bin/env -S deno run --allow-read --allow-write
+
+const commitMsgFile = Deno.args[0];
+if (!commitMsgFile) {
+  Deno.exit(0);
+}
+
+// Read the commit message
+const content = await Deno.readTextFile(commitMsgFile);
+
+// Regular expression to catch AI co-author and generated-by tags
+const filterRegex = /^(Co-Authored-By:.*(Claude|Anthropic|GitHub Copilot|ChatGPT|openai)|(Generated|Assisted)[- ]by:.*(Claude|Anthropic|AI)).*$/gim;
+
+// Strip matching lines and cleanup trailing empty lines
+const cleaned = content
+  .replace(filterRegex, "")
+  .replace(/\n{3,}/g, "\n\n")
+  .trimEnd() + "\n";
+
+// Write the modified message back
+await Deno.writeTextFile(commitMsgFile, cleaned);
