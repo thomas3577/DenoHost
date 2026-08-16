@@ -84,3 +84,8 @@ When reviewing diffs, cover these categories:
 2. **Robustness:** `NullReferenceException` risks (respect nullable reference types), unhandled exceptions in async paths, missing input validation at system boundaries
 3. **Maintainability:** high cyclomatic complexity, deeply nested logic, violations of existing architecture
 4. **Testability:** hardcoded dependencies instead of DI, untestable code paths
+
+## Git Guidelines
+
+- Do not add 'Co-Authored-By', generator tags, or any AI references to commit messages or PR descriptions.
+- Keep commit messages concise and strictly focused on changes.
