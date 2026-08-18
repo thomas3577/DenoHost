@@ -13,16 +13,16 @@
 
 ```bash
 # Restore
-dotnet restore DenoHost.sln
+dotnet restore DenoHost.slnx
 
 # Build
-dotnet build DenoHost.sln
+dotnet build DenoHost.slnx
 
 # Lint (must be clean — CI enforces this)
-dotnet format DenoHost.sln --no-restore --verify-no-changes --severity warn
+dotnet format DenoHost.slnx --no-restore --verify-no-changes --severity warn
 
 # Test (specify RID matching your platform)
-dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
+dotnet test --project DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
 
 # Deno tests for CI scripts (run inside the action directory)
 deno task test

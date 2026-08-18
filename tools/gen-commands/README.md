@@ -30,7 +30,7 @@ deno task test
 After generating, run the .NET build to confirm the output compiles:
 
 ```bash
-dotnet build DenoHost.sln
+dotnet build DenoHost.slnx
 ```
 
 ---

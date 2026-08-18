@@ -182,7 +182,7 @@ public class DenoCommandsSchemaTests
   {
     // Walk up from the test binary location to find the solution root, then locate the snapshot.
     var dir = new DirectoryInfo(AppContext.BaseDirectory);
-    while (dir != null && dir.GetFiles("*.sln").Length == 0)
+    while (dir != null && dir.GetFiles("*.slnx").Length == 0 && dir.GetFiles("*.sln").Length == 0)
       dir = dir.Parent;
 
     if (dir == null)

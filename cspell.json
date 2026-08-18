@@ -35,6 +35,7 @@
     "denoland",
     "msvc",
     "nupkgs",
+    "slnx",
     "snupkg",
     "SonarQube",
     "tsgo",
