@@ -329,13 +329,13 @@ jobs:
         run: test -f DenoHost.Tests/bin/Release/net9.0/win-x64/runtimes/win-x64/native/deno.exe
 
       - name: Run Unit Tests with Coverage
-        run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64 --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+        run: dotnet test --project DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64 --no-build --results-directory ./coverage -- --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
 
       - name: Generate Coverage Report
-        run: reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Cobertura;Badges"
+        run: reportgenerator -reports:"coverage/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Cobertura;Badges"
 
       - name: Upload Coverage Reports to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
@@ -370,7 +370,7 @@ jobs:
         run: test -f DenoHost.Tests/bin/Release/net9.0/linux-x64/runtimes/linux-x64/native/deno
 
       - name: Run Unit Tests
-        run: dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64 --no-build
+        run: dotnet test --project DenoHost.Tests/DenoHost.Tests.csproj -c Release -r linux-x64 --no-build
 
   smoke-test-packaged:
     name: Smoke Test Packaged Runtime

@@ -22,7 +22,7 @@ dotnet build DenoHost.sln
 dotnet format DenoHost.sln --no-restore --verify-no-changes --severity warn
 
 # Test (specify RID matching your platform)
-dotnet test DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
+dotnet test --project DenoHost.Tests/DenoHost.Tests.csproj -c Release -r win-x64
 
 # Deno tests for CI scripts (run inside the action directory)
 deno task test

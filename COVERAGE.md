@@ -5,8 +5,8 @@
 **Generate local coverage report:**
 
 ```bash
-dotnet test --collect:"XPlat Code Coverage" --results-directory TestResults
-reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Html;Badges;Cobertura;SonarQube"
+dotnet test --project DenoHost.Tests/DenoHost.Tests.csproj --results-directory TestResults -- --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+reportgenerator -reports:"TestResults/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"Html;Badges;Cobertura;SonarQube"
 ```
 
 Open the HTML report:
@@ -30,14 +30,16 @@ dotnet tool install -g dotnet-reportgenerator-globaltool
 
 ## Additional Coverage Options
 
-### 1. Using MSBuild Coverage (alternative method)
+### 1. Other coverage output formats
 
 ```bash
-dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=TestResults/coverage.cobertura.xml
+dotnet test --project DenoHost.Tests/DenoHost.Tests.csproj -- --coverage --coverage-output-format xml
 ```
 
-### 2. Test specific assemblies only
+Supported formats: `coverage` (binary), `xml`, `cobertura`.
+
+### 2. Restrict what gets instrumented
 
 ```bash
-dotnet test --collect:"XPlat Code Coverage" --settings coverage.runsettings
+dotnet test --project DenoHost.Tests/DenoHost.Tests.csproj -- --coverage --coverage-settings coverage.config
 ```
