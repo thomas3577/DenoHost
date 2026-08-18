@@ -70,10 +70,13 @@ public class DenoConfigSchemaTests
     return version;
   }
 
+  private static bool HasSolutionFile(DirectoryInfo directory)
+    => directory.GetFiles("*.slnx").Length > 0 || directory.GetFiles("*.sln").Length > 0;
+
   private static string FindSolutionRoot(string startPath)
   {
     var directory = new DirectoryInfo(startPath);
-    while (directory != null && directory.GetFiles("*.sln").Length == 0)
+    while (directory != null && !HasSolutionFile(directory))
     {
       directory = directory.Parent;
     }

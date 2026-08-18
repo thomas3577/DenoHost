@@ -85,13 +85,13 @@ jobs:
       - name: Restore Solution
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: dotnet restore DenoHost.sln
+        run: dotnet restore DenoHost.slnx
 
       - name: Check for Vulnerable Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          OUTPUT=$(dotnet list DenoHost.sln package --vulnerable --include-transitive --format json)
+          OUTPUT=$(dotnet list DenoHost.slnx package --vulnerable --include-transitive --format json)
           echo "$OUTPUT"
           if echo "$OUTPUT" | grep -q '"severity"'; then
             echo "::error::Vulnerable packages detected!"
@@ -131,7 +131,7 @@ jobs:
           }
 
       - name: Lint (dotnet format)
-        run: dotnet format DenoHost.sln --no-restore --verify-no-changes --severity warn
+        run: dotnet format DenoHost.slnx --no-restore --verify-no-changes --severity warn
 
   tag-validation:
     name: Validate Stable Tag Source
