@@ -133,7 +133,7 @@ public sealed class CompileOptions
   /// <summary>Skip type-checking. If the value of "remote" is supplied, diagnostic errors from remote modules will be ignored</summary>
   public string? NoCheck { get; set; }
 
-  /// <summary>Set type-checking behavior. This subcommand type-checks local modules by default, so passing [38;5;245m--check[39m is redundant; pass [38;5;245m--check=all[39m to also type-check remote modules. Alternatively, use the [38;5;245m'deno check'[39m subcommand.</summary>
+  /// <summary>Set type-checking behavior. This subcommand type-checks local modules by default, so passing --check is redundant; pass --check=all to also type-check remote modules. Alternatively, use the 'deno check' subcommand.</summary>
   public string? Check { get; set; }
 
   #endregion
@@ -149,7 +149,7 @@ public sealed class CompileOptions
   /// <summary>Do not resolve npm modules</summary>
   public bool? NoNpm { get; set; }
 
-  /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: [38;5;245mauto[39m (create a local node_modules directory and install npm packages into it), [38;5;245mmanual[39m (use the existing local node_modules directory, do not modify it), [38;5;245mnone[39m (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to [38;5;245mauto[39m when the flag is passed without a value.</summary>
+  /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: auto (create a local node_modules directory and install npm packages into it), manual (use the existing local node_modules directory, do not modify it), none (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to auto when the flag is passed without a value.</summary>
   public string? NodeModulesDir { get; set; }
 
   /// <summary>Sets the linker mode for npm packages (isolated or hoisted)</summary>
@@ -158,7 +158,7 @@ public sealed class CompileOptions
   /// <summary>Toggles local vendor folder usage for remote modules and a node_modules folder for npm packages</summary>
   public string? Vendor { get; set; }
 
-  /// <summary>Reload source code cache (recompile TypeScript). With no value, reloads everything. Pass a comma-separated list of specifiers to reload only those modules; [38;5;245mnpm:[39m reloads all npm modules; [38;5;245mnpm:chalk[39m reloads a single npm module; [38;5;245mjsr:@std/http/file-server,jsr:@std/assert/assert-equals[39m reloads specific modules.</summary>
+  /// <summary>Reload source code cache (recompile TypeScript). With no value, reloads everything. Pass a comma-separated list of specifiers to reload only those modules; npm: reloads all npm modules; npm:chalk reloads a single npm module; jsr:@std/http/file-server,jsr:@std/assert/assert-equals reloads specific modules.</summary>
   public string[]? Reload { get; set; }
 
   /// <summary>Check the specified lock file. (If value is not provided, defaults to "./deno.lock")</summary>
@@ -189,7 +189,7 @@ public sealed class CompileOptions
   /// <summary>Allow running npm lifecycle scripts for the given packages</summary>
   public string[]? AllowScripts { get; set; }
 
-  /// <summary>Value of [38;5;245mglobalThis.location[39m used by some web APIs</summary>
+  /// <summary>Value of globalThis.location used by some web APIs</summary>
   public string? Location { get; set; }
 
   /// <summary>To see a list of all available flags use --v8-flags=--help</summary>
@@ -223,13 +223,13 @@ public sealed class CompileOptions
   /// <summary>Excludes a file/directory in the compiled executable.</summary>
   public string? Exclude { get; set; }
 
-  /// <summary>Output file [38;5;245m(defaults to $PWD/&lt;inferred-name&gt;)[39m</summary>
+  /// <summary>Output file (defaults to $PWD/&lt;inferred-name&gt;)</summary>
   public string? Output { get; set; }
 
   /// <summary>Target OS architecture</summary>
   public string? Target { get; set; }
 
-  /// <summary>JS engine the compiled binary runs on [38;5;245m(quickjs is smaller and experimental, and does not receive the same security updates as v8)[39m</summary>
+  /// <summary>JS engine the compiled binary runs on (quickjs is smaller and experimental, and does not receive the same security updates as v8)</summary>
   public string? Engine { get; set; }
 
   /// <summary>Hide terminal on Windows</summary>
@@ -241,16 +241,16 @@ public sealed class CompileOptions
   /// <summary>Create a self-extracting binary that extracts the embedded file system to disk on first run and then runs from there</summary>
   public bool? SelfExtracting { get; set; }
 
-  /// <summary>[33mExperimental.[39m Bundle the entrypoint with esbuild before embedding, instead of shipping the whole node_modules tree.</summary>
+  /// <summary>Experimental. Bundle the entrypoint with esbuild before embedding, instead of shipping the whole node_modules tree.</summary>
   public bool? Bundle { get; set; }
 
   /// <summary>Stable identity for the compiled app.</summary>
   public string? AppName { get; set; }
 
-  /// <summary>[33mExperimental.[39m Minify the bundled output. Only meaningful with [36m--bundle[39m.</summary>
+  /// <summary>Experimental. Minify the bundled output. Only meaningful with --bundle.</summary>
   public bool? Minify { get; set; }
 
-  /// <summary>Embed only the npm packages reachable from the module graph (managed npm; no [36mnode_modules[39m directory).</summary>
+  /// <summary>Embed only the npm packages reachable from the module graph (managed npm; no node_modules directory).</summary>
   public bool? ExcludeUnusedNpm { get; set; }
 
   #endregion

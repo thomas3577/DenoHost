@@ -75,7 +75,7 @@ public sealed class TaskOptions
   /// <summary>Error out if lockfile is out of date</summary>
   public bool? Frozen { get; set; }
 
-  /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: [38;5;245mauto[39m (create a local node_modules directory and install npm packages into it), [38;5;245mmanual[39m (use the existing local node_modules directory, do not modify it), [38;5;245mnone[39m (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to [38;5;245mauto[39m when the flag is passed without a value.</summary>
+  /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: auto (create a local node_modules directory and install npm packages into it), manual (use the existing local node_modules directory, do not modify it), none (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to auto when the flag is passed without a value.</summary>
   public string? NodeModulesDir { get; set; }
 
   /// <summary>Sets the linker mode for npm packages (isolated or hoisted)</summary>

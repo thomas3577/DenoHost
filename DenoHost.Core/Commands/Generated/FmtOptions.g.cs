@@ -26,25 +26,25 @@ public sealed class FmtOptions
   /// <summary>Ignore formatting particular source files</summary>
   public string[]? Ignore { get; set; }
 
-  /// <summary>Use tabs instead of spaces for indentation [38;5;245m[default: false][39m</summary>
+  /// <summary>Use tabs instead of spaces for indentation [default: false]</summary>
   public bool? UseTabs { get; set; }
 
-  /// <summary>Define maximum line width [38;5;245m[default: 80][39m</summary>
+  /// <summary>Define maximum line width [default: 80]</summary>
   public int? LineWidth { get; set; }
 
-  /// <summary>Define indentation width [38;5;245m[default: 2][39m</summary>
+  /// <summary>Define indentation width [default: 2]</summary>
   public int? IndentWidth { get; set; }
 
-  /// <summary>Use single quotes [38;5;245m[default: false][39m</summary>
+  /// <summary>Use single quotes [default: false]</summary>
   public bool? SingleQuote { get; set; }
 
-  /// <summary>Define how prose should be wrapped [38;5;245m[default: always][39m</summary>
+  /// <summary>Define how prose should be wrapped [default: always]</summary>
   public string? ProseWrap { get; set; }
 
-  /// <summary>Don't use semicolons except where necessary [38;5;245m[default: false][39m</summary>
+  /// <summary>Don't use semicolons except where necessary [default: false]</summary>
   public bool? NoSemicolons { get; set; }
 
-  /// <summary>Don't read .editorconfig files to infer formatting options [38;5;245m[default: false][39m</summary>
+  /// <summary>Don't read .editorconfig files to infer formatting options [default: false]</summary>
   public bool? NoEditorconfig { get; set; }
 
   /// <summary>Enable formatting Svelte, Vue, Astro and Angular files</summary>

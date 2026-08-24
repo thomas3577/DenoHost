@@ -26,7 +26,7 @@ public sealed class AddOptions
   /// <summary>Allow running npm lifecycle scripts for the given packages</summary>
   public string[]? AllowScripts { get; set; }
 
-  /// <summary>Allow importing from remote hosts. Optionally specify allowed IP addresses and host names, with ports as necessary. Default value: [38;5;245mdeno.land:443,jsr.io:443,esm.sh:443,raw.esm.sh:443,cdn.jsdelivr.net:443,raw.githubusercontent.com:443,gist.githubusercontent.com:443[39m</summary>
+  /// <summary>Allow importing from remote hosts. Optionally specify allowed IP addresses and host names, with ports as necessary. Default value: deno.land:443,jsr.io:443,esm.sh:443,raw.esm.sh:443,cdn.jsdelivr.net:443,raw.githubusercontent.com:443,gist.githubusercontent.com:443</summary>
   public string[]? AllowImport { get; set; }
 
   /// <summary>Deny importing from remote hosts. Optionally specify denied IP addresses and host names, with ports as necessary.</summary>

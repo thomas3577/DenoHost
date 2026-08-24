@@ -59,6 +59,12 @@ public class PermissionNameOrSet
 /// </summary>
 public class PermissionNameOrSetJsonConverter : JsonConverter<PermissionNameOrSet>
 {
+  /// <summary>Reads a <see cref="PermissionNameOrSet"/> from JSON.</summary>
+  /// <param name="reader">The reader positioned at the value.</param>
+  /// <param name="typeToConvert">The type being converted.</param>
+  /// <param name="options">The serializer options in effect.</param>
+  /// <returns>The deserialized value, or <c>null</c>.</returns>
+  /// <exception cref="JsonException">Thrown for token types the schema does not allow.</exception>
   public override PermissionNameOrSet? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
   {
     switch (reader.TokenType)
@@ -74,6 +80,10 @@ public class PermissionNameOrSetJsonConverter : JsonConverter<PermissionNameOrSe
     }
   }
 
+  /// <summary>Writes a <see cref="PermissionNameOrSet"/> back to JSON.</summary>
+  /// <param name="writer">The writer to emit to.</param>
+  /// <param name="value">The value to serialize.</param>
+  /// <param name="options">The serializer options in effect.</param>
   public override void Write(Utf8JsonWriter writer, PermissionNameOrSet value, JsonSerializerOptions options)
   {
     if (value.IsPermissionName)

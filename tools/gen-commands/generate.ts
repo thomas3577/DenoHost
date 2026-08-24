@@ -10,7 +10,7 @@ const SNAPSHOT_FILE = join(SCRIPT_DIR, 'deno_reference.snapshot.json');
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface DenoArg {
+export interface DenoArg {
   name: string;
   short: string | null;
   long: string | null;
@@ -20,7 +20,7 @@ interface DenoArg {
   usage: string;
 }
 
-interface DenoSubcommand {
+export interface DenoSubcommand {
   name: string;
   about: string | null;
   args: DenoArg[];
@@ -49,7 +49,7 @@ const SKIP_FLAGS = new Set([
 ]);
 
 // Commands to generate, with positional arg handling
-interface CommandConfig {
+export interface CommandConfig {
   name: string;
   // Each positional: csParam = C# parameter declaration, append = statement added to args list
   positional: Array<{ csParam: string; append: string }>;
@@ -169,8 +169,18 @@ export function toPascalCase(s: string): string {
   return s.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('');
 }
 
+// `deno json_reference` returns colourised help text; its ANSI SGR sequences (7-bit ESC[...
+// and 8-bit CSI \u009B forms) and any other control characters are illegal inside XML doc
+// comments (CS1570), so drop them here.
+// deno-lint-ignore no-control-regex
+const CONTROL_CHARS = /\u001B\[[0-9;]*[A-Za-z]|\u009B[0-9;]*[A-Za-z]|[\u0000-\u001F\u007F-\u009F]/g;
+
 export function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return s
+    .replace(CONTROL_CHARS, '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 export function argStyleToCsType(style: ArgStyle): string {
@@ -243,9 +253,10 @@ export function inferProperty(arg: DenoArg): Property | null {
 
 // ─── C# code generation ───────────────────────────────────────────────────────
 
-function renderProperty(prop: Property): string {
+export function renderProperty(prop: Property): string {
   const lines: string[] = [];
-  if (prop.xmlDoc) lines.push(`  /// <summary>${prop.xmlDoc}</summary>`);
+  const doc = prop.xmlDoc || `The <c>${escapeXml(prop.flagName)}</c> option.`;
+  lines.push(`  /// <summary>${doc}</summary>`);
   lines.push(`  public ${prop.csType} ${prop.csName} { get; set; }`);
   return lines.join('\n');
 }
@@ -265,7 +276,7 @@ export function renderToArgsLine(prop: Property): string {
   }
 }
 
-function generateOptionsClass(
+export function generateOptionsClass(
   cmd: CommandConfig,
   subcmd: DenoSubcommand,
   permSupplement: DenoArg[],
@@ -312,7 +323,7 @@ function generateOptionsClass(
   lines.push('namespace DenoHost.Core.Commands;');
   lines.push('');
 
-  const firstLine = subcmd.about?.split('\n')[0].replace(/\s*\[[^m]*m/g, '').trim() ?? '';
+  const firstLine = subcmd.about?.split('\n')[0].trim() ?? '';
   const summary = firstLine
     ? `Options for <c>deno ${cmd.name}</c>. ${escapeXml(firstLine)}`
     : `Options for <c>deno ${cmd.name}</c>.`;
