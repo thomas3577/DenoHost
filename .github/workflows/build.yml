@@ -289,19 +289,62 @@ jobs:
       - name: Display .NET Info
         run: dotnet --info
 
-      - name: Build Core Project
-        run: dotnet build DenoHost.Core/DenoHost.Core.csproj -c Release
-
       - name: Pack Core Project
         run: |
           VERSION=${{ needs.get-version.outputs.package_version }}
-          dotnet pack DenoHost.Core/DenoHost.Core.csproj -c Release -p:Version=$VERSION --output ./nupkg/core
+          dotnet pack DenoHost.Core/DenoHost.Core.csproj -c Release -p:Version=$VERSION -p:ContinuousIntegrationBuild=true --output ./nupkg/core
+
+      - name: Validate Core Package Contents
+        shell: pwsh
+        run: |
+          $version = '${{ needs.get-version.outputs.package_version }}'
+          $package = Get-ChildItem ./nupkg/core/*.nupkg | Select-Object -First 1
+          if ($null -eq $package) {
+            throw 'No package found under ./nupkg/core'
+          }
+
+          if ($null -eq (Get-ChildItem ./nupkg/core/*.snupkg | Select-Object -First 1)) {
+            throw 'No symbol package (.snupkg) found under ./nupkg/core'
+          }
+
+          $extractDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+          New-Item -ItemType Directory -Path $extractDir | Out-Null
+          $dll = Join-Path $extractDir 'DenoHost.Core.dll'
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($package.FullName)
+          try {
+            $entries = $archive.Entries | ForEach-Object { $_.FullName }
+
+            foreach ($entry in @('lib/net9.0/DenoHost.Core.dll', 'lib/net9.0/DenoHost.Core.xml')) {
+              if (-not ($entries -contains $entry)) {
+                throw "Package '$($package.Name)' is missing required entry: $entry"
+              }
+            }
+
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile(
+              $archive.GetEntry('lib/net9.0/DenoHost.Core.dll'), $dll, $true)
+          }
+          finally {
+            $archive.Dispose()
+          }
+
+          # The packed assembly must carry the release version, not the SDK default 1.0.0.
+          $expected = ($version -split '-', 2)[0] + '.0'
+          $actual = [System.Reflection.AssemblyName]::GetAssemblyName($dll).Version.ToString()
+          Remove-Item $extractDir -Recurse -Force
+
+          if ($actual -ne $expected) {
+            throw "Assembly version '$actual' does not match package version '$version' (expected '$expected')."
+          }
+
+          Write-Host "Core package '$($package.Name)' carries assembly version $actual and XML documentation."
 
       - name: Upload Core Package as Artifact
         uses: actions/upload-artifact@v7
         with:
           name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
-          path: ./nupkg/core/*.nupkg
+          path: ./nupkg/core/*
           retention-days: 7
 
   test-on-windows:
@@ -522,7 +565,7 @@ jobs:
         run: dotnet nuget push ./nupkg/core/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
 
       - name: Push Core Package to GitHub Packages
-        run: dotnet nuget push ./nupkg/core/*.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+        run: dotnet nuget push ./nupkg/core/*.nupkg --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate --no-symbols
 
   verify-alpha-from-nuget:
     name: Verify Alpha Package From NuGet

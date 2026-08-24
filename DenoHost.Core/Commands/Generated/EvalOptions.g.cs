@@ -133,7 +133,7 @@ public sealed class EvalOptions
   /// <summary>Skip type-checking. If the value of "remote" is supplied, diagnostic errors from remote modules will be ignored</summary>
   public string? NoCheck { get; set; }
 
-  /// <summary>Enable type-checking. This subcommand does not type-check by default; pass [38;5;245m--check=all[39m to also type-check remote modules. Alternatively, use the [38;5;245m'deno check'[39m subcommand.</summary>
+  /// <summary>Enable type-checking. This subcommand does not type-check by default; pass --check=all to also type-check remote modules. Alternatively, use the 'deno check' subcommand.</summary>
   public string? Check { get; set; }
 
   #endregion
@@ -149,7 +149,7 @@ public sealed class EvalOptions
   /// <summary>Do not resolve npm modules</summary>
   public bool? NoNpm { get; set; }
 
-  /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: [38;5;245mauto[39m (create a local node_modules directory and install npm packages into it), [38;5;245mmanual[39m (use the existing local node_modules directory, do not modify it), [38;5;245mnone[39m (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to [38;5;245mauto[39m when the flag is passed without a value.</summary>
+  /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: auto (create a local node_modules directory and install npm packages into it), manual (use the existing local node_modules directory, do not modify it), none (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to auto when the flag is passed without a value.</summary>
   public string? NodeModulesDir { get; set; }
 
   /// <summary>Sets the linker mode for npm packages (isolated or hoisted)</summary>
@@ -158,7 +158,7 @@ public sealed class EvalOptions
   /// <summary>Toggles local vendor folder usage for remote modules and a node_modules folder for npm packages</summary>
   public string? Vendor { get; set; }
 
-  /// <summary>Reload source code cache (recompile TypeScript). With no value, reloads everything. Pass a comma-separated list of specifiers to reload only those modules; [38;5;245mnpm:[39m reloads all npm modules; [38;5;245mnpm:chalk[39m reloads a single npm module; [38;5;245mjsr:@std/http/file-server,jsr:@std/assert/assert-equals[39m reloads specific modules.</summary>
+  /// <summary>Reload source code cache (recompile TypeScript). With no value, reloads everything. Pass a comma-separated list of specifiers to reload only those modules; npm: reloads all npm modules; npm:chalk reloads a single npm module; jsr:@std/http/file-server,jsr:@std/assert/assert-equals reloads specific modules.</summary>
   public string[]? Reload { get; set; }
 
   /// <summary>Check the specified lock file. (If value is not provided, defaults to "./deno.lock")</summary>
@@ -189,7 +189,7 @@ public sealed class EvalOptions
   /// <summary>Allow running npm lifecycle scripts for the given packages</summary>
   public string[]? AllowScripts { get; set; }
 
-  /// <summary>Value of [38;5;245mglobalThis.location[39m used by some web APIs</summary>
+  /// <summary>Value of globalThis.location used by some web APIs</summary>
   public string? Location { get; set; }
 
   /// <summary>To see a list of all available flags use --v8-flags=--help</summary>

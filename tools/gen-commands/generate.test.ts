@@ -1,5 +1,5 @@
 import { assertEquals, assertMatch, assertStrictEquals } from '@std/assert';
-import { argStyleToCsType, inferProperty, renderToArgsLine, toPascalCase } from './generate.ts';
+import { argStyleToCsType, escapeXml, inferProperty, renderToArgsLine, toPascalCase } from './generate.ts';
 
 // ─── toPascalCase ─────────────────────────────────────────────────────────────
 
@@ -128,6 +128,29 @@ Deno.test('inferProperty: override — no-semicolons is boolopt', () => {
   const prop = inferProperty(arg('no-semicolons', '--no-semicolons[=<true|false>]'));
   assertEquals(prop?.csType, 'bool?');
   assertEquals(prop?.argStyle, 'boolopt');
+});
+
+// ─── escapeXml ────────────────────────────────────────────────────────────────
+
+Deno.test('escapeXml: escapes XML metacharacters', () => {
+  assertEquals(escapeXml('a & b <c> d'), 'a &amp; b &lt;c&gt; d');
+});
+
+Deno.test('escapeXml: strips ANSI colour sequences from `deno json_reference` help', () => {
+  const help =
+    'Default value: \u001B[38;5;245mdeno.land:443\u001B[39m';
+  assertEquals(escapeXml(help), 'Default value: deno.land:443');
+});
+
+Deno.test('escapeXml: strips bare control characters', () => {
+  assertEquals(escapeXml('a\u0000b\u0007c\u007F'), 'abc');
+});
+
+Deno.test('escapeXml: strips CR so a summary stays on one line', () => {
+  assertEquals(escapeXml('Define maximum line width\u000D'), 'Define maximum line width');
+});
+Deno.test('escapeXml: keeps ordinary printable text untouched', () => {
+  assertEquals(escapeXml('--allow-net=example.com:443'), '--allow-net=example.com:443');
 });
 
 // ─── argStyleToCsType ─────────────────────────────────────────────────────────

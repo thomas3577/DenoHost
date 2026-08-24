@@ -169,8 +169,17 @@ export function toPascalCase(s: string): string {
   return s.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('');
 }
 
+// `deno json_reference` returns colourised help text; its ANSI SGR sequences and any other
+// control characters are illegal inside XML doc comments (CS1570), so drop them here.
+// deno-lint-ignore no-control-regex
+const CONTROL_CHARS = /\u001B\[[0-9;]*[A-Za-z]|[\u0000-\u001F\u007F]/g;
+
 export function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return s
+    .replace(CONTROL_CHARS, '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 export function argStyleToCsType(style: ArgStyle): string {
@@ -245,7 +254,8 @@ export function inferProperty(arg: DenoArg): Property | null {
 
 function renderProperty(prop: Property): string {
   const lines: string[] = [];
-  if (prop.xmlDoc) lines.push(`  /// <summary>${prop.xmlDoc}</summary>`);
+  const doc = prop.xmlDoc || `The <c>${escapeXml(prop.flagName)}</c> option.`;
+  lines.push(`  /// <summary>${doc}</summary>`);
   lines.push(`  public ${prop.csType} ${prop.csName} { get; set; }`);
   return lines.join('\n');
 }
@@ -312,7 +322,7 @@ function generateOptionsClass(
   lines.push('namespace DenoHost.Core.Commands;');
   lines.push('');
 
-  const firstLine = subcmd.about?.split('\n')[0].replace(/\s*\[[^m]*m/g, '').trim() ?? '';
+  const firstLine = subcmd.about?.split('\n')[0].trim() ?? '';
   const summary = firstLine
     ? `Options for <c>deno ${cmd.name}</c>. ${escapeXml(firstLine)}`
     : `Options for <c>deno ${cmd.name}</c>.`;

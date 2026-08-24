@@ -51,6 +51,7 @@ public static partial class Deno
   /// var command = "run --allow-read script.ts";
   /// await Deno.Execute(command);
   /// </code>
+  /// <param name="cancellationToken">Optional token to cancel the operation.</param>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static Task Execute(string command, CancellationToken cancellationToken = default) => Execute<string>(command, cancellationToken);
 
@@ -63,18 +64,6 @@ public static partial class Deno
   /// <returns>A task producing the deserialized result.</returns>
   public static Task<T> Execute<T>(string command, CancellationToken cancellationToken = default)
     => ExecuteCore<T>(command, null, null, null, null, cancellationToken);
-
-  /// <summary>
-  /// Executes a Deno command with cancellation support.
-  /// </summary>
-  /// <param name="command">The Deno command (e.g. <c>"run --allow-read script.ts"</c>).</param>
-  /// <param name="cancellationToken">Token to cancel the operation (e.g. timeout / user abort).</param>
-  /// <code>
-  /// using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-  /// await Deno.Execute("run --allow-read script.ts", cts.Token);
-  /// </code>
-  /// <returns>A task representing the asynchronous command execution.</returns>
-  // Cancellation now part of the unified optional parameter above.
 
   /// <summary>
   /// Executes a Deno command with base options.
@@ -209,6 +198,7 @@ public static partial class Deno
   /// var args = new[] { "--allow-read", "script.ts" };
   /// await Deno.Execute(command, configPath, args);
   /// </code>
+  /// <param name="cancellationToken">Optional token to cancel the operation.</param>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static Task Execute(string command, string configOrPath, string[] args, CancellationToken cancellationToken = default)
     => Execute<string>(command, configOrPath, args, cancellationToken);
@@ -225,14 +215,15 @@ public static partial class Deno
   /// var command = "run";
   /// var configPath = "./deno.json";
   /// var args = new[] { "--allow-read", "script.ts" };
-  /// var result = await Deno.Execute<MyResult>(command, configPath, args);
+  /// var result = await Deno.Execute&lt;MyResult&gt;(command, configPath, args);
   ///
   /// // Var 2:
   /// var command = "run";
   /// var configPath = "{ \"imports\": { \"@std/fs\": \"jsr:@std/fs@^1.0.18\" } }"; // JSON string
   /// var args = new[] { "--allow-read", "script.ts" };
-  /// var result = await Deno.Execute<MyResult>(command, configPath, args);
+  /// var result = await Deno.Execute&lt;MyResult&gt;(command, configPath, args);
   /// </code>
+  /// <param name="cancellationToken">Optional token to cancel the operation.</param>
   /// <returns>The deserialized result of the Deno process.</returns>
   public static Task<T> Execute<T>(string command, string configOrPath, string[] args, CancellationToken cancellationToken = default)
     => ExecuteCore<T>(command, args, null, null, configOrPath, cancellationToken);
@@ -243,6 +234,7 @@ public static partial class Deno
   /// <param name="command">The Deno command.</param>
   /// <param name="config">The Deno configuration object.</param>
   /// <param name="args">Additional arguments for Deno.</param>
+  /// <param name="cancellationToken">Optional token to cancel the operation.</param>
   /// <returns>A task representing the asynchronous operation.</returns>
   public static Task Execute(string command, DenoConfig config, string[] args, CancellationToken cancellationToken = default)
     => Execute<string>(command, config, args, cancellationToken);
@@ -254,6 +246,7 @@ public static partial class Deno
   /// <param name="command">The Deno command.</param>
   /// <param name="config">The Deno configuration object.</param>
   /// <param name="args">Additional arguments for Deno.</param>
+  /// <param name="cancellationToken">Optional token to cancel the operation.</param>
   /// <returns>The deserialized result of the Deno process.</returns>
   public static Task<T> Execute<T>(string command, DenoConfig config, string[] args, CancellationToken cancellationToken = default)
     => ExecuteCore<T>(command, args, null, config, null, cancellationToken);
