@@ -32,7 +32,7 @@ public class DenoConfig
   [JsonPropertyName("compilerOptions")]
   public Dictionary<string, object>? CompilerOptions { get; set; }
 
-  /// <summary>Location of an import map used when resolving modules. Overridden by <see cref="Imports"/> and <see cref="Scopes"/>.</summary>
+  /// <summary>Location of an import map used when resolving modules. Mutually exclusive with <see cref="Imports"/> and <see cref="Scopes"/>.</summary>
   [JsonPropertyName("importMap")]
   public string? ImportMap { get; set; }
 

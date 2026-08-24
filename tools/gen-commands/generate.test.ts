@@ -1,5 +1,13 @@
 import { assertEquals, assertMatch, assertStrictEquals } from '@std/assert';
-import { argStyleToCsType, escapeXml, inferProperty, renderToArgsLine, toPascalCase } from './generate.ts';
+import {
+  argStyleToCsType,
+  escapeXml,
+  generateOptionsClass,
+  inferProperty,
+  renderProperty,
+  renderToArgsLine,
+  toPascalCase,
+} from './generate.ts';
 
 // ─── toPascalCase ─────────────────────────────────────────────────────────────
 
@@ -153,6 +161,15 @@ Deno.test('escapeXml: keeps ordinary printable text untouched', () => {
   assertEquals(escapeXml('--allow-net=example.com:443'), '--allow-net=example.com:443');
 });
 
+Deno.test('escapeXml: strips C1 control characters (U+0080-U+009F)', () => {
+  assertEquals(escapeXml('a\u0080b\u009Fc'), 'abc');
+});
+
+Deno.test('escapeXml: strips 8-bit CSI (U+009B) SGR sequences', () => {
+  const help = 'Default value: \u009B38;5;245mdeno.land:443\u009B39m';
+  assertEquals(escapeXml(help), 'Default value: deno.land:443');
+});
+
 // ─── argStyleToCsType ─────────────────────────────────────────────────────────
 
 Deno.test('argStyleToCsType: flag and boolopt → bool?', () => {
@@ -234,4 +251,39 @@ Deno.test('renderToArgsLine: optarray emits bare flag for empty array', () => {
   assertMatch(line, /string\.Join\(","/);
   // bare flag branch
   assertStrictEquals(line.includes('args.Add("--watch")'), true);
+});
+
+// ─── renderProperty ────────────────────────────────────────────────────────────
+
+Deno.test('renderProperty: uses xmlDoc when present', () => {
+  const rendered = renderProperty({ ...prop('Seed', 'int?', 'intvalue', '--seed'), xmlDoc: 'Sets the random seed.' });
+  assertMatch(rendered, /\/\/\/ <summary>Sets the random seed\.<\/summary>/);
+});
+
+Deno.test('renderProperty: falls back to a generated summary when xmlDoc is empty', () => {
+  const rendered = renderProperty({ ...prop('NoRemote', 'bool?', 'flag', '--no-remote'), xmlDoc: '' });
+  assertMatch(rendered, /\/\/\/ <summary>The <c>--no-remote<\/c> option\.<\/summary>/);
+});
+
+// ─── generateOptionsClass ───────────────────────────────────────────────────────
+
+function commandConfig(name: string): Parameters<typeof generateOptionsClass>[0] {
+  return { name, positional: [], hasPermissions: false };
+}
+
+function subcommand(about: string | null): Parameters<typeof generateOptionsClass>[1] {
+  return { name: 'eval', about, args: [] };
+}
+
+Deno.test('generateOptionsClass: sanitizes ANSI/control characters in subcmd.about', () => {
+  const about = 'Evaluate [1mJavaScript[0m0m from the command line.';
+  const generated = generateOptionsClass(commandConfig('eval'), subcommand(about), [], '2.0.0');
+  assertMatch(generated, /\/\/\/ <summary>Options for <c>deno eval<\/c>\. Evaluate JavaScript from the command line\.<\/summary>/);
+  assertStrictEquals(generated.includes(''), false);
+  assertStrictEquals(generated.includes(''), false);
+});
+
+Deno.test('generateOptionsClass: falls back to plain summary when about is null', () => {
+  const generated = generateOptionsClass(commandConfig('eval'), subcommand(null), [], '2.0.0');
+  assertMatch(generated, /\/\/\/ <summary>Options for <c>deno eval<\/c>\.<\/summary>/);
 });
