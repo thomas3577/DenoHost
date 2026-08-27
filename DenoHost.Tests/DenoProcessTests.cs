@@ -1201,7 +1201,7 @@ public class DenoProcessTests
   [Fact]
   public void Task_WithOptions_CreatesUnstartedProcess()
   {
-    using var process = DenoProcess.Task("build", new TaskOptions { UnstableKv = true });
+    using var process = DenoProcess.Task("build", new TaskOptions { Recursive = true });
     Assert.NotNull(process);
     Assert.False(process.IsRunning);
   }
