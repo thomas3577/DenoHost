@@ -4,6 +4,7 @@ import {
   escapeXml,
   generateOptionsClass,
   inferProperty,
+  parseHelpUsageHints,
   renderProperty,
   renderToArgsLine,
   toPascalCase,
@@ -136,6 +137,86 @@ Deno.test('inferProperty: override — no-semicolons is boolopt', () => {
   const prop = inferProperty(arg('no-semicolons', '--no-semicolons[=<true|false>]'));
   assertEquals(prop?.csType, 'bool?');
   assertEquals(prop?.argStyle, 'boolopt');
+});
+
+Deno.test('inferProperty: override — seed/shard/shuffle/retry/repeats/coverage-threshold/jobs are intvalue', () => {
+  for (const long of ['seed', 'shard', 'shuffle', 'retry', 'repeats', 'coverage-threshold', 'jobs']) {
+    const prop = inferProperty(arg(long, `--${long} <VALUE>`));
+    assertEquals(prop?.csType, 'int?', long);
+    assertEquals(prop?.argStyle, 'intvalue', long);
+  }
+});
+
+// ─── inferProperty: helpUsage overrides the (Deno 2.9.6+) placeholder-less usage field ────
+
+Deno.test('inferProperty: helpUsage recovers a value flag when arg.usage has no placeholder', () => {
+  // Deno 2.9.6's `deno json_reference` usage field, for a flag that actually takes a value.
+  const prop = inferProperty(arg('output', '--output'), '--output <VALUE>');
+  assertEquals(prop?.csType, 'string?');
+  assertEquals(prop?.argStyle, 'value');
+});
+
+Deno.test('inferProperty: helpUsage recovers an optional-array flag', () => {
+  const prop = inferProperty(arg('watch-exclude', '--watch-exclude'), '--watch-exclude[=VALUE...]');
+  assertEquals(prop?.csType, 'string[]?');
+  assertEquals(prop?.argStyle, 'optarray');
+});
+
+Deno.test('inferProperty: helpUsage confirms a pure flag stays bool?', () => {
+  const prop = inferProperty(arg('no-terminal', '--no-terminal'), '--no-terminal');
+  assertEquals(prop?.csType, 'bool?');
+  assertEquals(prop?.argStyle, 'flag');
+});
+
+Deno.test('inferProperty: falls back to arg.usage when no helpUsage given', () => {
+  const prop = inferProperty(arg('import-map', '--import-map <FILE>'));
+  assertEquals(prop?.csType, 'string?');
+  assertEquals(prop?.argStyle, 'value');
+});
+
+// ─── parseHelpUsageHints ────────────────────────────────────────────────────────
+
+Deno.test('parseHelpUsageHints: extracts value/optvalue/optarray/flag placeholders', () => {
+  const help = [
+    'Options:',
+    '  -o, --output <VALUE>    Output file (defaults to $PWD/<inferred-name>)',
+    '      --no-check[=<VALUE>]  Skip type-checking.',
+    '      --watch-exclude[=VALUE...]  Exclude provided files/patterns from watch mode',
+    '      --no-terminal       Hide terminal on Windows',
+    '      --lock [<VALUE>]    Check the specified lock file.',
+  ].join('\n');
+  const hints = parseHelpUsageHints(help);
+  assertEquals(hints.get('output'), '<VALUE>');
+  assertEquals(hints.get('no-check'), '[=<VALUE>]');
+  assertEquals(hints.get('watch-exclude'), '[=VALUE...]');
+  assertEquals(hints.get('no-terminal'), '');
+  assertEquals(hints.get('lock'), '[<VALUE>]');
+});
+
+Deno.test('parseHelpUsageHints: stops before Permission options section', () => {
+  const help = [
+    'Options:',
+    '      --no-check[=<VALUE>]  Skip type-checking.',
+    '',
+    'Permission options:',
+    '  -R, --allow-read[=<PATH>...]  Allow file system read access.',
+    '                                --allow-read  |  --allow-read="/etc,/var/log.txt"',
+  ].join('\n');
+  const hints = parseHelpUsageHints(help);
+  assertEquals(hints.has('allow-read'), false);
+});
+
+Deno.test('parseHelpUsageHints: keeps first occurrence of a flag over a later example line', () => {
+  // Regression guard: usage-example continuation lines inside a description (e.g.
+  // `--allow-read="/etc"`) must not overwrite the real placeholder captured from the
+  // flag's own definition line.
+  const help = [
+    'Options:',
+    '  -R, --allow-read[=<PATH>...]  Allow file system read access.',
+    '                                --allow-read  |  --allow-read="/etc,/var/log.txt"',
+  ].join('\n');
+  const hints = parseHelpUsageHints(help);
+  assertEquals(hints.get('allow-read'), '[=<PATH>...]');
 });
 
 // ─── escapeXml ────────────────────────────────────────────────────────────────

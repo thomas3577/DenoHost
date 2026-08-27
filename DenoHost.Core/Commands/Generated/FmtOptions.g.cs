@@ -24,19 +24,19 @@ public sealed class FmtOptions
   public bool? PermitNoFiles { get; set; }
 
   /// <summary>Watch for file changes and restart process automatically.</summary>
-  public bool? Watch { get; set; }
+  public string[]? Watch { get; set; }
 
   /// <summary>Exclude provided files/patterns from watch mode</summary>
-  public bool? WatchExclude { get; set; }
+  public string[]? WatchExclude { get; set; }
 
   /// <summary>Do not clear terminal screen when under watch mode</summary>
   public bool? NoClearScreen { get; set; }
 
   /// <summary>Set content type of the supplied file</summary>
-  public bool? Ext { get; set; }
+  public string? Ext { get; set; }
 
   /// <summary>Ignore formatting particular source files</summary>
-  public bool? Ignore { get; set; }
+  public string[]? Ignore { get; set; }
 
   /// <summary>Use tabs instead of spaces for indentation [default: false]</summary>
   public bool? UseTabs { get; set; }
@@ -51,7 +51,7 @@ public sealed class FmtOptions
   public bool? SingleQuote { get; set; }
 
   /// <summary>Define how prose should be wrapped [default: always]</summary>
-  public bool? ProseWrap { get; set; }
+  public string? ProseWrap { get; set; }
 
   /// <summary>Don't use semicolons except where necessary [default: false]</summary>
   public bool? NoSemicolons { get; set; }
@@ -73,16 +73,16 @@ public sealed class FmtOptions
     if (Check == true) args.Add("--check");
     if (FailFast == true) args.Add("--fail-fast");
     if (PermitNoFiles == true) args.Add("--permit-no-files");
-    if (Watch == true) args.Add("--watch");
-    if (WatchExclude == true) args.Add("--watch-exclude");
+    if (Watch is not null) { if (Watch.Length == 0) args.Add("--watch"); else { args.Add("--watch"); args.Add(string.Join(",", Watch)); } }
+    if (WatchExclude is not null) { if (WatchExclude.Length == 0) args.Add("--watch-exclude"); else { args.Add("--watch-exclude"); args.Add(string.Join(",", WatchExclude)); } }
     if (NoClearScreen == true) args.Add("--no-clear-screen");
-    if (Ext == true) args.Add("--ext");
-    if (Ignore == true) args.Add("--ignore");
+    if (Ext is not null) { args.Add("--ext"); args.Add(Ext); }
+    if (Ignore is not null) { if (Ignore.Length == 0) args.Add("--ignore"); else { args.Add("--ignore"); args.Add(string.Join(",", Ignore)); } }
     if (UseTabs.HasValue) args.Add(UseTabs.Value ? "--use-tabs" : "--use-tabs=false");
     if (LineWidth.HasValue) { args.Add("--line-width"); args.Add(LineWidth.Value.ToString(CultureInfo.InvariantCulture)); }
     if (IndentWidth.HasValue) { args.Add("--indent-width"); args.Add(IndentWidth.Value.ToString(CultureInfo.InvariantCulture)); }
     if (SingleQuote.HasValue) args.Add(SingleQuote.Value ? "--single-quote" : "--single-quote=false");
-    if (ProseWrap == true) args.Add("--prose-wrap");
+    if (ProseWrap is not null) { args.Add("--prose-wrap"); args.Add(ProseWrap); }
     if (NoSemicolons.HasValue) args.Add(NoSemicolons.Value ? "--no-semicolons" : "--no-semicolons=false");
     if (NoEditorconfig == true) args.Add("--no-editorconfig");
     if (UnstableComponent == true) args.Add("--unstable-component");

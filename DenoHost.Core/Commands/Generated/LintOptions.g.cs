@@ -21,13 +21,13 @@ public sealed class LintOptions
   public bool? Fix { get; set; }
 
   /// <summary>Use set of rules with a tag</summary>
-  public bool? RulesTags { get; set; }
+  public string[]? RulesTags { get; set; }
 
   /// <summary>Include lint rules</summary>
-  public bool? RulesInclude { get; set; }
+  public string[]? RulesInclude { get; set; }
 
   /// <summary>Exclude lint rules</summary>
-  public bool? RulesExclude { get; set; }
+  public string[]? RulesExclude { get; set; }
 
   /// <summary>Output lint result in JSON format</summary>
   public bool? Json { get; set; }
@@ -36,13 +36,13 @@ public sealed class LintOptions
   public bool? Compact { get; set; }
 
   /// <summary>Ignore linting particular source files</summary>
-  public bool? Ignore { get; set; }
+  public string[]? Ignore { get; set; }
 
   /// <summary>Watch for file changes and restart process automatically.</summary>
-  public bool? Watch { get; set; }
+  public string[]? Watch { get; set; }
 
   /// <summary>Exclude provided files/patterns from watch mode</summary>
-  public bool? WatchExclude { get; set; }
+  public string[]? WatchExclude { get; set; }
 
   /// <summary>Do not clear terminal screen when under watch mode</summary>
   public bool? NoClearScreen { get; set; }
@@ -51,13 +51,13 @@ public sealed class LintOptions
   public bool? PermitNoFiles { get; set; }
 
   /// <summary>Specify the file extension to lint when reading from stdin.For example, use `jsx` to lint JSX files or `tsx` for TSX files.This argument is necessary because stdin input does not automatically infer the file type.Example usage: `cat file.jsx | deno lint - --ext=jsx`.</summary>
-  public bool? Ext { get; set; }
+  public string? Ext { get; set; }
 
   /// <summary>Allow importing from remote hosts. Optionally specify allowed IP addresses and host names, with ports as necessary. Default value: deno.land:443,jsr.io:443,esm.sh:443,raw.esm.sh:443,cdn.jsdelivr.net:443,raw.githubusercontent.com:443,gist.githubusercontent.com:443</summary>
-  public bool? AllowImport { get; set; }
+  public string[]? AllowImport { get; set; }
 
   /// <summary>Deny importing from remote hosts. Optionally specify denied IP addresses and host names, with ports as necessary.</summary>
-  public bool? DenyImport { get; set; }
+  public string[]? DenyImport { get; set; }
 
   #endregion
 
@@ -66,19 +66,19 @@ public sealed class LintOptions
     var args = new List<string>();
     if (Rules == true) args.Add("--rules");
     if (Fix == true) args.Add("--fix");
-    if (RulesTags == true) args.Add("--rules-tags");
-    if (RulesInclude == true) args.Add("--rules-include");
-    if (RulesExclude == true) args.Add("--rules-exclude");
+    if (RulesTags is not null) { if (RulesTags.Length == 0) args.Add("--rules-tags"); else { args.Add("--rules-tags"); args.Add(string.Join(",", RulesTags)); } }
+    if (RulesInclude is not null) { if (RulesInclude.Length == 0) args.Add("--rules-include"); else { args.Add("--rules-include"); args.Add(string.Join(",", RulesInclude)); } }
+    if (RulesExclude is not null) { if (RulesExclude.Length == 0) args.Add("--rules-exclude"); else { args.Add("--rules-exclude"); args.Add(string.Join(",", RulesExclude)); } }
     if (Json == true) args.Add("--json");
     if (Compact == true) args.Add("--compact");
-    if (Ignore == true) args.Add("--ignore");
-    if (Watch == true) args.Add("--watch");
-    if (WatchExclude == true) args.Add("--watch-exclude");
+    if (Ignore is not null) { if (Ignore.Length == 0) args.Add("--ignore"); else { args.Add("--ignore"); args.Add(string.Join(",", Ignore)); } }
+    if (Watch is not null) { if (Watch.Length == 0) args.Add("--watch"); else { args.Add("--watch"); args.Add(string.Join(",", Watch)); } }
+    if (WatchExclude is not null) { if (WatchExclude.Length == 0) args.Add("--watch-exclude"); else { args.Add("--watch-exclude"); args.Add(string.Join(",", WatchExclude)); } }
     if (NoClearScreen == true) args.Add("--no-clear-screen");
     if (PermitNoFiles == true) args.Add("--permit-no-files");
-    if (Ext == true) args.Add("--ext");
-    if (AllowImport == true) args.Add("--allow-import");
-    if (DenyImport == true) args.Add("--deny-import");
+    if (Ext is not null) { args.Add("--ext"); args.Add(Ext); }
+    if (AllowImport is not null) { if (AllowImport.Length == 0) args.Add("--allow-import"); else { args.Add("--allow-import"); args.Add(string.Join(",", AllowImport)); } }
+    if (DenyImport is not null) { if (DenyImport.Length == 0) args.Add("--deny-import"); else { args.Add("--deny-import"); args.Add(string.Join(",", DenyImport)); } }
     return [.. args];
   }
 }

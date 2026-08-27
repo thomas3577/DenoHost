@@ -30,19 +30,19 @@ public sealed class CheckOptions
   public bool? NoCodeCache { get; set; }
 
   /// <summary>Watch for file changes and restart process automatically.</summary>
-  public bool? Watch { get; set; }
+  public string[]? Watch { get; set; }
 
   /// <summary>Exclude provided files/patterns from watch mode</summary>
-  public bool? WatchExclude { get; set; }
+  public string[]? WatchExclude { get; set; }
 
   /// <summary>Do not clear terminal screen when under watch mode</summary>
   public bool? NoClearScreen { get; set; }
 
   /// <summary>Skip type-checking. If the value of "remote" is supplied, diagnostic errors from remote modules will be ignored</summary>
-  public bool? NoCheck { get; set; }
+  public string? NoCheck { get; set; }
 
   /// <summary>Load import map file from local file or remote URL</summary>
-  public bool? ImportMap { get; set; }
+  public string? ImportMap { get; set; }
 
   /// <summary>Do not resolve remote modules</summary>
   public bool? NoRemote { get; set; }
@@ -51,61 +51,61 @@ public sealed class CheckOptions
   public bool? NoNpm { get; set; }
 
   /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: auto (create a local node_modules directory and install npm packages into it), manual (use the existing local node_modules directory, do not modify it), none (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to auto when the flag is passed without a value.</summary>
-  public bool? NodeModulesDir { get; set; }
+  public string? NodeModulesDir { get; set; }
 
   /// <summary>Toggles local vendor folder usage for remote modules and a node_modules folder for npm packages</summary>
-  public bool? Vendor { get; set; }
+  public string? Vendor { get; set; }
 
   /// <summary>Sets the linker mode for npm packages (isolated or hoisted)</summary>
-  public bool? NodeModulesLinker { get; set; }
+  public string? NodeModulesLinker { get; set; }
 
   /// <summary>Reload source code cache (recompile TypeScript). With no value, reloads everything. Pass a comma-separated list of specifiers to reload only those modules; npm: reloads all npm modules; npm:chalk reloads a single npm module; jsr:@std/http/file-server,jsr:@std/assert/assert-equals reloads specific modules.</summary>
-  public bool? Reload { get; set; }
+  public string[]? Reload { get; set; }
 
   /// <summary>Check the specified lock file. (If value is not provided, defaults to "./deno.lock")</summary>
-  public bool? Lock { get; set; }
+  public string? Lock { get; set; }
 
   /// <summary>Disable auto discovery of the lock file</summary>
   public bool? NoLock { get; set; }
 
   /// <summary>Error out if lockfile is out of date</summary>
-  public bool? FrozenLockfile { get; set; }
+  public string? FrozenLockfile { get; set; }
 
   /// <summary>Load certificate authority from PEM encoded file</summary>
-  public bool? Cert { get; set; }
+  public string? Cert { get; set; }
 
   /// <summary>DANGER: Disables verification of TLS certificates</summary>
-  public bool? UnsafelyIgnoreCertificateErrors { get; set; }
+  public string[]? UnsafelyIgnoreCertificateErrors { get; set; }
 
   /// <summary>(Unstable) The age in minutes, ISO-8601 duration or RFC3339 absolute timestamp (e.g. '120' for two hours, 'P2D' for two days, '2025-09-16' for cutoff date, '2025-09-16T12:00:00+00:00' for cutoff time, '0' to disable)</summary>
-  public bool? MinDepAge { get; set; }
+  public string? MinDepAge { get; set; }
 
   /// <summary>Require that remote dependencies are already cached</summary>
   public bool? CachedOnly { get; set; }
 
   /// <summary>Value of globalThis.location used by some web APIs</summary>
-  public bool? Location { get; set; }
+  public string? Location { get; set; }
 
   /// <summary>To see a list of all available flags use --v8-flags=--help</summary>
-  public bool? V8Flags { get; set; }
+  public string[]? V8Flags { get; set; }
 
   /// <summary>Set the random number generator seed</summary>
-  public bool? Seed { get; set; }
+  public int? Seed { get; set; }
 
   /// <summary>A list of files that will be executed before the main module</summary>
-  public bool? Preload { get; set; }
+  public string? Preload { get; set; }
 
   /// <summary>A list of CommonJS modules that will be executed before the main module</summary>
-  public bool? Require { get; set; }
+  public string? Require { get; set; }
 
   /// <summary>Use this argument to specify custom conditions for npm package exports. You can also use DENO_CONDITIONS env var.</summary>
-  public bool? Conditions { get; set; }
+  public string? Conditions { get; set; }
 
   /// <summary>Allow importing from remote hosts. Optionally specify allowed IP addresses and host names, with ports as necessary. Default value: deno.land:443,jsr.io:443,esm.sh:443,raw.esm.sh:443,cdn.jsdelivr.net:443,raw.githubusercontent.com:443,gist.githubusercontent.com:443</summary>
-  public bool? AllowImport { get; set; }
+  public string[]? AllowImport { get; set; }
 
   /// <summary>Deny importing from remote hosts. Optionally specify denied IP addresses and host names, with ports as necessary.</summary>
-  public bool? DenyImport { get; set; }
+  public string[]? DenyImport { get; set; }
 
   #endregion
 
@@ -117,32 +117,32 @@ public sealed class CheckOptions
     if (DocOnly == true) args.Add("--doc-only");
     if (Desktop == true) args.Add("--desktop");
     if (NoCodeCache == true) args.Add("--no-code-cache");
-    if (Watch == true) args.Add("--watch");
-    if (WatchExclude == true) args.Add("--watch-exclude");
+    if (Watch is not null) { if (Watch.Length == 0) args.Add("--watch"); else { args.Add("--watch"); args.Add(string.Join(",", Watch)); } }
+    if (WatchExclude is not null) { if (WatchExclude.Length == 0) args.Add("--watch-exclude"); else { args.Add("--watch-exclude"); args.Add(string.Join(",", WatchExclude)); } }
     if (NoClearScreen == true) args.Add("--no-clear-screen");
-    if (NoCheck == true) args.Add("--no-check");
-    if (ImportMap == true) args.Add("--import-map");
+    if (NoCheck is not null) { if (NoCheck.Length == 0) args.Add("--no-check"); else args.Add(string.Concat("--no-check=", NoCheck)); }
+    if (ImportMap is not null) { args.Add("--import-map"); args.Add(ImportMap); }
     if (NoRemote == true) args.Add("--no-remote");
     if (NoNpm == true) args.Add("--no-npm");
-    if (NodeModulesDir == true) args.Add("--node-modules-dir");
-    if (Vendor == true) args.Add("--vendor");
-    if (NodeModulesLinker == true) args.Add("--node-modules-linker");
-    if (Reload == true) args.Add("--reload");
-    if (Lock == true) args.Add("--lock");
+    if (NodeModulesDir is not null) { if (NodeModulesDir.Length == 0) args.Add("--node-modules-dir"); else args.Add(string.Concat("--node-modules-dir=", NodeModulesDir)); }
+    if (Vendor is not null) { if (Vendor.Length == 0) args.Add("--vendor"); else args.Add(string.Concat("--vendor=", Vendor)); }
+    if (NodeModulesLinker is not null) { args.Add("--node-modules-linker"); args.Add(NodeModulesLinker); }
+    if (Reload is not null) { if (Reload.Length == 0) args.Add("--reload"); else { args.Add("--reload"); args.Add(string.Join(",", Reload)); } }
+    if (Lock is not null) { if (Lock.Length == 0) args.Add("--lock"); else args.Add(string.Concat("--lock=", Lock)); }
     if (NoLock == true) args.Add("--no-lock");
-    if (FrozenLockfile == true) args.Add("--frozen-lockfile");
-    if (Cert == true) args.Add("--cert");
-    if (UnsafelyIgnoreCertificateErrors == true) args.Add("--unsafely-ignore-certificate-errors");
-    if (MinDepAge == true) args.Add("--min-dep-age");
+    if (FrozenLockfile is not null) { if (FrozenLockfile.Length == 0) args.Add("--frozen-lockfile"); else args.Add(string.Concat("--frozen-lockfile=", FrozenLockfile)); }
+    if (Cert is not null) { args.Add("--cert"); args.Add(Cert); }
+    if (UnsafelyIgnoreCertificateErrors is not null) { if (UnsafelyIgnoreCertificateErrors.Length == 0) args.Add("--unsafely-ignore-certificate-errors"); else { args.Add("--unsafely-ignore-certificate-errors"); args.Add(string.Join(",", UnsafelyIgnoreCertificateErrors)); } }
+    if (MinDepAge is not null) { args.Add("--min-dep-age"); args.Add(MinDepAge); }
     if (CachedOnly == true) args.Add("--cached-only");
-    if (Location == true) args.Add("--location");
-    if (V8Flags == true) args.Add("--v8-flags");
-    if (Seed == true) args.Add("--seed");
-    if (Preload == true) args.Add("--preload");
-    if (Require == true) args.Add("--require");
-    if (Conditions == true) args.Add("--conditions");
-    if (AllowImport == true) args.Add("--allow-import");
-    if (DenyImport == true) args.Add("--deny-import");
+    if (Location is not null) { args.Add("--location"); args.Add(Location); }
+    if (V8Flags is not null) { if (V8Flags.Length == 0) args.Add("--v8-flags"); else { args.Add("--v8-flags"); args.Add(string.Join(",", V8Flags)); } }
+    if (Seed.HasValue) { args.Add("--seed"); args.Add(Seed.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (Preload is not null) { args.Add("--preload"); args.Add(Preload); }
+    if (Require is not null) { args.Add("--require"); args.Add(Require); }
+    if (Conditions is not null) { args.Add("--conditions"); args.Add(Conditions); }
+    if (AllowImport is not null) { if (AllowImport.Length == 0) args.Add("--allow-import"); else { args.Add("--allow-import"); args.Add(string.Join(",", AllowImport)); } }
+    if (DenyImport is not null) { if (DenyImport.Length == 0) args.Add("--deny-import"); else { args.Add("--deny-import"); args.Add(string.Join(",", DenyImport)); } }
     return [.. args];
   }
 }

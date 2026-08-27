@@ -15,19 +15,19 @@ public sealed class CacheOptions
   #region General
 
   /// <summary>Enable type-checking. This subcommand does not type-check by default; pass --check=all to also type-check remote modules. Alternatively, use the 'deno check' subcommand.</summary>
-  public bool? Check { get; set; }
+  public string? Check { get; set; }
 
   /// <summary>The <c>--ext</c> option.</summary>
-  public bool? Ext { get; set; }
+  public string? Ext { get; set; }
 
   /// <summary>Load environment variables from local file</summary>
-  public bool? EnvFile { get; set; }
+  public string? EnvFile { get; set; }
 
   /// <summary>Skip type-checking. If the value of "remote" is supplied, diagnostic errors from remote modules will be ignored</summary>
-  public bool? NoCheck { get; set; }
+  public string? NoCheck { get; set; }
 
   /// <summary>Load import map file from local file or remote URL</summary>
-  public bool? ImportMap { get; set; }
+  public string? ImportMap { get; set; }
 
   /// <summary>Do not resolve remote modules</summary>
   public bool? NoRemote { get; set; }
@@ -36,69 +36,69 @@ public sealed class CacheOptions
   public bool? NoNpm { get; set; }
 
   /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: auto (create a local node_modules directory and install npm packages into it), manual (use the existing local node_modules directory, do not modify it), none (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to auto when the flag is passed without a value.</summary>
-  public bool? NodeModulesDir { get; set; }
+  public string? NodeModulesDir { get; set; }
 
   /// <summary>Toggles local vendor folder usage for remote modules and a node_modules folder for npm packages</summary>
-  public bool? Vendor { get; set; }
+  public string? Vendor { get; set; }
 
   /// <summary>Sets the linker mode for npm packages (isolated or hoisted)</summary>
-  public bool? NodeModulesLinker { get; set; }
+  public string? NodeModulesLinker { get; set; }
 
   /// <summary>Reload source code cache (recompile TypeScript). With no value, reloads everything. Pass a comma-separated list of specifiers to reload only those modules; npm: reloads all npm modules; npm:chalk reloads a single npm module; jsr:@std/http/file-server,jsr:@std/assert/assert-equals reloads specific modules.</summary>
-  public bool? Reload { get; set; }
+  public string[]? Reload { get; set; }
 
   /// <summary>Check the specified lock file. (If value is not provided, defaults to "./deno.lock")</summary>
-  public bool? Lock { get; set; }
+  public string? Lock { get; set; }
 
   /// <summary>Disable auto discovery of the lock file</summary>
   public bool? NoLock { get; set; }
 
   /// <summary>Error out if lockfile is out of date</summary>
-  public bool? FrozenLockfile { get; set; }
+  public string? FrozenLockfile { get; set; }
 
   /// <summary>Load certificate authority from PEM encoded file</summary>
-  public bool? Cert { get; set; }
+  public string? Cert { get; set; }
 
   /// <summary>DANGER: Disables verification of TLS certificates</summary>
-  public bool? UnsafelyIgnoreCertificateErrors { get; set; }
+  public string[]? UnsafelyIgnoreCertificateErrors { get; set; }
 
   /// <summary>(Unstable) The age in minutes, ISO-8601 duration or RFC3339 absolute timestamp (e.g. '120' for two hours, 'P2D' for two days, '2025-09-16' for cutoff date, '2025-09-16T12:00:00+00:00' for cutoff time, '0' to disable)</summary>
-  public bool? MinDepAge { get; set; }
+  public string? MinDepAge { get; set; }
 
   /// <summary>Allow importing from remote hosts. Optionally specify allowed IP addresses and host names, with ports as necessary. Default value: deno.land:443,jsr.io:443,esm.sh:443,raw.esm.sh:443,cdn.jsdelivr.net:443,raw.githubusercontent.com:443,gist.githubusercontent.com:443</summary>
-  public bool? AllowImport { get; set; }
+  public string[]? AllowImport { get; set; }
 
   /// <summary>Deny importing from remote hosts. Optionally specify denied IP addresses and host names, with ports as necessary.</summary>
-  public bool? DenyImport { get; set; }
+  public string[]? DenyImport { get; set; }
 
   /// <summary>Allow running npm lifecycle scripts for the given packages</summary>
-  public bool? AllowScripts { get; set; }
+  public string[]? AllowScripts { get; set; }
 
   #endregion
 
   internal string[] ToArgs()
   {
     var args = new List<string>();
-    if (Check == true) args.Add("--check");
-    if (Ext == true) args.Add("--ext");
-    if (EnvFile == true) args.Add("--env-file");
-    if (NoCheck == true) args.Add("--no-check");
-    if (ImportMap == true) args.Add("--import-map");
+    if (Check is not null) { if (Check.Length == 0) args.Add("--check"); else args.Add(string.Concat("--check=", Check)); }
+    if (Ext is not null) { args.Add("--ext"); args.Add(Ext); }
+    if (EnvFile is not null) { if (EnvFile.Length == 0) args.Add("--env-file"); else args.Add(string.Concat("--env-file=", EnvFile)); }
+    if (NoCheck is not null) { if (NoCheck.Length == 0) args.Add("--no-check"); else args.Add(string.Concat("--no-check=", NoCheck)); }
+    if (ImportMap is not null) { args.Add("--import-map"); args.Add(ImportMap); }
     if (NoRemote == true) args.Add("--no-remote");
     if (NoNpm == true) args.Add("--no-npm");
-    if (NodeModulesDir == true) args.Add("--node-modules-dir");
-    if (Vendor == true) args.Add("--vendor");
-    if (NodeModulesLinker == true) args.Add("--node-modules-linker");
-    if (Reload == true) args.Add("--reload");
-    if (Lock == true) args.Add("--lock");
+    if (NodeModulesDir is not null) { if (NodeModulesDir.Length == 0) args.Add("--node-modules-dir"); else args.Add(string.Concat("--node-modules-dir=", NodeModulesDir)); }
+    if (Vendor is not null) { if (Vendor.Length == 0) args.Add("--vendor"); else args.Add(string.Concat("--vendor=", Vendor)); }
+    if (NodeModulesLinker is not null) { args.Add("--node-modules-linker"); args.Add(NodeModulesLinker); }
+    if (Reload is not null) { if (Reload.Length == 0) args.Add("--reload"); else { args.Add("--reload"); args.Add(string.Join(",", Reload)); } }
+    if (Lock is not null) { if (Lock.Length == 0) args.Add("--lock"); else args.Add(string.Concat("--lock=", Lock)); }
     if (NoLock == true) args.Add("--no-lock");
-    if (FrozenLockfile == true) args.Add("--frozen-lockfile");
-    if (Cert == true) args.Add("--cert");
-    if (UnsafelyIgnoreCertificateErrors == true) args.Add("--unsafely-ignore-certificate-errors");
-    if (MinDepAge == true) args.Add("--min-dep-age");
-    if (AllowImport == true) args.Add("--allow-import");
-    if (DenyImport == true) args.Add("--deny-import");
-    if (AllowScripts == true) args.Add("--allow-scripts");
+    if (FrozenLockfile is not null) { if (FrozenLockfile.Length == 0) args.Add("--frozen-lockfile"); else args.Add(string.Concat("--frozen-lockfile=", FrozenLockfile)); }
+    if (Cert is not null) { args.Add("--cert"); args.Add(Cert); }
+    if (UnsafelyIgnoreCertificateErrors is not null) { if (UnsafelyIgnoreCertificateErrors.Length == 0) args.Add("--unsafely-ignore-certificate-errors"); else { args.Add("--unsafely-ignore-certificate-errors"); args.Add(string.Join(",", UnsafelyIgnoreCertificateErrors)); } }
+    if (MinDepAge is not null) { args.Add("--min-dep-age"); args.Add(MinDepAge); }
+    if (AllowImport is not null) { if (AllowImport.Length == 0) args.Add("--allow-import"); else { args.Add("--allow-import"); args.Add(string.Join(",", AllowImport)); } }
+    if (DenyImport is not null) { if (DenyImport.Length == 0) args.Add("--deny-import"); else { args.Add("--deny-import"); args.Add(string.Join(",", DenyImport)); } }
+    if (AllowScripts is not null) { if (AllowScripts.Length == 0) args.Add("--allow-scripts"); else { args.Add("--allow-scripts"); args.Add(string.Join(",", AllowScripts)); } }
     return [.. args];
   }
 }

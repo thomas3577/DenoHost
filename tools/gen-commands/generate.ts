@@ -198,15 +198,28 @@ export function argStyleToCsType(style: ArgStyle): string {
 // Explicit overrides for flags whose usage hint doesn't match the heuristic.
 // Keyed by the long flag name (without --).
 const ARG_STYLE_OVERRIDES: Partial<Record<string, ArgStyle>> = {
-  'port':          'intvalue',  // <PORT> hint doesn't match NUMBER heuristic
-  'line-width':    'intvalue',  // usage uses a non-NUMBER placeholder
-  'indent-width':  'intvalue',  // same
-  'use-tabs':      'boolopt',   // usage uses [=<true|false>] not [=<BOOLEAN>]
-  'single-quote':  'boolopt',
-  'no-semicolons': 'boolopt',
+  'port':               'intvalue',  // <PORT> hint doesn't match NUMBER heuristic
+  'line-width':         'intvalue',  // usage uses a non-NUMBER placeholder
+  'indent-width':       'intvalue',  // same
+  'use-tabs':           'boolopt',   // usage uses [=<true|false>] not [=<BOOLEAN>]
+  'single-quote':       'boolopt',
+  'no-semicolons':      'boolopt',
+  // Since Deno 2.9.6, `--help` only prints a generic <VALUE> placeholder for these
+  // (previously <NUMBER>/<INDEX/COUNT>), so the NUMBER heuristic no longer fires.
+  'seed':               'intvalue',
+  'shard':              'intvalue',
+  'shuffle':            'intvalue',
+  'retry':              'intvalue',
+  'repeats':            'intvalue',
+  'coverage-threshold': 'intvalue',
+  'jobs':               'intvalue',
 };
 
-export function inferProperty(arg: DenoArg): Property | null {
+// `deno json_reference`'s `usage` field lost its value-placeholder hints (e.g. `<VALUE>`,
+// `[=<VALUE>]`, `...`) in Deno 2.9.6 — every option now reports a bare `--flag` there,
+// even ones that take a value. `deno <cmd> --help` still prints the real placeholder, so
+// callers pass the reconstructed usage string from that as `helpUsage` when available.
+export function inferProperty(arg: DenoArg, helpUsage?: string): Property | null {
   if (!arg.long) return null;
 
   const overrideStyle = ARG_STYLE_OVERRIDES[arg.long];
@@ -221,7 +234,7 @@ export function inferProperty(arg: DenoArg): Property | null {
     };
   }
 
-  const usage = arg.usage;
+  const usage = helpUsage ?? arg.usage;
   const upper = usage.toUpperCase();
 
   let argStyle: ArgStyle;
@@ -234,8 +247,10 @@ export function inferProperty(arg: DenoArg): Property | null {
   } else if (upper.includes('NUMBER') || upper.includes('PERCENT') || upper.includes('INDEX/COUNT')) {
     argStyle = 'intvalue';
   } else if (usage.includes('...')) {
-    argStyle = /\[=?</.test(usage) ? 'optarray' : 'array';
-  } else if (/\[=?</.test(usage)) {
+    // Since Deno 2.9.6, `--help` renders optional array values as `[=VALUE...]` — no
+    // angle brackets — so the optional-bracket check can't require `<` anymore.
+    argStyle = usage.includes('[') ? 'optarray' : 'array';
+  } else if (usage.includes('[')) {
     argStyle = 'optvalue';
   } else {
     argStyle = 'value';
@@ -249,6 +264,37 @@ export function inferProperty(arg: DenoArg): Property | null {
     xmlDoc: arg.help ? escapeXml(arg.help.split('\n')[0]) : '',
     heading: arg.help_heading ?? 'General',
   };
+}
+
+// ─── Value-placeholder hints from `--help` ────────────────────────────────────
+
+// Matches an option's flag + value-placeholder token at the start of a `--help` line, e.g.:
+//   -o, --output <VALUE>          →  ["output", " <VALUE>"]
+//       --no-check[=<VALUE>]      →  ["no-check", "[=<VALUE>]"]
+//       --watch-exclude[=VALUE...] → ["watch-exclude", "[=VALUE...]"]
+//       --no-terminal              →  ["no-terminal", undefined]
+const HELP_OPTION_LINE = /^\s*(?:-[\w-]+,\s+)?--([a-z][a-z0-9-]*)(\s?\[=?[^\]]*\]|\s<[^>]*>)?(?=\s{2,}|\s*$)/;
+
+// Extracts, for each flag, the raw placeholder token from its definition line in `--help`
+// output. Stops before "Permission options:" — those flags are synthesized separately from
+// the JSON schema (see buildPermissionSupplement) and that section repeats flag names inside
+// usage-example continuation lines (e.g. `--allow-read="/etc"`), which would otherwise
+// overwrite the real hint with a false "no value" match.
+export function parseHelpUsageHints(helpText: string): Map<string, string> {
+  const optionsSection = helpText.split(/\r?\nPermission options:/)[0];
+  const hints = new Map<string, string>();
+  for (const line of optionsSection.split('\n')) {
+    const m = HELP_OPTION_LINE.exec(line);
+    if (m && !hints.has(m[1])) hints.set(m[1], (m[2] ?? '').trim());
+  }
+  return hints;
+}
+
+async function fetchHelpUsageHints(cmdName: string): Promise<Map<string, string>> {
+  const proc = new Deno.Command('deno', { args: [cmdName, '--help'], stdout: 'piped' });
+  const { stdout, success } = await proc.output();
+  if (!success) return new Map();
+  return parseHelpUsageHints(new TextDecoder().decode(stdout));
 }
 
 // ─── C# code generation ───────────────────────────────────────────────────────
@@ -281,6 +327,7 @@ export function generateOptionsClass(
   subcmd: DenoSubcommand,
   permSupplement: DenoArg[],
   denoVersion: string,
+  helpHints: Map<string, string> = new Map(),
 ): string {
   const className = `${toPascalCase(cmd.name)}Options`;
 
@@ -303,7 +350,9 @@ export function generateOptionsClass(
   const allProps: Property[] = [];
 
   for (const arg of filtered) {
-    const prop = inferProperty(arg);
+    const hint = arg.long ? helpHints.get(arg.long) : undefined;
+    const helpUsage = hint !== undefined ? `--${arg.long}${hint}` : undefined;
+    const prop = inferProperty(arg, helpUsage);
     if (!prop) continue;
     if (!groups.has(prop.heading)) groups.set(prop.heading, []);
     groups.get(prop.heading)!.push(prop);
@@ -530,8 +579,9 @@ async function main() {
       console.warn(`  Warning: subcommand '${cmd.name}' not found in json_reference — skipping.`);
       continue;
     }
+    const helpHints = await fetchHelpUsageHints(cmd.name);
     const className = `${toPascalCase(cmd.name)}Options`;
-    const content = generateOptionsClass(cmd, subcmd, permSupplement, denoVersion);
+    const content = generateOptionsClass(cmd, subcmd, permSupplement, denoVersion, helpHints);
     const outPath = join(OUTPUT_DIR, `${className}.g.cs`);
     await Deno.writeTextFile(outPath, content + '\n');
     console.log(`  Generated ${className}.g.cs`);

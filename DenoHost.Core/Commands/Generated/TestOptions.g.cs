@@ -85,19 +85,19 @@ public sealed class TestOptions
   public bool? NoRun { get; set; }
 
   /// <summary>Collect coverage profile data into DIR. If DIR is not specified, it uses 'coverage/'.</summary>
-  public bool? Coverage { get; set; }
+  public string? Coverage { get; set; }
 
   /// <summary>Empty the temporary coverage profile data directory before running tests.</summary>
   public bool? Clean { get; set; }
 
   /// <summary>Stop after N errors. Defaults to stopping after first failure</summary>
-  public bool? FailFast { get; set; }
+  public string? FailFast { get; set; }
 
   /// <summary>Run tests with this string or regexp pattern in the test name</summary>
-  public bool? Filter { get; set; }
+  public string? Filter { get; set; }
 
   /// <summary>Shuffle the order in which the tests are run</summary>
-  public bool? Shuffle { get; set; }
+  public int? Shuffle { get; set; }
 
   /// <summary>Run test modules in parallel. Parallelism defaults to the number of available CPUs or the value of the DENO_JOBS environment variable</summary>
   public bool? Parallel { get; set; }
@@ -109,67 +109,67 @@ public sealed class TestOptions
   public bool? SanitizeResources { get; set; }
 
   /// <summary>Fail if coverage is below this percentage (0-100). Requires --coverage</summary>
-  public bool? CoverageThreshold { get; set; }
+  public int? CoverageThreshold { get; set; }
 
   /// <summary>Update snapshots created with `t.assertSnapshot()` instead of failing when they do not match</summary>
   public bool? UpdateSnapshots { get; set; }
 
   /// <summary>Watch for file changes and restart process automatically.</summary>
-  public bool? Watch { get; set; }
+  public string[]? Watch { get; set; }
 
   /// <summary>Exclude provided files/patterns from watch mode</summary>
-  public bool? WatchExclude { get; set; }
+  public string[]? WatchExclude { get; set; }
 
   /// <summary>Do not clear terminal screen when under watch mode</summary>
   public bool? NoClearScreen { get; set; }
 
   /// <summary>Select reporter to use. Default to 'pretty'</summary>
-  public bool? Reporter { get; set; }
+  public string? Reporter { get; set; }
 
   /// <summary>Write a JUnit XML test report to PATH. Use '-' to write to stdout which is the default when PATH is not provided</summary>
-  public bool? JunitPath { get; set; }
+  public string? JunitPath { get; set; }
 
   /// <summary>Hide stack traces for errors in failure test results.</summary>
   public bool? HideStacktraces { get; set; }
 
   /// <summary>Re-run failing tests up to NUMBER times. A test passes if any attempt passes. Tests that set their own `retry` option take precedence</summary>
-  public bool? Retry { get; set; }
+  public int? Retry { get; set; }
 
   /// <summary>Run each test NUMBER additional times. Every repetition must pass. Tests that set their own `repeats` option take precedence</summary>
-  public bool? Repeats { get; set; }
+  public int? Repeats { get; set; }
 
   /// <summary>Run only the test files for shard INDEX of COUNT, e.g. --shard=2/3.</summary>
-  public bool? Shard { get; set; }
+  public int? Shard { get; set; }
 
   /// <summary>Run only test modules affected by files changed in git.</summary>
-  public bool? Changed { get; set; }
+  public string? Changed { get; set; }
 
   /// <summary>Run only test modules that depend on the given source files</summary>
-  public bool? Related { get; set; }
+  public string? Related { get; set; }
 
   /// <summary>Only collect raw coverage data, without generating a report</summary>
   public bool? CoverageRawDataOnly { get; set; }
 
   /// <summary>Ignore files</summary>
-  public bool? Ignore { get; set; }
+  public string[]? Ignore { get; set; }
 
   /// <summary>Load environment variables from local file</summary>
-  public bool? EnvFile { get; set; }
+  public string? EnvFile { get; set; }
 
   /// <summary>Don't return an error code if no files were found</summary>
   public bool? PermitNoFiles { get; set; }
 
   /// <summary>Set content type of the supplied file</summary>
-  public bool? Ext { get; set; }
+  public string? Ext { get; set; }
 
   /// <summary>Set type-checking behavior. This subcommand type-checks local modules by default, so passing --check is redundant; pass --check=all to also type-check remote modules. Alternatively, use the 'deno check' subcommand.</summary>
-  public bool? Check { get; set; }
+  public string? Check { get; set; }
 
   /// <summary>Skip type-checking. If the value of "remote" is supplied, diagnostic errors from remote modules will be ignored</summary>
-  public bool? NoCheck { get; set; }
+  public string? NoCheck { get; set; }
 
   /// <summary>Load import map file from local file or remote URL</summary>
-  public bool? ImportMap { get; set; }
+  public string? ImportMap { get; set; }
 
   /// <summary>Do not resolve remote modules</summary>
   public bool? NoRemote { get; set; }
@@ -178,58 +178,58 @@ public sealed class TestOptions
   public bool? NoNpm { get; set; }
 
   /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: auto (create a local node_modules directory and install npm packages into it), manual (use the existing local node_modules directory, do not modify it), none (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to auto when the flag is passed without a value.</summary>
-  public bool? NodeModulesDir { get; set; }
+  public string? NodeModulesDir { get; set; }
 
   /// <summary>Toggles local vendor folder usage for remote modules and a node_modules folder for npm packages</summary>
-  public bool? Vendor { get; set; }
+  public string? Vendor { get; set; }
 
   /// <summary>Sets the linker mode for npm packages (isolated or hoisted)</summary>
-  public bool? NodeModulesLinker { get; set; }
+  public string? NodeModulesLinker { get; set; }
 
   /// <summary>Reload source code cache (recompile TypeScript). With no value, reloads everything. Pass a comma-separated list of specifiers to reload only those modules; npm: reloads all npm modules; npm:chalk reloads a single npm module; jsr:@std/http/file-server,jsr:@std/assert/assert-equals reloads specific modules.</summary>
-  public bool? Reload { get; set; }
+  public string[]? Reload { get; set; }
 
   /// <summary>Check the specified lock file. (If value is not provided, defaults to "./deno.lock")</summary>
-  public bool? Lock { get; set; }
+  public string? Lock { get; set; }
 
   /// <summary>Disable auto discovery of the lock file</summary>
   public bool? NoLock { get; set; }
 
   /// <summary>Error out if lockfile is out of date</summary>
-  public bool? FrozenLockfile { get; set; }
+  public string? FrozenLockfile { get; set; }
 
   /// <summary>Load certificate authority from PEM encoded file</summary>
-  public bool? Cert { get; set; }
+  public string? Cert { get; set; }
 
   /// <summary>DANGER: Disables verification of TLS certificates</summary>
-  public bool? UnsafelyIgnoreCertificateErrors { get; set; }
+  public string[]? UnsafelyIgnoreCertificateErrors { get; set; }
 
   /// <summary>(Unstable) The age in minutes, ISO-8601 duration or RFC3339 absolute timestamp (e.g. '120' for two hours, 'P2D' for two days, '2025-09-16' for cutoff date, '2025-09-16T12:00:00+00:00' for cutoff time, '0' to disable)</summary>
-  public bool? MinDepAge { get; set; }
+  public string? MinDepAge { get; set; }
 
   /// <summary>Require that remote dependencies are already cached</summary>
   public bool? CachedOnly { get; set; }
 
   /// <summary>Value of globalThis.location used by some web APIs</summary>
-  public bool? Location { get; set; }
+  public string? Location { get; set; }
 
   /// <summary>To see a list of all available flags use --v8-flags=--help</summary>
-  public bool? V8Flags { get; set; }
+  public string[]? V8Flags { get; set; }
 
   /// <summary>Set the random number generator seed</summary>
-  public bool? Seed { get; set; }
+  public int? Seed { get; set; }
 
   /// <summary>A list of files that will be executed before the main module</summary>
-  public bool? Preload { get; set; }
+  public string? Preload { get; set; }
 
   /// <summary>A list of CommonJS modules that will be executed before the main module</summary>
-  public bool? Require { get; set; }
+  public string? Require { get; set; }
 
   /// <summary>Use this argument to specify custom conditions for npm package exports. You can also use DENO_CONDITIONS env var.</summary>
-  public bool? Conditions { get; set; }
+  public string? Conditions { get; set; }
 
   /// <summary>Allow running npm lifecycle scripts for the given packages</summary>
-  public bool? AllowScripts { get; set; }
+  public string[]? AllowScripts { get; set; }
 
   #endregion
 
@@ -258,55 +258,55 @@ public sealed class TestOptions
     if (NoPrompt == true) args.Add("--no-prompt");
     if (Doc == true) args.Add("--doc");
     if (NoRun == true) args.Add("--no-run");
-    if (Coverage == true) args.Add("--coverage");
+    if (Coverage is not null) { if (Coverage.Length == 0) args.Add("--coverage"); else args.Add(string.Concat("--coverage=", Coverage)); }
     if (Clean == true) args.Add("--clean");
-    if (FailFast == true) args.Add("--fail-fast");
-    if (Filter == true) args.Add("--filter");
-    if (Shuffle == true) args.Add("--shuffle");
+    if (FailFast is not null) { if (FailFast.Length == 0) args.Add("--fail-fast"); else args.Add(string.Concat("--fail-fast=", FailFast)); }
+    if (Filter is not null) { args.Add("--filter"); args.Add(Filter); }
+    if (Shuffle.HasValue) { args.Add("--shuffle"); args.Add(Shuffle.Value.ToString(CultureInfo.InvariantCulture)); }
     if (Parallel == true) args.Add("--parallel");
     if (SanitizeOps == true) args.Add("--sanitize-ops");
     if (SanitizeResources == true) args.Add("--sanitize-resources");
-    if (CoverageThreshold == true) args.Add("--coverage-threshold");
+    if (CoverageThreshold.HasValue) { args.Add("--coverage-threshold"); args.Add(CoverageThreshold.Value.ToString(CultureInfo.InvariantCulture)); }
     if (UpdateSnapshots == true) args.Add("--update-snapshots");
-    if (Watch == true) args.Add("--watch");
-    if (WatchExclude == true) args.Add("--watch-exclude");
+    if (Watch is not null) { if (Watch.Length == 0) args.Add("--watch"); else { args.Add("--watch"); args.Add(string.Join(",", Watch)); } }
+    if (WatchExclude is not null) { if (WatchExclude.Length == 0) args.Add("--watch-exclude"); else { args.Add("--watch-exclude"); args.Add(string.Join(",", WatchExclude)); } }
     if (NoClearScreen == true) args.Add("--no-clear-screen");
-    if (Reporter == true) args.Add("--reporter");
-    if (JunitPath == true) args.Add("--junit-path");
+    if (Reporter is not null) { args.Add("--reporter"); args.Add(Reporter); }
+    if (JunitPath is not null) { args.Add("--junit-path"); args.Add(JunitPath); }
     if (HideStacktraces == true) args.Add("--hide-stacktraces");
-    if (Retry == true) args.Add("--retry");
-    if (Repeats == true) args.Add("--repeats");
-    if (Shard == true) args.Add("--shard");
-    if (Changed == true) args.Add("--changed");
-    if (Related == true) args.Add("--related");
+    if (Retry.HasValue) { args.Add("--retry"); args.Add(Retry.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (Repeats.HasValue) { args.Add("--repeats"); args.Add(Repeats.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (Shard.HasValue) { args.Add("--shard"); args.Add(Shard.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (Changed is not null) { if (Changed.Length == 0) args.Add("--changed"); else args.Add(string.Concat("--changed=", Changed)); }
+    if (Related is not null) { args.Add("--related"); args.Add(Related); }
     if (CoverageRawDataOnly == true) args.Add("--coverage-raw-data-only");
-    if (Ignore == true) args.Add("--ignore");
-    if (EnvFile == true) args.Add("--env-file");
+    if (Ignore is not null) { if (Ignore.Length == 0) args.Add("--ignore"); else { args.Add("--ignore"); args.Add(string.Join(",", Ignore)); } }
+    if (EnvFile is not null) { if (EnvFile.Length == 0) args.Add("--env-file"); else args.Add(string.Concat("--env-file=", EnvFile)); }
     if (PermitNoFiles == true) args.Add("--permit-no-files");
-    if (Ext == true) args.Add("--ext");
-    if (Check == true) args.Add("--check");
-    if (NoCheck == true) args.Add("--no-check");
-    if (ImportMap == true) args.Add("--import-map");
+    if (Ext is not null) { args.Add("--ext"); args.Add(Ext); }
+    if (Check is not null) { if (Check.Length == 0) args.Add("--check"); else args.Add(string.Concat("--check=", Check)); }
+    if (NoCheck is not null) { if (NoCheck.Length == 0) args.Add("--no-check"); else args.Add(string.Concat("--no-check=", NoCheck)); }
+    if (ImportMap is not null) { args.Add("--import-map"); args.Add(ImportMap); }
     if (NoRemote == true) args.Add("--no-remote");
     if (NoNpm == true) args.Add("--no-npm");
-    if (NodeModulesDir == true) args.Add("--node-modules-dir");
-    if (Vendor == true) args.Add("--vendor");
-    if (NodeModulesLinker == true) args.Add("--node-modules-linker");
-    if (Reload == true) args.Add("--reload");
-    if (Lock == true) args.Add("--lock");
+    if (NodeModulesDir is not null) { if (NodeModulesDir.Length == 0) args.Add("--node-modules-dir"); else args.Add(string.Concat("--node-modules-dir=", NodeModulesDir)); }
+    if (Vendor is not null) { if (Vendor.Length == 0) args.Add("--vendor"); else args.Add(string.Concat("--vendor=", Vendor)); }
+    if (NodeModulesLinker is not null) { args.Add("--node-modules-linker"); args.Add(NodeModulesLinker); }
+    if (Reload is not null) { if (Reload.Length == 0) args.Add("--reload"); else { args.Add("--reload"); args.Add(string.Join(",", Reload)); } }
+    if (Lock is not null) { if (Lock.Length == 0) args.Add("--lock"); else args.Add(string.Concat("--lock=", Lock)); }
     if (NoLock == true) args.Add("--no-lock");
-    if (FrozenLockfile == true) args.Add("--frozen-lockfile");
-    if (Cert == true) args.Add("--cert");
-    if (UnsafelyIgnoreCertificateErrors == true) args.Add("--unsafely-ignore-certificate-errors");
-    if (MinDepAge == true) args.Add("--min-dep-age");
+    if (FrozenLockfile is not null) { if (FrozenLockfile.Length == 0) args.Add("--frozen-lockfile"); else args.Add(string.Concat("--frozen-lockfile=", FrozenLockfile)); }
+    if (Cert is not null) { args.Add("--cert"); args.Add(Cert); }
+    if (UnsafelyIgnoreCertificateErrors is not null) { if (UnsafelyIgnoreCertificateErrors.Length == 0) args.Add("--unsafely-ignore-certificate-errors"); else { args.Add("--unsafely-ignore-certificate-errors"); args.Add(string.Join(",", UnsafelyIgnoreCertificateErrors)); } }
+    if (MinDepAge is not null) { args.Add("--min-dep-age"); args.Add(MinDepAge); }
     if (CachedOnly == true) args.Add("--cached-only");
-    if (Location == true) args.Add("--location");
-    if (V8Flags == true) args.Add("--v8-flags");
-    if (Seed == true) args.Add("--seed");
-    if (Preload == true) args.Add("--preload");
-    if (Require == true) args.Add("--require");
-    if (Conditions == true) args.Add("--conditions");
-    if (AllowScripts == true) args.Add("--allow-scripts");
+    if (Location is not null) { args.Add("--location"); args.Add(Location); }
+    if (V8Flags is not null) { if (V8Flags.Length == 0) args.Add("--v8-flags"); else { args.Add("--v8-flags"); args.Add(string.Join(",", V8Flags)); } }
+    if (Seed.HasValue) { args.Add("--seed"); args.Add(Seed.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (Preload is not null) { args.Add("--preload"); args.Add(Preload); }
+    if (Require is not null) { args.Add("--require"); args.Add(Require); }
+    if (Conditions is not null) { args.Add("--conditions"); args.Add(Conditions); }
+    if (AllowScripts is not null) { if (AllowScripts.Length == 0) args.Add("--allow-scripts"); else { args.Add("--allow-scripts"); args.Add(string.Join(",", AllowScripts)); } }
     return [.. args];
   }
 }

@@ -15,7 +15,7 @@ public sealed class TaskOptions
   #region General
 
   /// <summary>Specify the directory to run the task in</summary>
-  public bool? Cwd { get; set; }
+  public string? Cwd { get; set; }
 
   /// <summary>Run the task in all projects in the workspace</summary>
   public bool? Recursive { get; set; }
@@ -24,7 +24,7 @@ public sealed class TaskOptions
   public bool? Members { get; set; }
 
   /// <summary>Filter members of the workspace by name, implies --recursive flag</summary>
-  public bool? Filter { get; set; }
+  public string? Filter { get; set; }
 
   /// <summary>Evaluate the passed value as if it was a task in a configuration file</summary>
   public bool? Eval { get; set; }
@@ -36,41 +36,41 @@ public sealed class TaskOptions
   public bool? NoPrefix { get; set; }
 
   /// <summary>Maximum number of tasks to run concurrently.</summary>
-  public bool? Jobs { get; set; }
+  public int? Jobs { get; set; }
 
   /// <summary>Load environment variables from local file</summary>
-  public bool? EnvFile { get; set; }
+  public string? EnvFile { get; set; }
 
   /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: auto (create a local node_modules directory and install npm packages into it), manual (use the existing local node_modules directory, do not modify it), none (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to auto when the flag is passed without a value.</summary>
-  public bool? NodeModulesDir { get; set; }
+  public string? NodeModulesDir { get; set; }
 
   /// <summary>Check the specified lock file. (If value is not provided, defaults to "./deno.lock")</summary>
-  public bool? Lock { get; set; }
+  public string? Lock { get; set; }
 
   /// <summary>Disable auto discovery of the lock file</summary>
   public bool? NoLock { get; set; }
 
   /// <summary>Error out if lockfile is out of date</summary>
-  public bool? FrozenLockfile { get; set; }
+  public string? FrozenLockfile { get; set; }
 
   #endregion
 
   internal string[] ToArgs()
   {
     var args = new List<string>();
-    if (Cwd == true) args.Add("--cwd");
+    if (Cwd is not null) { args.Add("--cwd"); args.Add(Cwd); }
     if (Recursive == true) args.Add("--recursive");
     if (Members == true) args.Add("--members");
-    if (Filter == true) args.Add("--filter");
+    if (Filter is not null) { args.Add("--filter"); args.Add(Filter); }
     if (Eval == true) args.Add("--eval");
     if (IfPresent == true) args.Add("--if-present");
     if (NoPrefix == true) args.Add("--no-prefix");
-    if (Jobs == true) args.Add("--jobs");
-    if (EnvFile == true) args.Add("--env-file");
-    if (NodeModulesDir == true) args.Add("--node-modules-dir");
-    if (Lock == true) args.Add("--lock");
+    if (Jobs.HasValue) { args.Add("--jobs"); args.Add(Jobs.Value.ToString(CultureInfo.InvariantCulture)); }
+    if (EnvFile is not null) { if (EnvFile.Length == 0) args.Add("--env-file"); else args.Add(string.Concat("--env-file=", EnvFile)); }
+    if (NodeModulesDir is not null) { if (NodeModulesDir.Length == 0) args.Add("--node-modules-dir"); else args.Add(string.Concat("--node-modules-dir=", NodeModulesDir)); }
+    if (Lock is not null) { if (Lock.Length == 0) args.Add("--lock"); else args.Add(string.Concat("--lock=", Lock)); }
     if (NoLock == true) args.Add("--no-lock");
-    if (FrozenLockfile == true) args.Add("--frozen-lockfile");
+    if (FrozenLockfile is not null) { if (FrozenLockfile.Length == 0) args.Add("--frozen-lockfile"); else args.Add(string.Concat("--frozen-lockfile=", FrozenLockfile)); }
     return [.. args];
   }
 }

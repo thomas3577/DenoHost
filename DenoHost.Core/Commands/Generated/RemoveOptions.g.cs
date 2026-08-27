@@ -18,7 +18,7 @@ public sealed class RemoveOptions
   public bool? Global { get; set; }
 
   /// <summary>Installation root</summary>
-  public bool? Root { get; set; }
+  public string? Root { get; set; }
 
   /// <summary>Install only updating the lockfile</summary>
   public bool? LockfileOnly { get; set; }
@@ -27,10 +27,10 @@ public sealed class RemoveOptions
   public bool? PackageJson { get; set; }
 
   /// <summary>Skip type-checking. If the value of "remote" is supplied, diagnostic errors from remote modules will be ignored</summary>
-  public bool? NoCheck { get; set; }
+  public string? NoCheck { get; set; }
 
   /// <summary>Load import map file from local file or remote URL</summary>
-  public bool? ImportMap { get; set; }
+  public string? ImportMap { get; set; }
 
   /// <summary>Do not resolve remote modules</summary>
   public bool? NoRemote { get; set; }
@@ -39,34 +39,34 @@ public sealed class RemoveOptions
   public bool? NoNpm { get; set; }
 
   /// <summary>Selects the node_modules directory mode for npm packages (not a path). One of: auto (create a local node_modules directory and install npm packages into it), manual (use the existing local node_modules directory, do not modify it), none (do not use a local node_modules directory; resolve npm packages from the global cache). Defaults to auto when the flag is passed without a value.</summary>
-  public bool? NodeModulesDir { get; set; }
+  public string? NodeModulesDir { get; set; }
 
   /// <summary>Toggles local vendor folder usage for remote modules and a node_modules folder for npm packages</summary>
-  public bool? Vendor { get; set; }
+  public string? Vendor { get; set; }
 
   /// <summary>Sets the linker mode for npm packages (isolated or hoisted)</summary>
-  public bool? NodeModulesLinker { get; set; }
+  public string? NodeModulesLinker { get; set; }
 
   /// <summary>Reload source code cache (recompile TypeScript). With no value, reloads everything. Pass a comma-separated list of specifiers to reload only those modules; npm: reloads all npm modules; npm:chalk reloads a single npm module; jsr:@std/http/file-server,jsr:@std/assert/assert-equals reloads specific modules.</summary>
-  public bool? Reload { get; set; }
+  public string[]? Reload { get; set; }
 
   /// <summary>Check the specified lock file. (If value is not provided, defaults to "./deno.lock")</summary>
-  public bool? Lock { get; set; }
+  public string? Lock { get; set; }
 
   /// <summary>Disable auto discovery of the lock file</summary>
   public bool? NoLock { get; set; }
 
   /// <summary>Error out if lockfile is out of date</summary>
-  public bool? FrozenLockfile { get; set; }
+  public string? FrozenLockfile { get; set; }
 
   /// <summary>Load certificate authority from PEM encoded file</summary>
-  public bool? Cert { get; set; }
+  public string? Cert { get; set; }
 
   /// <summary>DANGER: Disables verification of TLS certificates</summary>
-  public bool? UnsafelyIgnoreCertificateErrors { get; set; }
+  public string[]? UnsafelyIgnoreCertificateErrors { get; set; }
 
   /// <summary>(Unstable) The age in minutes, ISO-8601 duration or RFC3339 absolute timestamp (e.g. '120' for two hours, 'P2D' for two days, '2025-09-16' for cutoff date, '2025-09-16T12:00:00+00:00' for cutoff time, '0' to disable)</summary>
-  public bool? MinDepAge { get; set; }
+  public string? MinDepAge { get; set; }
 
   #endregion
 
@@ -74,23 +74,23 @@ public sealed class RemoveOptions
   {
     var args = new List<string>();
     if (Global == true) args.Add("--global");
-    if (Root == true) args.Add("--root");
+    if (Root is not null) { args.Add("--root"); args.Add(Root); }
     if (LockfileOnly == true) args.Add("--lockfile-only");
     if (PackageJson == true) args.Add("--package-json");
-    if (NoCheck == true) args.Add("--no-check");
-    if (ImportMap == true) args.Add("--import-map");
+    if (NoCheck is not null) { if (NoCheck.Length == 0) args.Add("--no-check"); else args.Add(string.Concat("--no-check=", NoCheck)); }
+    if (ImportMap is not null) { args.Add("--import-map"); args.Add(ImportMap); }
     if (NoRemote == true) args.Add("--no-remote");
     if (NoNpm == true) args.Add("--no-npm");
-    if (NodeModulesDir == true) args.Add("--node-modules-dir");
-    if (Vendor == true) args.Add("--vendor");
-    if (NodeModulesLinker == true) args.Add("--node-modules-linker");
-    if (Reload == true) args.Add("--reload");
-    if (Lock == true) args.Add("--lock");
+    if (NodeModulesDir is not null) { if (NodeModulesDir.Length == 0) args.Add("--node-modules-dir"); else args.Add(string.Concat("--node-modules-dir=", NodeModulesDir)); }
+    if (Vendor is not null) { if (Vendor.Length == 0) args.Add("--vendor"); else args.Add(string.Concat("--vendor=", Vendor)); }
+    if (NodeModulesLinker is not null) { args.Add("--node-modules-linker"); args.Add(NodeModulesLinker); }
+    if (Reload is not null) { if (Reload.Length == 0) args.Add("--reload"); else { args.Add("--reload"); args.Add(string.Join(",", Reload)); } }
+    if (Lock is not null) { if (Lock.Length == 0) args.Add("--lock"); else args.Add(string.Concat("--lock=", Lock)); }
     if (NoLock == true) args.Add("--no-lock");
-    if (FrozenLockfile == true) args.Add("--frozen-lockfile");
-    if (Cert == true) args.Add("--cert");
-    if (UnsafelyIgnoreCertificateErrors == true) args.Add("--unsafely-ignore-certificate-errors");
-    if (MinDepAge == true) args.Add("--min-dep-age");
+    if (FrozenLockfile is not null) { if (FrozenLockfile.Length == 0) args.Add("--frozen-lockfile"); else args.Add(string.Concat("--frozen-lockfile=", FrozenLockfile)); }
+    if (Cert is not null) { args.Add("--cert"); args.Add(Cert); }
+    if (UnsafelyIgnoreCertificateErrors is not null) { if (UnsafelyIgnoreCertificateErrors.Length == 0) args.Add("--unsafely-ignore-certificate-errors"); else { args.Add("--unsafely-ignore-certificate-errors"); args.Add(string.Join(",", UnsafelyIgnoreCertificateErrors)); } }
+    if (MinDepAge is not null) { args.Add("--min-dep-age"); args.Add(MinDepAge); }
     return [.. args];
   }
 }
