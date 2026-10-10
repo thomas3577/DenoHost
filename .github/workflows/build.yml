@@ -264,7 +264,7 @@ jobs:
           }
 
       - name: Upload Runtime Package
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: DenoHost.Runtime.${{ matrix.rid }}.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/runtime/${{ matrix.rid }}/*.nupkg
@@ -341,7 +341,7 @@ jobs:
           Write-Host "Core package '$($package.Name)' carries assembly version $actual and XML documentation."
 
       - name: Upload Core Package as Artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: DenoHost.Core.${{ needs.get-version.outputs.package_version }}
           path: ./nupkg/core/*
